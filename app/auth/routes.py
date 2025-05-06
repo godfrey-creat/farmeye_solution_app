@@ -21,13 +21,12 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data.lower()).first()
         if user is not None and user.verify_password(form.password.data):
-            if not user.is_approved:
-                flash('Your account is pending approval. Please wait for an admin to approve it.', 'warning')
-                return redirect(url_for('auth.login'))
-            
             login_user(user, form.remember_me.data)
             user.last_login = datetime.utcnow()
             db.session.commit()
+            
+            # Flash login success message
+            flash('Login successful! Welcome back.', 'success')
             
             # Redirect to the page the user was trying to access or to the dashboard
             next_page = request.args.get('next')
@@ -65,14 +64,16 @@ def register():
             first_name=form.first_name.data,
             last_name=form.last_name.data,
             phone_number=form.phone_number.data,
+            user_type=form.user_type.data,  # Added user_type field
             is_approved=False  # Default to not approved
         )
         
         db.session.add(user)
         db.session.commit()
         
-        # Send notification about new user registration if needed
+        # Flash registration success message
         flash('Registration successful! Your account is pending approval by an administrator.', 'success')
+        
         return redirect(url_for('auth.login'))
     
     return render_template('auth/register.html', form=form)

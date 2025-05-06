@@ -11,7 +11,7 @@ class Farm(db.Model):
     location = db.Column(db.String(200), nullable=False)
     size = db.Column(db.Float, nullable=False)  # Size in acres/hectares
     crop_type = db.Column(db.String(50), nullable=False)
-    owner_id = db.Column(db.Integer, nullable=False)  # Foreign key to User table (if applicable)
+    user_id = db.Column(db.Integer, nullable=False)  # Foreign key to User table (if applicable)
 
     sensors = db.relationship('Sensor', backref='farm', lazy=True)
     crop_health = db.relationship('CropHealth', backref='farm', lazy=True)

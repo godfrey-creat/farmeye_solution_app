@@ -15,6 +15,7 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(64))
     last_name = db.Column(db.String(64))
     phone_number = db.Column(db.String(20))
+    user_type = db.Column(db.String(20), nullable=False, default='small-scale')  # Added field for user type
     is_approved = db.Column(db.Boolean, default=False)
     farms = db.relationship('Farm', backref='owner', lazy='dynamic')
     sensor_data = db.relationship('SensorData', backref='user', lazy='dynamic')
@@ -40,7 +41,7 @@ class User(UserMixin, db.Model):
         return f"{self.first_name} {self.last_name}"
     
     def __repr__(self):
-        return f'<User {self.username}>'
+        return f'<User {self.username}> - Type: {self.user_type}'  # Updated representation
 
 
 @login_manager.user_loader
