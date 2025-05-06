@@ -75,3 +75,27 @@ class WeatherData(db.Model):
 
     def __repr__(self):
         return f"<WeatherData Farm: {self.farm_id}, Condition: {self.condition}, Time: {self.timestamp}>"
+    
+class FarmImage(db.Model):
+    __tablename__ = 'farm_images'
+
+    id = db.Column(db.Integer, primary_key=True)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    image_url = db.Column(db.String(200), nullable=False)  # URL or path to the image
+    upload_date = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<FarmImage Farm: {self.farm_id}, URL: {self.image_url}>"
+    
+class Alert(db.Model):
+    __tablename__ = 'alerts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    alert_type = db.Column(db.String(50), nullable=False)  # E.g., 'Sensor Failure', 'Weather Alert', etc.
+    message = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='Active')  # Active, Resolved, etc.
+
+    def __repr__(self):
+        return f"<Alert Type: {self.alert_type}, Status: {self.status}, Created At: {self.created_at}>"

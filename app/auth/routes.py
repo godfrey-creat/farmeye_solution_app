@@ -1,12 +1,15 @@
 # app/auth/routes.py
 from flask import render_template, redirect, request, url_for, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
+from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
 from . import auth
 from .forms import LoginForm, RegistrationForm, RequestResetPasswordForm, ResetPasswordForm
-from .models import User, Role, Permission
+from .models import User
 from .. import db
 from ..utils.email import send_email
+
+csrf = CSRFProtect()
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -29,10 +32,7 @@ def login():
             # Redirect to the page the user was trying to access or to the dashboard
             next_page = request.args.get('next')
             if not next_page or not next_page.startswith('/'):
-                if user.is_admin():
-                    next_page = url_for('admin.dashboard')
-                else:
-                    next_page = url_for('farm.dashboard')
+                next_page = url_for('farm.dashboard')
             return redirect(next_page)
         flash('Invalid email or password.', 'danger')
     
@@ -49,6 +49,7 @@ def logout():
 
 
 @auth.route('/register', methods=['GET', 'POST'])
+@csrf.exempt
 def register():
     """Handle user registration"""
     if current_user.is_authenticated:
@@ -63,36 +64,15 @@ def register():
             password=form.password.data,
             first_name=form.first_name.data,
             last_name=form.last_name.data,
-            phone_number=form.phone_number.data
+            phone_number=form.phone_number.data,
+            is_approved=False  # Default to not approved
         )
         
-        # Set role to farmer (default) or admin if it's the first user
-        if User.query.count() == 0:
-            user.role = Role.query.filter_by(name='Admin').first()
-            user.is_approved = True
-        else:
-            user.role = Role.query.filter_by(name='Farmer').first()
-            user.is_approved = False
-            
         db.session.add(user)
         db.session.commit()
         
-        # Send notification to admins about new user registration
-        if not user.is_approved:
-            admins = User.query.join(Role).filter(Role.name == 'Admin').all()
-            for admin in admins:
-                send_email(
-                    admin.email,
-                    'New User Registration',
-                    'auth/email/new_user',
-                    user=user,
-                    admin=admin
-                )
-            
-        flash('Registration successful! ' + 
-              ('Your account is now active.' if user.is_approved else 
-               'Your account is pending approval by an administrator.'), 
-              'success')
+        # Send notification about new user registration if needed
+        flash('Registration successful! Your account is pending approval by an administrator.', 'success')
         return redirect(url_for('auth.login'))
     
     return render_template('auth/register.html', form=form)

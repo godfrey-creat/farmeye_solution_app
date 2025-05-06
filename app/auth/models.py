@@ -1,68 +1,7 @@
-# app/auth/models.py
 from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
-
-class Role(db.Model):
-    """Role model for different user types (admin, farmer)"""
-    __tablename__ = 'roles'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), unique=True)
-    default = db.Column(db.Boolean, default=False, index=True)
-    permissions = db.Column(db.Integer)
-    users = db.relationship('User', backref='role', lazy='dynamic')
-    
-    def __init__(self, **kwargs):
-        super(Role, self).__init__(**kwargs)
-        if self.permissions is None:
-            self.permissions = 0
-    
-    @staticmethod
-    def insert_roles():
-        roles = {
-            'Farmer': [Permission.VIEW_DATA, Permission.UPLOAD_DATA],
-            'Admin': [Permission.VIEW_DATA, Permission.UPLOAD_DATA, 
-                     Permission.APPROVE_USERS, Permission.ADMIN]
-        }
-        default_role = 'Farmer'
-        
-        for r in roles:
-            role = Role.query.filter_by(name=r).first()
-            if role is None:
-                role = Role(name=r)
-            role.reset_permissions()
-            for perm in roles[r]:
-                role.add_permission(perm)
-            role.default = (role.name == default_role)
-            db.session.add(role)
-        db.session.commit()
-    
-    def add_permission(self, perm):
-        if not self.has_permission(perm):
-            self.permissions += perm
-    
-    def remove_permission(self, perm):
-        if self.has_permission(perm):
-            self.permissions -= perm
-    
-    def reset_permissions(self):
-        self.permissions = 0
-    
-    def has_permission(self, perm):
-        return self.permissions & perm == perm
-    
-    def __repr__(self):
-        return f'<Role {self.name}>'
-
-
-class Permission:
-    """Permissions for different user roles"""
-    VIEW_DATA = 1
-    UPLOAD_DATA = 2
-    APPROVE_USERS = 4
-    ADMIN = 8
 
 
 class User(UserMixin, db.Model):
@@ -76,7 +15,6 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(64))
     last_name = db.Column(db.String(64))
     phone_number = db.Column(db.String(20))
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     is_approved = db.Column(db.Boolean, default=False)
     farms = db.relationship('Farm', backref='owner', lazy='dynamic')
     sensor_data = db.relationship('SensorData', backref='user', lazy='dynamic')
@@ -86,12 +24,6 @@ class User(UserMixin, db.Model):
     
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
-        if self.role is None:
-            if self.email == 'admin@farmeye.com':  # Default admin
-                self.role = Role.query.filter_by(name='Admin').first()
-                self.is_approved = True
-            else:
-                self.role = Role.query.filter_by(default=True).first()
     
     @property
     def password(self):
@@ -104,15 +36,6 @@ class User(UserMixin, db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
     
-    def can(self, perm):
-        return self.role is not None and self.role.has_permission(perm)
-    
-    def is_admin(self):
-        return self.can(Permission.ADMIN)
-    
-    def is_farmer(self):
-        return self.role.name == 'Farmer'
-    
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
     
@@ -124,11 +47,6 @@ class User(UserMixin, db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
-# app/farm/models.py
-from datetime import datetime
-from app import db
-import os
 
 class Farm(db.Model):
     """Farm model for storing farm details"""

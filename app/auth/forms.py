@@ -1,107 +1,56 @@
-# app/auth/forms.py
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, FloatField, TextAreaField
-from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo, ValidationError
-from .models import User
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
+from app.auth.models import db  # Import db directly here, but defer User import
 
 class LoginForm(FlaskForm):
-    """Form for user login"""
-    email = StringField('Email', validators=[
-        DataRequired(), 
-        Email()
-    ])
-    password = PasswordField('Password', validators=[
-        DataRequired()
-    ])
-    remember_me = BooleanField('Keep me logged in')
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    remember_me = BooleanField('Remember Me')
     submit = SubmitField('Log In')
 
 
 class RegistrationForm(FlaskForm):
-    """Form for user registration"""
-    email = StringField('Email', validators=[
-        DataRequired(), 
-        Length(1, 64),
-        Email()
-    ])
-    username = StringField('Username', validators=[
-        DataRequired(),
-        Length(1, 64),
-        Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0,
-               'Usernames must start with a letter and can only contain '
-               'letters, numbers, dots or underscores')
-    ])
-    first_name = StringField('First Name', validators=[
-        DataRequired(), 
-        Length(1, 64)
-    ])
-    last_name = StringField('Last Name', validators=[
-        DataRequired(), 
-        Length(1, 64)
-    ])
-    phone_number = StringField('Phone Number', validators=[
-        DataRequired(), 
-        Length(10, 15)
-    ])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[
         DataRequired(),
-        Length(min=8),
-        EqualTo('password2', message='Passwords must match.')
+        EqualTo('confirm_password', message='Passwords must match')
     ])
-    password2 = PasswordField('Confirm password', validators=[
-        DataRequired()
-    ])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired()])
+    first_name = StringField('First Name', validators=[DataRequired()])
+    last_name = StringField('Last Name', validators=[DataRequired()])
+    phone_number = StringField('Phone Number', validators=[DataRequired()])
     submit = SubmitField('Register')
 
-    def validate_email(self, field):
-        """Validate that email is not already registered"""
-        if User.query.filter_by(email=field.data.lower()).first():
-            raise ValidationError('Email already registered.')
+    def validate_email(self, email):
+        from app.auth.models import User  # Deferred import
+        user = User.query.filter_by(email=email.data.lower()).first()
+        if user:
+            raise ValidationError('Email is already registered.')
 
-    def validate_username(self, field):
-        """Validate that username is not already in use"""
-        if User.query.filter_by(username=field.data).first():
-            raise ValidationError('Username already in use.')
-
-
-class FarmRegistrationForm(FlaskForm):
-    """Form for registering a new farm"""
-    name = StringField('Farm Name', validators=[
-        DataRequired(), 
-        Length(1, 100)
-    ])
-    location = StringField('Location', validators=[
-        DataRequired(), 
-        Length(1, 200)
-    ])
-    size_acres = FloatField('Size (acres)', validators=[
-        DataRequired()
-    ])
-    crop_type = StringField('Primary Crop Type', validators=[
-        DataRequired(), 
-        Length(1, 100)
-    ])
-    description = TextAreaField('Description')
-    submit = SubmitField('Register Farm')
+    def validate_username(self, username):
+        from app.auth.models import User  # Deferred import
+        user = User.query.filter_by(username=username.data).first()
+        if user:
+            raise ValidationError('Username is already taken.')
 
 
 class RequestResetPasswordForm(FlaskForm):
-    """Form for requesting password reset"""
-    email = StringField('Email', validators=[
-        DataRequired(), 
-        Email()
-    ])
+    email = StringField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Request Password Reset')
+
+    def validate_email(self, email):
+        from app.auth.models import User  # Deferred import
+        user = User.query.filter_by(email=email.data.lower()).first()
+        if user is None:
+            raise ValidationError('No account is associated with this email.')
 
 
 class ResetPasswordForm(FlaskForm):
-    """Form for resetting password"""
-    password = PasswordField('New Password', validators=[
+    password = PasswordField('Password', validators=[
         DataRequired(),
-        Length(min=8)
+        EqualTo('confirm_password', message='Passwords must match')
     ])
-    password2 = PasswordField('Confirm New Password', validators=[
-        DataRequired(),
-        EqualTo('password', message='Passwords must match')
-    ])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired()])
     submit = SubmitField('Reset Password')
