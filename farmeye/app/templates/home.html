@@ -3,669 +3,672 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FarmEye - Next Gen Farm Monitoring</title>
+    <title>FarmEye - Agricultural Monitoring Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#1e8a3e',
-                        secondary: '#34a853',
-                        light: '#e6f4ea',
-                        dark: '#0d652d',
-                        accentYellow: '#fbbc04',
-                        accentRed: '#ea4335',
-                        accentBlue: '#4285f4',
-                        darkBlue: '#1a365d'
-                    }
+                        'farmeye-green': '#196F3D',
+                        'leaf-green': '#229954',
+                        'sprout-green': '#52BE80',
+                        'field-green': '#ABEBC6',
+                        'soil-brown': '#6E2C00',
+                        'sun-yellow': '#F1C40F',
+                        'water-blue': '#3498DB',
+                        'harvest-orange': '#E67E22',
+                        'alert-red': '#C0392B',
+                        'dark-gray': '#2C3E50',
+                        'medium-gray': '#7F8C8D',
+                        'light-gray': '#ECF0F1',
+                    },
+                    fontFamily: {
+                        'sans': ['Roboto', 'sans-serif'],
+                    },
                 }
             }
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-        }
-        
-        .sidebar-item:hover {
-            background-color: rgba(30, 138, 62, 0.1);
-        }
-        
-        .sidebar-item.active {
-            background-color: rgba(30, 138, 62, 0.2);
-            border-left: 4px solid #1e8a3e;
-        }
-        
-        .gauge-container {
-            position: relative;
-            width: 100%;
-            max-width: 200px;
-            margin: 0 auto;
-        }
-        
-        .gauge-body {
-            width: 100%;
-            height: 0;
-            padding-bottom: 50%;
-            position: relative;
-            border-top-left-radius: 100% 200%;
-            border-top-right-radius: 100% 200%;
-            overflow: hidden;
-            background-color: #f5f5f5;
-        }
-        
-        .gauge-fill {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to right, #34a853, #1e8a3e);
-            transform-origin: center top;
-            transform: rotate(0.5turn);
-            transition: transform 1s ease-out;
-        }
-        
-        .gauge-cover {
-            width: 75%;
-            height: 75%;
-            background: white;
+        .health-indicator {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            position: absolute;
-            top: 25%;
-            left: 50%;
-            transform: translateX(-50%);
+            background: conic-gradient(
+                var(--color) var(--percentage), 
+                #ECF0F1 var(--percentage)
+            );
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: #0d652d;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         
-        .cctv-container {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
-            height: 0;
-            overflow: hidden;
-            border-radius: 0.5rem;
-        }
-        
-        .cctv-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-        
-        .alert-pulse {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(234, 67, 53, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(234, 67, 53, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(234, 67, 53, 0);
-            }
-        }
-        
-        .progress-bar {
-            height: 8px;
-            border-radius: 4px;
-            background-color: #e5e7eb;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(to right, #34a853, #1e8a3e);
-            border-radius: 4px;
-        }
-        
-        .status-indicator {
-            width: 10px;
-            height: 10px;
+        .health-indicator-inner {
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
-            display: inline-block;
-            margin-right: 6px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #2C3E50;
         }
         
-        .status-good {
-            background-color: #34a853;
+        .ndvi-gradient {
+            background: linear-gradient(to right, #C0392B, #F1C40F, #229954);
         }
         
-        .status-warning {
-            background-color: #fbbc04;
+        .weather-widget {
+            background: linear-gradient(to bottom, #FEF9E7, white);
         }
         
-        .status-critical {
-            background-color: #ea4335;
+        .rainy-weather {
+            background: linear-gradient(to bottom, #EBF5FB, white);
         }
         
-        .field-selector {
-            background-color: rgba(255,255,255,0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        .cloudy-weather {
+            background: linear-gradient(to bottom, #EAEDED, white);
+        }
+        
+        .sidebar-item:hover {
+            background-color: rgba(34, 153, 84, 0.1);
+        }
+        
+        .sidebar-item.active {
+            background-color: #229954;
+            color: white;
+        }
+        
+        .data-card:hover {
+            box-shadow: 0 4px 6px rgba(25, 111, 61, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .alert-card-critical {
+            border-left: 4px solid #C0392B;
+            background-color: rgba(192, 57, 43, 0.1);
+        }
+        
+        .alert-card-warning {
+            border-left: 4px solid #F1C40F;
+            background-color: rgba(241, 196, 15, 0.1);
+        }
+        
+        .alert-card-info {
+            border-left: 4px solid #3498DB;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .timeline-node {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #229954;
+        }
+        
+        .timeline-node.current {
+            width: 16px;
+            height: 16px;
+            background-color: #196F3D;
+        }
+        
+        .timeline-node.critical {
+            background-color: #C0392B;
+        }
+        
+        .timeline-node.warning {
+            background-color: #F1C40F;
+        }
+        
+        .toggle-switch {
+            width: 36px;
+            height: 20px;
+        }
+        
+        .toggle-switch::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            background-color: white;
+            transition: 0.2s;
+        }
+        
+        .toggle-switch.on {
+            background-color: #229954;
+        }
+        
+        .toggle-switch.on::before {
+            transform: translateX(16px);
+        }
+        
+        .toggle-switch.off {
+            background-color: #7F8C8D;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .mobile-bottom-nav {
+                display: flex;
+            }
         }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden bg-gray-50">
-    <!-- Sidebar -->
-    <div class="w-20 md:w-64 bg-white shadow-lg flex flex-col transition-all duration-300 ease-in-out">
-        <!-- Logo -->
-        <div class="p-4 flex items-center justify-center border-b border-gray-200">
-            <div class="flex items-center">
-                <i class="fas fa-leaf text-3xl text-primary"></i>
-                <span class="text-xl font-bold text-dark hidden md:block ml-2">FarmEye</span>
+<body class="font-sans bg-light-gray text-dark-gray">
+    <!-- Top Navigation Bar -->
+    <header class="bg-farmeye-green text-white h-15 flex items-center px-4 fixed top-0 left-0 right-0 z-50 shadow-md">
+        <div class="flex items-center">
+            <!-- Logo -->
+            <div class="flex items-center mr-8">
+                <i class="fas fa-leaf text-2xl mr-2"></i>
+                <span class="text-xl font-semibold">FarmEye</span>
             </div>
-        </div>
-        
-        <!-- Navigation -->
-        <div class="flex-1 overflow-y-auto py-2">
-            <nav class="px-2">
-                <ul>
-                    <li>
-                        <a href="#" class="sidebar-item active flex items-center p-3 rounded-lg text-dark hover:text-primary mb-1">
-                            <i class="fas fa-home text-lg md:text-xl"></i>
-                            <span class="font-medium hidden md:block ml-3">Dashboard</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-dark hover:text-primary mb-1">
-                            <i class="fas fa-map-marked-alt text-lg md:text-xl"></i>
-                            <span class="font-medium hidden md:block ml-3">Fields</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-dark hover:text-primary mb-1">
-                            <i class="fas fa-seedling text-lg md:text-xl"></i>
-                            <span class="font-medium hidden md:block ml-3">Crops</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-dark hover:text-primary mb-1">
-                            <i class="fas fa-tint text-lg md:text-xl"></i>
-                            <span class="font-medium hidden md:block ml-3">Irrigation</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-dark hover:text-primary mb-1">
-                            <i class="fas fa-bug text-lg md:text-xl"></i>
-                            <span class="font-medium hidden md:block ml-3">Pests</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-dark hover:text-primary mb-1">
-                            <i class="fas fa-chart-line text-lg md:text-xl"></i>
-                            <span class="font-medium hidden md:block ml-3">Analytics</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center p-3 rounded-lg text-dark hover:text-primary mb-1">
-                            <i class="fas fa-tasks text-lg md:text-xl"></i>
-                            <span class="font-medium hidden md:block ml-3">Tasks</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-        
-        <!-- User Profile -->
-        <div class="p-3 border-t border-gray-200">
-            <div class="flex items-center">
-                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="w-10 h-10 rounded-full">
-                <div class="hidden md:block ml-3">
-                    <p class="text-sm font-medium text-dark">John Farmer</p>
-                    <p class="text-xs text-gray-500">Premium Plan</p>
+            
+            <!-- Farm Selector -->
+            <div class="relative mr-4">
+                <button class="flex items-center px-3 py-2 bg-white bg-opacity-10 rounded hover:bg-opacity-20 transition">
+                    <span>Green Valley Farm</span>
+                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                </button>
+                <div class="hidden absolute left-0 mt-1 w-48 bg-white rounded shadow-lg text-dark-gray py-1 z-50">
+                    <a href="#" class="block px-4 py-2 hover:bg-field-green">Sunny Acres</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-field-green">Riverbend Farm</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-field-green">Mountain View Ranch</a>
+                </div>
+            </div>
+            
+            <!-- Field Selector -->
+            <div class="relative mr-4">
+                <button class="flex items-center px-3 py-2 bg-white bg-opacity-10 rounded hover:bg-opacity-20 transition">
+                    <span>Field A-12</span>
+                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                </button>
+                <div class="hidden absolute left-0 mt-1 w-48 bg-white rounded shadow-lg text-dark-gray py-1 z-50">
+                    <a href="#" class="block px-4 py-2 hover:bg-field-green">Field A-11</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-field-green">Field A-12</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-field-green">Field B-05</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-field-green">Field B-08</a>
                 </div>
             </div>
         </div>
-    </div>
+        
+        <div class="ml-auto flex items-center">
+            <!-- Weather Widget -->
+            <div class="weather-widget rounded-lg px-3 py-2 mr-4 flex items-center">
+                <i class="fas fa-sun text-sun-yellow text-xl mr-2"></i>
+                <div>
+                    <div class="font-bold">24°C</div>
+                    <div class="text-xs text-medium-gray">Sunny</div>
+                </div>
+            </div>
+            
+            <!-- Notifications -->
+            <button class="relative p-2 mr-2 rounded-full hover:bg-white hover:bg-opacity-20 transition">
+                <i class="fas fa-bell"></i>
+                <span class="absolute top-0 right-0 bg-alert-red text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+            </button>
+            
+            <!-- User Profile -->
+            <button class="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition">
+                <i class="fas fa-user-circle text-xl"></i>
+            </button>
+            
+            <!-- Help -->
+            <button class="p-2 ml-2 rounded-full hover:bg-white hover:bg-opacity-20 transition">
+                <i class="fas fa-question-circle text-xl"></i>
+            </button>
+            
+            <!-- Mobile Menu Button -->
+            <button id="mobileMenuButton" class="p-2 ml-2 rounded-full hover:bg-white hover:bg-opacity-20 transition md:hidden">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar fixed top-15 left-0 bottom-0 w-56 bg-light-gray shadow-md z-40 transition-transform duration-300 ease-in-out">
+        <nav class="py-4">
+            <ul>
+                <li>
+                    <a href="#" class="sidebar-item active flex items-center px-6 py-3">
+                        <i class="fas fa-tachometer-alt mr-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="sidebar-item flex items-center px-6 py-3">
+                        <i class="fas fa-map-marked-alt mr-3"></i>
+                        <span>Field Map</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="sidebar-item flex items-center px-6 py-3">
+                        <i class="fas fa-chart-line mr-3"></i>
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="sidebar-item flex items-center px-6 py-3">
+                        <i class="fas fa-tint mr-3"></i>
+                        <span>Irrigation</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="sidebar-item flex items-center px-6 py-3">
+                        <i class="fas fa-cloud-sun-rain mr-3"></i>
+                        <span>Weather</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="sidebar-item flex items-center px-6 py-3">
+                        <i class="fas fa-bug mr-3"></i>
+                        <span>Pest Control</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="sidebar-item flex items-center px-6 py-3">
+                        <i class="fas fa-calendar-alt mr-3"></i>
+                        <span>Schedule</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="sidebar-item flex items-center px-6 py-3">
+                        <i class="fas fa-cog mr-3"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+    
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav fixed bottom-0 left-0 right-0 bg-white shadow-lg flex justify-around items-center py-2 z-40 hidden">
+        <a href="#" class="flex flex-col items-center text-leaf-green">
+            <i class="fas fa-tachometer-alt text-xl"></i>
+            <span class="text-xs mt-1">Dashboard</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-medium-gray">
+            <i class="fas fa-map-marked-alt text-xl"></i>
+            <span class="text-xs mt-1">Map</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-medium-gray">
+            <i class="fas fa-chart-line text-xl"></i>
+            <span class="text-xs mt-1">Analytics</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-medium-gray">
+            <i class="fas fa-cog text-xl"></i>
+            <span class="text-xs mt-1">Settings</span>
+        </a>
+    </nav>
     
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col overflow-hidden">
-        <!-- Top Navigation -->
-        <header class="bg-white shadow-sm">
-            <div class="flex items-center justify-between px-6 py-3">
-                <!-- Field Selector -->
-                <div class="field-selector flex items-center space-x-4 p-2">
-                    <div class="flex items-center">
-                        <i class="fas fa-tractor text-primary mr-2"></i>
-                        <select class="bg-transparent border-none focus:outline-none focus:ring-0 text-sm font-medium">
-                            <option>Green Valley Farm</option>
-                            <option>Sunny Acres</option>
-                            <option>Riverbend Fields</option>
-                        </select>
-                    </div>
-                    
-                    <div class="hidden md:flex items-center">
-                        <i class="fas fa-map-marked-alt text-primary mr-2"></i>
-                        <select class="bg-transparent border-none focus:outline-none focus:ring-0 text-sm font-medium">
-                            <option>North Field (Corn)</option>
-                            <option>South Field (Soybeans)</option>
-                            <option>East Field (Wheat)</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="flex items-center space-x-4">
-                    <!-- Quick Stats -->
-                    <div class="hidden md:flex items-center space-x-6">
-                        <div class="flex items-center">
-                            <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                            <span class="text-sm">82% Health</span>
-                        </div>
-                        <div class="flex items-center">
-                            <i class="fas fa-temperature-high text-accentRed mr-2"></i>
-                            <span class="text-sm">24°C</span>
-                        </div>
-                        <div class="flex items-center">
-                            <i class="fas fa-tint text-accentBlue mr-2"></i>
-                            <span class="text-sm">62% Moisture</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Notifications -->
-                    <button class="relative p-2 rounded-full hover:bg-gray-100">
-                        <i class="fas fa-bell text-gray-600"></i>
-                        <span class="absolute top-0 right-0 h-2 w-2 rounded-full bg-accentRed"></span>
-                    </button>
-                    
-                    <!-- Help -->
-                    <button class="p-2 rounded-full hover:bg-gray-100">
-                        <i class="fas fa-question-circle text-gray-600"></i>
-                    </button>
-                </div>
+    <main class="pt-20 pl-56 pr-4 pb-4 transition-all duration-300 ease-in-out">
+        <!-- Page Header -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-semibold">Field A-12 Dashboard</h1>
+            <div class="flex items-center">
+                <span class="text-medium-gray mr-2">Auto-refresh</span>
+                <div class="toggle-switch rounded-full relative cursor-pointer on"></div>
             </div>
-        </header>
+        </div>
         
-        <!-- Dashboard Content -->
-        <main class="flex-1 overflow-y-auto p-4 md:p-6">
-            <!-- Overview Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <!-- Farm Health -->
-                <div class="bg-white rounded-xl shadow-sm p-4 flex items-center">
-                    <div class="gauge-container mr-4">
-                        <div class="gauge-body">
-                            <div class="gauge-fill" style="transform: rotate(0.35turn);"></div>
-                            <div class="gauge-cover">82%</div>
+        <!-- Health Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <!-- Farm Health Indicator -->
+            <div class="data-card bg-white rounded-lg border border-field-green p-4 shadow-sm transition">
+                <h3 class="text-lg font-semibold mb-3">Field Health</h3>
+                <div class="flex justify-center">
+                    <div class="health-indicator" style="--color: #52BE80; --percentage: 80%">
+                        <div class="health-indicator-inner">
+                            82%
                         </div>
                     </div>
+                </div>
+                <div class="mt-3 text-center text-medium-gray text-sm">
+                    <i class="fas fa-arrow-up text-sprout-green mr-1"></i>
+                    <span>2% improvement</span>
+                </div>
+            </div>
+            
+            <!-- Soil Health -->
+            <div class="data-card bg-white rounded-lg border border-field-green p-4 shadow-sm transition">
+                <h3 class="text-lg font-semibold mb-3">Soil Health</h3>
+                <div class="text-2xl font-bold text-soil-brown mb-1">76%</div>
+                <div class="flex items-center text-sm text-medium-gray">
+                    <div class="w-full bg-light-gray rounded-full h-2 mr-2">
+                        <div class="bg-soil-brown h-2 rounded-full" style="width: 76%"></div>
+                    </div>
+                    <span>Optimal</span>
+                </div>
+                <div class="mt-2 text-sm">
+                    <span class="text-medium-gray">pH: </span>
+                    <span class="font-medium">6.8</span>
+                </div>
+            </div>
+            
+            <!-- Moisture Level -->
+            <div class="data-card bg-white rounded-lg border border-field-green p-4 shadow-sm transition">
+                <h3 class="text-lg font-semibold mb-3">Moisture Level</h3>
+                <div class="text-2xl font-bold text-water-blue mb-1">64%</div>
+                <div class="flex items-center text-sm text-medium-gray">
+                    <div class="w-full bg-light-gray rounded-full h-2 mr-2">
+                        <div class="bg-water-blue h-2 rounded-full" style="width: 64%"></div>
+                    </div>
+                    <span>Normal</span>
+                </div>
+                <div class="mt-2 text-sm">
+                    <span class="text-medium-gray">Last irrigation: </span>
+                    <span class="font-medium">2 days ago</span>
+                </div>
+            </div>
+            
+            <!-- Growth Stage -->
+            <div class="data-card bg-white rounded-lg border border-field-green p-4 shadow-sm transition">
+                <h3 class="text-lg font-semibold mb-3">Growth Stage</h3>
+                <div class="text-2xl font-bold text-leaf-green mb-1">Vegetative</div>
+                <div class="flex items-center text-sm text-medium-gray">
+                    <div class="w-full bg-light-gray rounded-full h-2 mr-2">
+                        <div class="bg-leaf-green h-2 rounded-full" style="width: 45%"></div>
+                    </div>
+                    <span>Day 28/62</span>
+                </div>
+                <div class="mt-2 text-sm">
+                    <span class="text-medium-gray">Next stage: </span>
+                    <span class="font-medium">Flowering</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alerts Section -->
+        <!-- <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-3">Alerts & Notifications</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="alert-card-critical rounded p-4 flex items-start">
+                    <i class="fas fa-exclamation-triangle text-alert-red mt-1 mr-3"></i>
                     <div>
-                        <h3 class="text-sm font-medium text-gray-500">Farm Health</h3>
-                        <p class="text-lg font-bold text-dark">Excellent</p>
-                        <p class="text-xs text-gray-500">+2% from last week</p>
+                        <h4 class="font-semibold">Pest detected</h4>
+                        <p class="text-sm text-medium-gray">Corn earworm detected in sector 4. Immediate action recommended.</p>
+                        <button class="mt-2 text-xs font-medium text-alert-red hover:underline">View details</button>
                     </div>
                 </div>
                 
-                <!-- Yield Prediction -->
-                <div class="bg-white rounded-xl shadow-sm p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-gray-500">Yield Prediction</h3>
-                        <i class="fas fa-chart-line text-primary"></i>
-                    </div>
-                    <p class="text-2xl font-bold text-dark mb-1">8.2 t/ha</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs text-gray-500">Potential: 9.5 t/ha</span>
-                        <span class="text-xs text-green-500">+5% from last year</span>
-                    </div>
-                    <div class="progress-bar mt-2">
-                        <div class="progress-fill" style="width: 82%"></div>
+                <div class="alert-card-warning rounded p-4 flex items-start">
+                    <i class="fas fa-exclamation-circle text-sun-yellow mt-1 mr-3"></i>
+                    <div>
+                        <h4 class="font-semibold">Irrigation needed</h4>
+                        <p class="text-sm text-medium-gray">Moisture levels dropping in sector 2. Schedule irrigation within 24 hours.</p>
+                        <button class="mt-2 text-xs font-medium text-sun-yellow hover:underline">Schedule now</button>
                     </div>
                 </div>
                 
-                <!-- Active Alerts -->
-                <div class="bg-white rounded-xl shadow-sm p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-gray-500">Active Alerts</h3>
-                        <span class="bg-accentRed text-white text-xs px-2 py-1 rounded-full">3 New</span>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center">
-                            <span class="status-indicator status-critical"></span>
-                            <p class="text-sm">Pest detected in NW corner</p>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="status-indicator status-warning"></span>
-                            <p class="text-sm">Low soil moisture in Zone 3</p>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="status-indicator status-warning"></span>
-                            <p class="text-sm">Weed growth increasing</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Upcoming Tasks -->
-                <div class="bg-white rounded-xl shadow-sm p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-gray-500">Upcoming Tasks</h3>
-                        <i class="fas fa-tasks text-primary"></i>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center">
-                            <div class="w-8 h-8 rounded-full bg-primary bg-opacity-10 flex items-center justify-center mr-2">
-                                <i class="fas fa-tint text-primary text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium">Irrigation Check</p>
-                                <p class="text-xs text-gray-500">Tomorrow AM</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-8 h-8 rounded-full bg-secondary bg-opacity-10 flex items-center justify-center mr-2">
-                                <i class="fas fa-spray-can text-secondary text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium">Fertilize Zone 2</p>
-                                <p class="text-xs text-gray-500">In 3 days</p>
-                            </div>
-                        </div>
+                <div class="alert-card-info rounded p-4 flex items-start">
+                    <i class="fas fa-info-circle text-water-blue mt-1 mr-3"></i>
+                    <div>
+                        <h4 class="font-semibold">Weather advisory</h4>
+                        <p class="text-sm text-medium-gray">Heavy rain expected in 36 hours. Consider delaying fertilizer application.</p>
+                        <button class="mt-2 text-xs font-medium text-water-blue hover:underline">View forecast</button>
                     </div>
                 </div>
             </div>
-            
-            <!-- Main Content Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <!-- Field Monitoring -->
-                <div class="bg-white rounded-xl shadow-sm p-4 lg:col-span-2">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-bold text-dark">Field Monitoring</h2>
-                        <div class="flex space-x-2">
-                            <button class="text-xs bg-gray-100 hover:bg-primary hover:text-white text-dark px-3 py-1 rounded">
-                                <i class="fas fa-arrows-alt mr-1"></i> Full Map
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-xs font-medium text-gray-500">Soil Moisture</h3>
-                                <i class="fas fa-tint text-accentBlue"></i>
-                            </div>
-                            <p class="text-xl font-bold text-dark">62%</p>
-                            <div class="flex items-center mt-1">
-                                <span class="status-indicator status-good"></span>
-                                <span class="text-xs text-gray-500">Optimal</span>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-xs font-medium text-gray-500">Temperature</h3>
-                                <i class="fas fa-temperature-high text-accentRed"></i>
-                            </div>
-                            <p class="text-xl font-bold text-dark">24°C</p>
-                            <div class="flex items-center mt-1">
-                                <span class="status-indicator status-good"></span>
-                                <span class="text-xs text-gray-500">Normal</span>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200 alert-pulse">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-xs font-medium text-gray-500">Weed Coverage</h3>
-                                <i class="fas fa-leaf text-secondary"></i>
-                            </div>
-                            <p class="text-xl font-bold text-dark">12%</p>
-                            <div class="flex items-center mt-1">
-                                <span class="status-indicator status-warning"></span>
-                                <span class="text-xs text-gray-500">Action needed</span>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-xs font-medium text-gray-500">Humidity</h3>
-                                <i class="fas fa-water text-blue-400"></i>
-                            </div>
-                            <p class="text-xl font-bold text-dark">45%</p>
-                            <div class="flex items-center mt-1">
-                                <span class="status-indicator status-good"></span>
-                                <span class="text-xs text-gray-500">Optimal</span>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-xs font-medium text-gray-500">Soil pH</h3>
-                                <i class="fas fa-flask text-purple-500"></i>
-                            </div>
-                            <p class="text-xl font-bold text-dark">6.8</p>
-                            <div class="flex items-center mt-1">
-                                <span class="status-indicator status-good"></span>
-                                <span class="text-xs text-gray-500">Ideal for corn</span>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-xs font-medium text-gray-500">Light Exposure</h3>
-                                <i class="fas fa-sun text-accentYellow"></i>
-                            </div>
-                            <p class="text-xl font-bold text-dark">8.2 hrs</p>
-                            <div class="flex items-center mt-1">
-                                <i class="fas fa-arrow-up text-green-500 mr-1 text-xs"></i>
-                                <span class="text-xs text-gray-500">+1.2 hrs</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-container">
-                        <canvas id="fieldChart"></canvas>
-                    </div>
+        </div>
+         -->
+        <!-- Visualization Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Live CCTV Panel -->
+            <div class="bg-white rounded-lg border border-field-green overflow-hidden shadow-sm">
+                <div class="bg-field-green px-4 py-3">
+                    <h3 class="font-semibold">Live Field View</h3>
                 </div>
-                
-                <!-- Live Feed & Tasks -->
-                <div class="space-y-6">
-                    <!-- Live Feed -->
-                    <div class="bg-white rounded-xl shadow-sm p-4">
-                        <div class="flex items-center justify-between mb-3">
-                            <h2 class="text-lg font-bold text-dark">Live Field View</h2>
-                            <select class="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary">
-                                <option>Camera 1 - North View</option>
-                                <option>Camera 2 - East View</option>
-                                <option>Camera 3 - South View</option>
-                            </select>
-                        </div>
-                        <div class="cctv-container">
-                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                        </div>
-                        <div class="flex justify-between mt-3">
-                            <button class="bg-gray-100 hover:bg-primary hover:text-white text-dark px-3 py-1 rounded text-sm flex items-center">
-                                <i class="fas fa-expand mr-1"></i> Fullscreen
-                            </button>
-                            <button class="bg-gray-100 hover:bg-primary hover:text-white text-dark px-3 py-1 rounded text-sm flex items-center">
-                                <i class="fas fa-camera mr-1"></i> Snapshot
-                            </button>
-                        </div>
+                <div class="aspect-w-16 aspect-h-9 bg-black relative">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i class="fas fa-video text-white text-opacity-30 text-4xl"></i>
                     </div>
-                    
-                    <!-- Quick Actions -->
-                    <div class="bg-white rounded-xl shadow-sm p-4">
-                        <h2 class="text-lg font-bold text-dark mb-3">Quick Actions</h2>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button class="bg-primary hover:bg-dark text-white px-3 py-2 rounded-lg text-sm flex flex-col items-center">
-                                <i class="fas fa-tint text-xl mb-1"></i>
-                                <span>Irrigation</span>
-                            </button>
-                            <button class="bg-secondary hover:bg-dark text-white px-3 py-2 rounded-lg text-sm flex flex-col items-center">
-                                <i class="fas fa-spray-can text-xl mb-1"></i>
-                                <span>Spraying</span>
-                            </button>
-                            <button class="bg-accentYellow hover:bg-dark text-white px-3 py-2 rounded-lg text-sm flex flex-col items-center">
-                                <i class="fas fa-robot text-xl mb-1"></i>
-                                <span>Drones</span>
-                            </button>
-                            <button class="bg-accentBlue hover:bg-dark text-white px-3 py-2 rounded-lg text-sm flex flex-col items-center">
-                                <i class="fas fa-chart-bar text-xl mb-1"></i>
-                                <span>Reports</span>
-                            </button>
+                    <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
+                        <div class="flex justify-between items-center">
+                            <span>Sector 3 - Camera 2</span>
+                            <div class="flex space-x-2">
+                                <button class="p-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30">
+                                    <i class="fas fa-expand text-xs"></i>
+                                </button>
+                                <button class="p-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30">
+                                    <i class="fas fa-camera text-xs"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Weeds & Weather -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <!-- Weeds Identified -->
-                <div class="bg-white rounded-xl shadow-sm p-4 lg:col-span-2">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-bold text-dark">Weed Detection</h2>
-                        <button class="text-sm bg-primary hover:bg-dark text-white px-3 py-1 rounded flex items-center">
-                            <i class="fas fa-spray-can mr-1"></i> Treatment Plan
+                <div class="p-3 flex justify-between bg-light-gray">
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 bg-white border border-leaf-green rounded text-sm text-leaf-green hover:bg-leaf-green hover:text-white transition">
+                            <i class="fas fa-chevron-left mr-1"></i> Prev
+                        </button>
+                        <button class="px-3 py-1 bg-white border border-leaf-green rounded text-sm text-leaf-green hover:bg-leaf-green hover:text-white transition">
+                            Next <i class="fas fa-chevron-right ml-1"></i>
                         </button>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="bg-gray-50 rounded-lg p-3 border-l-4 border-accentYellow">
-                            <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3">
-                                    <i class="fas fa-leaf text-accentYellow"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-medium text-dark">Pigweed</h3>
-                                    <p class="text-xs text-gray-500">5.2% coverage</p>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs bg-white px-2 py-1 rounded">High Priority</span>
-                                <button class="text-xs bg-white hover:bg-primary hover:text-white text-dark px-2 py-1 rounded">
-                                    Details
-                                </button>
+                    <select class="border border-field-green rounded text-sm px-2">
+                        <option>Camera 1</option>
+                        <option>Camera 2</option>
+                        <option>Camera 3</option>
+                        <option>Camera 4</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Satellite Imagery Panel -->
+            <div class="bg-white rounded-lg border border-field-green overflow-hidden shadow-sm">
+                <div class="bg-field-green px-4 py-3 flex justify-between items-center">
+                    <h3 class="font-semibold">Satellite Imagery</h3>
+                    <div class="flex items-center">
+                        <span class="text-sm mr-2">NDVI</span>
+                        <div class="ndvi-gradient h-4 w-24 rounded"></div>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="aspect-w-1 aspect-h-1 bg-light-gray mb-3 relative">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i class="fas fa-satellite-dish text-medium-gray text-opacity-30 text-4xl"></i>
+                        </div>
+                    </div>
+                    <div class="flex justify-between">
+                        <select class="border border-field-green rounded text-sm px-2 py-1">
+                            <option>NDVI (Vegetation)</option>
+                            <option>Moisture Index</option>
+                            <option>Temperature Map</option>
+                            <option>Growth Stage</option>
+                        </select>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 bg-leaf-green text-white rounded text-sm hover:bg-opacity-90 transition">
+                                <i class="fas fa-calendar-alt mr-1"></i> History
+                            </button>
+                            <button class="px-3 py-1 bg-leaf-green text-white rounded text-sm hover:bg-opacity-90 transition">
+                                <i class="fas fa-download mr-1"></i> Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Section -->
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-3">Field Metrics</h2>
+            <div class="bg-white rounded-lg border border-field-green p-4 shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex space-x-4">
+                        <button class="px-3 py-1 bg-leaf-green text-white rounded text-sm hover:bg-opacity-90 transition">
+                            Temperature
+                        </button>
+                        <button class="px-3 py-1 bg-white border border-leaf-green rounded text-sm text-leaf-green hover:bg-leaf-green hover:text-white transition">
+                            Moisture
+                        </button>
+                        <button class="px-3 py-1 bg-white border border-leaf-green rounded text-sm text-leaf-green hover:bg-leaf-green hover:text-white transition">
+                            Growth
+                        </button>
+                    </div>
+                    <select class="border border-field-green rounded text-sm px-2 py-1">
+                        <option>Last 7 days</option>
+                        <option>Last 30 days</option>
+                        <option>This season</option>
+                    </select>
+                </div>
+                
+                <!-- Chart Container -->
+                <div class="h-64 relative">
+                    <canvas id="fieldMetricsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Advisory Timeline -->
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-3">10-Day Advisory Timeline</h2>
+            <div class="bg-white rounded-lg border border-field-green p-4 shadow-sm">
+                <div class="relative h-12">
+                    <div class="absolute left-0 right-0 top-1/2 h-1 bg-leaf-green"></div>
+                    
+                    <div class="absolute left-0 top-1/2 transform -translate-y-1/2 flex justify-between w-full">
+                        <!-- Timeline Nodes -->
+                        <div class="relative">
+                            <div class="timeline-node"></div>
+                            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-medium-gray">Today</div>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="timeline-node"></div>
+                            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-medium-gray">Tue</div>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="timeline-node warning"></div>
+                            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-medium-gray">Wed</div>
+                            <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white border border-field-green rounded px-2 py-1 shadow-sm text-sm w-32 text-center">
+                                <div class="text-xs text-sun-yellow font-medium">Irrigation</div>
+                                <div class="text-xs">Recommended</div>
                             </div>
                         </div>
                         
-                        <div class="bg-gray-50 rounded-lg p-3 border-l-4 border-accentYellow">
-                            <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3">
-                                    <i class="fas fa-leaf text-accentYellow"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-medium text-dark">Foxtail</h3>
-                                    <p class="text-xs text-gray-500">3.8% coverage</p>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs bg-white px-2 py-1 rounded">Medium Priority</span>
-                                <button class="text-xs bg-white hover:bg-primary hover:text-white text-dark px-2 py-1 rounded">
-                                    Details
-                                </button>
+                        <div class="relative">
+                            <div class="timeline-node"></div>
+                            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-medium-gray">Thu</div>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="timeline-node current"></div>
+                            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-medium-gray">Fri</div>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="timeline-node"></div>
+                            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-medium-gray">Sat</div>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="timeline-node critical"></div>
+                            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-medium-gray">Sun</div>
+                            <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white border border-field-green rounded px-2 py-1 shadow-sm text-sm w-32 text-center">
+                                <div class="text-xs text-alert-red font-medium">Harvest</div>
+                                <div class="text-xs">Critical window</div>
                             </div>
                         </div>
                         
-                        <div class="bg-gray-50 rounded-lg p-3 border-l-4 border-accentRed">
-                            <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3">
-                                    <i class="fas fa-leaf text-accentRed"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-medium text-dark">Canada Thistle</h3>
-                                    <p class="text-xs text-gray-500">2.1% coverage</p>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs bg-white px-2 py-1 rounded">Critical</span>
-                                <button class="text-xs bg-white hover:bg-primary hover:text-white text-dark px-2 py-1 rounded">
-                                    Details
-                                </button>
-                            </div>
+                        <div class="relative">
+                            <div class="timeline-node"></div>
+                            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-medium-gray">Mon</div>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="timeline-node"></div>
+                            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-medium-gray">Tue</div>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="timeline-node"></div>
+                            <div class="absolute top-6 left-1/2 transform -translate-x-1/2 text-xs text-medium-gray">Wed</div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Weather Forecast -->
-                <div class="bg-white rounded-xl shadow-sm p-4">
-                    <h2 class="text-lg font-bold text-dark mb-4">Weather Forecast</h2>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2">
-                        <div class="text-center p-2 rounded-lg bg-gray-50">
-                            <p class="text-sm font-medium">Today</p>
-                            <i class="fas fa-sun text-2xl text-accentYellow my-2"></i>
-                            <p class="text-sm font-bold">24° / 14°</p>
-                            <p class="text-xs text-gray-500">10% rain</p>
-                        </div>
-                        <div class="text-center p-2 rounded-lg bg-gray-50">
-                            <p class="text-sm font-medium">Tue</p>
-                            <i class="fas fa-cloud-sun text-2xl text-accentYellow my-2"></i>
-                            <p class="text-sm font-bold">22° / 15°</p>
-                            <p class="text-xs text-gray-500">20% rain</p>
-                        </div>
-                        <div class="text-center p-2 rounded-lg bg-gray-50">
-                            <p class="text-sm font-medium">Wed</p>
-                            <i class="fas fa-cloud text-2xl text-gray-400 my-2"></i>
-                            <p class="text-sm font-bold">20° / 16°</p>
-                            <p class="text-xs text-gray-500">40% rain</p>
-                        </div>
-                        <div class="text-center p-2 rounded-lg bg-gray-50">
-                            <p class="text-sm font-medium">Thu</p>
-                            <i class="fas fa-cloud-rain text-2xl text-accentBlue my-2"></i>
-                            <p class="text-sm font-bold">18° / 14°</p>
-                            <p class="text-xs text-gray-500">80% rain</p>
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-field-green bg-opacity-30 rounded p-3">
+                        <div class="flex items-start">
+                            <div class="bg-leaf-green text-white rounded-full h-8 w-8 flex items-center justify-center mr-3">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium">Irrigation Advisory</h4>
+                                <p class="text-sm text-medium-gray">Optimal irrigation window opens in 2 days. Soil moisture levels projected to drop below 50%.</p>
+                            </div>
                         </div>
                     </div>
-                    <button class="w-full mt-3 bg-gray-100 hover:bg-primary hover:text-white text-dark px-3 py-2 rounded text-sm flex items-center justify-center">
-                        <i class="fas fa-chart-line mr-2"></i> View Detailed Forecast
-                    </button>
+                    
+                    <div class="bg-field-green bg-opacity-30 rounded p-3">
+                        <div class="flex items-start">
+                            <div class="bg-harvest-orange text-white rounded-full h-8 w-8 flex items-center justify-center mr-3">
+                                <i class="fas fa-sickle"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium">Harvest Advisory</h4>
+                                <p class="text-sm text-medium-gray">Critical harvest window begins in 5 days. Crop maturity will peak during this period.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </main>
-    </div>
-
-    <!-- Chart.js -->
+        </div>
+    </main>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Field Monitoring Chart
-        const fieldCtx = document.getElementById('fieldChart').getContext('2d');
-        const fieldChart = new Chart(fieldCtx, {
+        // Mobile menu toggle
+        document.getElementById('mobileMenuButton').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('open');
+        });
+        
+        // Toggle switch functionality
+        document.querySelector('.toggle-switch').addEventListener('click', function() {
+            this.classList.toggle('on');
+            this.classList.toggle('off');
+        });
+        
+        // Initialize Chart
+        const ctx = document.getElementById('fieldMetricsChart').getContext('2d');
+        const fieldMetricsChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['6AM', '9AM', '12PM', '3PM', '6PM', '9PM', '12AM', '3AM'],
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                 datasets: [
                     {
-                        label: 'Soil Moisture',
-                        data: [65, 63, 60, 58, 57, 59, 61, 63],
-                        borderColor: '#4285f4',
-                        backgroundColor: 'rgba(66, 133, 244, 0.1)',
+                        label: 'Temperature (°C)',
+                        data: [22, 24, 26, 25, 27, 26, 24],
+                        borderColor: '#F1C40F',
+                        backgroundColor: 'rgba(241, 196, 15, 0.1)',
                         borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
+                        tension: 0.3,
+                        fill: true
                     },
                     {
-                        label: 'Temperature',
-                        data: [18, 22, 26, 28, 26, 22, 19, 17],
-                        borderColor: '#ea4335',
-                        backgroundColor: 'rgba(234, 67, 53, 0.1)',
+                        label: 'Soil Moisture (%)',
+                        data: [68, 65, 62, 60, 58, 55, 52],
+                        borderColor: '#3498DB',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
                         borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Humidity',
-                        data: [85, 70, 55, 45, 50, 65, 75, 80],
-                        borderColor: '#34a853',
-                        backgroundColor: 'rgba(52, 168, 83, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
+                        tension: 0.3,
+                        fill: true
                     }
                 ]
             },
@@ -684,14 +687,36 @@
                 scales: {
                     y: {
                         beginAtZero: false,
+                        grid: {
+                            color: '#ECF0F1'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
                     }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
                 }
             }
+        });
+        
+        // Dropdown functionality
+        document.querySelectorAll('.relative button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const dropdown = this.nextElementSibling;
+                document.querySelectorAll('.relative .hidden').forEach(d => {
+                    if (d !== dropdown) d.classList.add('hidden');
+                });
+                dropdown.classList.toggle('hidden');
+            });
+        });
+        
+        // Close dropdowns when clicking elsewhere
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.relative .hidden').forEach(d => {
+                d.classList.add('hidden');
+            });
         });
     </script>
 </body>

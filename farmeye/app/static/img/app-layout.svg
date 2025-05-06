@@ -1,0 +1,126 @@
+<svg viewBox="0 0 360 780" xmlns="http://www.w3.org/2000/svg">
+  <!-- Phone Frame -->
+  <rect width="360" height="780" rx="30" fill="#ECF0F1" />
+  
+  <!-- Status Bar -->
+  <rect x="0" y="0" width="360" height="30" rx="30 30 0 0" fill="#196F3D" />
+  <text x="20" y="20" font-family="Arial" font-size="14" fill="#FFFFFF">9:41 AM</text>
+  <text x="320" y="20" font-family="Arial" font-size="14" text-anchor="end" fill="#FFFFFF">🔋 85%</text>
+  
+  <!-- Navigation Bar -->
+  <rect x="0" y="30" width="360" height="50" fill="#196F3D" />
+  
+  <!-- Logo -->
+  <text x="20" y="60" font-family="Arial" font-size="18" font-weight="bold" fill="#FFFFFF">FarmEye</text>
+  
+  <!-- Farm Selector -->
+  <rect x="110" y="42" width="150" height="26" rx="13" fill="#FFFFFF" />
+  <text x="125" y="60" font-family="Arial" font-size="12" fill="#196F3D">Nyeri Coffee Farm ▼</text>
+  
+  <!-- Notification Icon -->
+  <circle cx="300" cy="55" r="12" fill="#FFFFFF" />
+  <text x="300" y="60" font-family="Arial" font-size="12" text-anchor="middle" fill="#196F3D">🔔</text>
+  <circle cx="308" cy="47" r="6" fill="#C0392B" />
+  <text x="308" y="50" font-family="Arial" font-size="8" text-anchor="middle" font-weight="bold" fill="#FFFFFF">3</text>
+  
+  <!-- User Icon -->
+  <circle cx="330" cy="55" r="12" fill="#FFFFFF" />
+  <text x="330" y="60" font-family="Arial" font-size="12" text-anchor="middle" fill="#196F3D">👤</text>
+  
+  <!-- Main Content Area -->
+  <rect x="0" y="80" width="360" height="650" fill="#FFFFFF" />
+  
+  <!-- Field Selector -->
+  <rect x="15" y="90" width="330" height="40" rx="20" fill="#ECF0F1" />
+  <text x="40" y="115" font-family="Arial" font-size="14" fill="#2C3E50">Field: </text>
+  <text x="85" y="115" font-family="Arial" font-size="14" font-weight="bold" fill="#196F3D">Field A - Coffee ▼</text>
+  
+  <!-- Farm Health Card -->
+  <rect x="15" y="140" width="330" height="110" rx="8" fill="#FFFFFF" stroke="#ABEBC6" stroke-width="2" filter="drop-shadow(0px 2px 4px rgba(25, 111, 61, 0.1))" />
+  <text x="30" y="165" font-family="Arial" font-size="16" font-weight="bold" fill="#2C3E50">Farm Health</text>
+  
+  <!-- Circular Gauge -->
+  <circle cx="70" cy="200" r="30" fill="#FFFFFF" stroke="#ABEBC6" stroke-width="3" />
+  <path d="M 70 200 L 70 170 A 30 30 0 0 1 100 200 Z" fill="#52BE80" />
+  <circle cx="70" cy="200" r="22" fill="#FFFFFF" />
+  <text x="70" y="205" font-family="Arial" font-size="16" text-anchor="middle" font-weight="bold" fill="#2C3E50">85%</text>
+  
+  <!-- Mini Weather Widget -->
+  <rect x="150" y="170" width="180" height="70" rx="8" fill="#ECF0F1" />
+  <text x="240" y="190" font-family="Arial" font-size="12" text-anchor="middle" fill="#2C3E50">Today's Weather</text>
+  <text x="240" y="215" font-family="Arial" font-size="16" text-anchor="middle" font-weight="bold" fill="#E67E22">24°C ☀️</text>
+  <text x="240" y="230" font-family="Arial" font-size="10" text-anchor="middle" fill="#7F8C8D">10% chance of rain</text>
+  
+  <!-- Quick Stats Row (as mini cards) -->
+  <rect x="15" y="260" width="105" height="90" rx="8" fill="#FFFFFF" stroke="#ABEBC6" stroke-width="2" filter="drop-shadow(0px 2px 4px rgba(25, 111, 61, 0.1))" />
+  <text x="60" y="285" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold" fill="#2C3E50">Soil Moisture</text>
+  <text x="60" y="315" font-family="Arial" font-size="16" text-anchor="middle" font-weight="bold" fill="#6E2C00">42%</text>
+  <text x="60" y="335" font-family="Arial" font-size="10" text-anchor="middle" fill="#C0392B">▼ 3% from optimal</text>
+  
+  <rect x="130" y="260" width="105" height="90" rx="8" fill="#FFFFFF" stroke="#ABEBC6" stroke-width="2" filter="drop-shadow(0px 2px 4px rgba(25, 111, 61, 0.1))" />
+  <text x="183" y="285" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold" fill="#2C3E50">Humidity</text>
+  <text x="183" y="315" font-family="Arial" font-size="16" text-anchor="middle" font-weight="bold" fill="#3498DB">65%</text>
+  <text x="183" y="335" font-family="Arial" font-size="10" text-anchor="middle" fill="#229954">Optimal range</text>
+  
+  <rect x="245" y="260" width="105" height="90" rx="8" fill="#FFFFFF" stroke="#ABEBC6" stroke-width="2" filter="drop-shadow(0px 2px 4px rgba(25, 111, 61, 0.1))" />
+  <text x="295" y="285" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold" fill="#2C3E50">Precipitation</text>
+  <text x="295" y="315" font-family="Arial" font-size="16" text-anchor="middle" font-weight="bold" fill="#3498DB">2.3mm</text>
+  <text x="295" y="335" font-family="Arial" font-size="10" text-anchor="middle" fill="#7F8C8D">Last 24 hours</text>
+  
+
+  <!-- Satellite Imagery -->
+  <rect x="15" y="480" width="330" height="205" rx="8" fill="#FFFFFF" stroke="#ABEBC6" stroke-width="2" filter="drop-shadow(0px 2px 4px rgba(25, 111, 61, 0.1))" />
+  <rect x="15" y="480" width="330" height="40" rx="8 8 0 0" fill="#ABEBC6" />
+  <text x="30" y="505" font-family="Arial" font-size="16" font-weight="bold" fill="#2C3E50">Field View</text>
+  
+  <!-- View Type Tabs -->
+  <rect x="200" y="490" width="60" height="20" rx="10" fill="#229954" />
+  <text x="230" y="505" font-family="Arial" font-size="10" text-anchor="middle" fill="#FFFFFF">Map</text>
+  
+  <rect x="270" y="490" width="60" height="20" rx="10" fill="#FFFFFF" stroke="#229954" stroke-width="1" />
+  <text x="300" y="505" font-family="Arial" font-size="10" text-anchor="middle" fill="#229954">CCTV</text>
+  
+  <!-- Map View -->
+  <rect x="25" y="530" width="310" height="145" rx="4" fill="#FFFFFF" stroke="#ECF0F1" stroke-width="1" />
+  
+  <!-- Farm Boundary on Map -->
+  <path d="M 65 590 L 125 575 L 175 590 L 225 585 L 275 635 L 245 675 L 185 660 L 115 650 L 75 625 Z" fill="#E6F4EA" stroke="#229954" stroke-width="2" fill-opacity="0.5" />
+  
+  <!-- NDVI Coloring -->
+  <path d="M 65 590 L 125 575 L 175 590 L 145 610 L 95 620 Z" fill="#C0392B" fill-opacity="0.7" />
+  <path d="M 175 590 L 225 585 L 275 635 L 245 675 L 215 635 Z" fill="#F1C40F" fill-opacity="0.7" />
+  <path d="M 215 635 L 245 675 L 185 660 L 155 635 Z" fill="#52BE80" fill-opacity="0.8" />
+  <path d="M 145 610 L 175 590 L 215 635 L 155 635 L 115 650 L 95 620 Z" fill="#229954" fill-opacity="0.7" />
+  <path d="M 65 590 L 95 620 L 115 650 L 75 625 Z" fill="#F1C40F" fill-opacity="0.7" />
+  
+  <!-- Map Layer Selector -->
+  <rect x="25" y="530" width="120" height="20" rx="4" fill="#FFFFFF" stroke="#229954" stroke-width="1" />
+  <text x="35" y="544" font-family="Arial" font-size="10" fill="#2C3E50">NDVI View ▼</text>
+  
+  <!-- Map Controls -->
+  <circle cx="305" cy="545" r="10" fill="#FFFFFF" stroke="#229954" stroke-width="1" />
+  <text x="305" y="549" font-family="Arial" font-size="12" text-anchor="middle" fill="#229954">+</text>
+  
+  <circle cx="305" cy="570" r="10" fill="#FFFFFF" stroke="#229954" stroke-width="1" />
+  <text x="305" y="574" font-family="Arial" font-size="12" text-anchor="middle" fill="#229954">-</text>
+  
+  <!-- Bottom Tab Bar -->
+  <rect x="0" y="700" width="360" height="80" rx="0 0 30 30" fill="#ECF0F1" />
+  
+  <!-- Tab Icons -->
+  <circle cx="60" cy="730" r="25" fill="#229954" />
+  <text x="60" y="737" font-family="Arial" font-size="18" text-anchor="middle" fill="#FFFFFF">📊</text>
+  <text x="60" y="760" font-family="Arial" font-size="12" text-anchor="middle" fill="#2C3E50">Dashboard</text>
+  
+  <text x="130" y="737" font-family="Arial" font-size="18" text-anchor="middle" fill="#7F8C8D">🌱</text>
+  <text x="130" y="760" font-family="Arial" font-size="12" text-anchor="middle" fill="#7F8C8D">Fields</text>
+  
+  <text x="200" y="737" font-family="Arial" font-size="18" text-anchor="middle" fill="#7F8C8D">🌿</text>
+  <text x="200" y="760" font-family="Arial" font-size="12" text-anchor="middle" fill="#7F8C8D">Crops</text>
+  
+  <text x="270" y="737" font-family="Arial" font-size="18" text-anchor="middle" fill="#7F8C8D">📈</text>
+  <text x="270" y="760" font-family="Arial" font-size="12" text-anchor="middle" fill="#7F8C8D">Yield</text>
+  
+  <text x="340" y="737" font-family="Arial" font-size="18" text-anchor="middle" fill="#7F8C8D">⚙️</text>
+  <text x="340" y="760" font-family="Arial" font-size="12" text-anchor="middle" fill="#7F8C8D">Settings</text>
+</svg>
