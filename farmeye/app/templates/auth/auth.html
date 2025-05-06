@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmEye - Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e8a3e',
+                        secondary: '#34a853',
+                        light: '#e6f4ea',
+                        dark: '#0d652d',
+                        accentYellow: '#fbbc04',
+                        accentRed: '#ea4335',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .auth-container {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button.active {
+            background-color: rgba(30, 138, 62, 0.1);
+            color: #1e8a3e;
+            border-bottom: 3px solid #1e8a3e;
+        }
+        
+        .input-field:focus {
+            border-color: #1e8a3e;
+            box-shadow: 0 0 0 1px #1e8a3e;
+        }
+        
+        .social-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .social-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #6b7280;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .divider::before {
+            margin-right: 1rem;
+        }
+        
+        .divider::after {
+            margin-left: 1rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div class="auth-container bg-white rounded-xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary p-6 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <i class="fas fa-leaf text-3xl text-white mr-2"></i>
+                <span class="text-2xl font-bold text-white">FarmEye</span>
+            </div>
+            <p class="text-white opacity-90">Smart farm monitoring system</p>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="flex border-b">
+            <button id="loginTab" class="tab-button active flex-1 py-4 font-medium text-center focus:outline-none">
+                <i class="fas fa-sign-in-alt mr-2"></i> Sign In
+            </button>
+            <button id="registerTab" class="tab-button flex-1 py-4 font-medium text-center focus:outline-none">
+                <i class="fas fa-user-plus mr-2"></i> Register
+            </button>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="loginForm" class="p-6">
+            <form>
+                <div class="mb-4">
+                    <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-envelope text-gray-400"></i>
+                        </div>
+                        <input type="email" id="loginEmail" class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none" placeholder="your@email.com" required>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input type="password" id="loginPassword" class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none" placeholder="••••••••" required>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                        <label for="remember-me" class="ml-2 block text-sm text-gray-700">Remember me</label>
+                    </div>
+                    <div class="text-sm">
+                        <a href="#" class="font-medium text-primary hover:text-dark">Forgot password?</a>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-primary hover:bg-dark text-white py-2 px-4 rounded-md font-medium transition duration-300">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="divider my-6">or continue with</div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <button class="social-btn flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fab fa-google text-accentRed mr-2"></i> Google
+                </button>
+                <button class="social-btn flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fab fa-microsoft text-blue-600 mr-2"></i> Microsoft
+                </button>
+            </div>
+        </div>
+        
+        <!-- Register Form (Hidden by default) -->
+        <div id="registerForm" class="p-6 hidden">
+            <form>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input type="text" id="firstName" class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none" placeholder="John" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input type="text" id="lastName" class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none" placeholder="Doe" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="registerEmail" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-envelope text-gray-400"></i>
+                        </div>
+                        <input type="email" id="registerEmail" class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none" placeholder="your@email.com" required>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="registerPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input type="password" id="registerPassword" class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none" placeholder="••••••••" required>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Must be at least 8 characters</p>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input type="password" id="confirmPassword" class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none" placeholder="••••••••" required>
+                    </div>
+                </div>
+                
+                <div class="flex items-center mb-6">
+                    <input id="terms" name="terms" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" required>
+                    <label for="terms" class="ml-2 block text-sm text-gray-700">
+                        I agree to the <a href="#" class="text-primary hover:text-dark">Terms</a> and <a href="#" class="text-primary hover:text-dark">Privacy Policy</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="w-full bg-primary hover:bg-dark text-white py-2 px-4 rounded-md font-medium transition duration-300 mb-4">
+                    Create Account
+                </button>
+                
+                <p class="text-sm text-center text-gray-600">
+                    Already have an account? <button id="switchToLogin" class="text-primary hover:text-dark font-medium">Sign in</button>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        const loginTab = document.getElementById('loginTab');
+        const registerTab = document.getElementById('registerTab');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const switchToLogin = document.getElementById('switchToLogin');
+        
+        loginTab.addEventListener('click', () => {
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+        });
+        
+        registerTab.addEventListener('click', () => {
+            registerTab.classList.add('active');
+            loginTab.classList.remove('active');
+            registerForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+        });
+        
+        switchToLogin.addEventListener('click', () => {
+            loginTab.classList.add('active');
+            registerTab.classList.remove('active');
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+        });
+        
+        // Form validation would go here in a real implementation
+    </script>
+</body>
+</html>
