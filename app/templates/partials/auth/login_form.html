@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}FarmEye - Authentication{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div class="auth-container bg-white rounded-xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary p-6 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <i class="fas fa-leaf text-3xl text-white mr-2"></i>
+                <span class="text-2xl font-bold text-white">FarmEye</span>
+            </div>
+            <p class="text-white opacity-90">Smart farm monitoring system</p>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="flex border-b">
+            <button id="loginTab" class="tab-button {% if active_tab == 'login' %}active{% endif %} flex-1 py-4 font-medium text-center focus:outline-none">
+                <i class="fas fa-sign-in-alt mr-2"></i> Sign In
+            </button>
+            <button id="registerTab" class="tab-button {% if active_tab == 'register' %}active{% endif %} flex-1 py-4 font-medium text-center focus:outline-none">
+                <i class="fas fa-user-plus mr-2"></i> Register
+            </button>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="loginForm" class="p-6 {% if active_tab == 'register' %}hidden{% endif %}">
+            {% include 'partials/auth/login_form.html' %}
+        </div>
+        
+        <!-- Register Form -->
+        <div id="registerForm" class="p-6 {% if active_tab == 'login' %}hidden{% endif %}">
+            {% include 'partials/auth/register_form.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

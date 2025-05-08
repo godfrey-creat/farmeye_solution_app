@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}FarmEye - Email Verification{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div class="auth-container bg-white rounded-xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary p-6 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <i class="fas fa-leaf text-3xl text-white mr-2"></i>
+                <span class="text-2xl font-bold text-white">FarmEye</span>
+            </div>
+            <p class="text-white opacity-90">Email Verification</p>
+        </div>
+        
+        <div class="p-6 text-center">
+            {% if verified %}
+                <div class="bg-primary-light text-white p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                    <i class="fas fa-check text-4xl"></i>
+                </div>
+                <h2 class="text-xl font-semibold mb-4">Email Verified!</h2>
+                <p class="text-medium mb-6">Your email has been successfully verified. You can now access all features of FarmEye.</p>
+            {% else %}
+                <div class="bg-warning text-white p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                    <i class="fas fa-envelope text-4xl"></i>
+                </div>
+                <h2 class="text-xl font-semibold mb-4">Verification Required</h2>
+                <p class="text-medium mb-6">Please check your email for a verification link. If you don't see it, check your spam folder or request a new verification email.</p>
+            {% endif %}
+            
+            <div class="flex justify-center">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+                    Proceed to Login
+                </a>
+                {% if not verified %}
+                <a href="{{ url_for('auth.resend_verification') }}" class="btn btn-outline ml-4">
+                    Resend Verification
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
