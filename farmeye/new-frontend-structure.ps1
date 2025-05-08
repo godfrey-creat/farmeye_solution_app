@@ -14,14 +14,20 @@ $structure = @{
         "growth_stage.html", "alerts.html", "field_view.html", "satellite_imagery.html",
         "timeline.html"
     )
+    "templates/auth" = @(
+        "auth.html", "reset_password.html", "verification.html"
+    )
+    "templates/partials/auth" = @(
+        "login_form.html", "register_form.html"
+    )
     "static/css" = @(
-        "main.css"
+        "main.css", "auth.css"
     )
     "static/css/components" = @(
         "sidebar.css", "notifications.css", "cards.css"
     )
     "static/js" = @(
-        "main.js", "charts.js", "notifications.js"
+        "main.js", "charts.js", "notifications.js", "auth.js"
     )
 }
 
