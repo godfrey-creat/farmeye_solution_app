@@ -25,7 +25,7 @@ def login():
         return redirect(url_for('farm.dashboard'))
 
     login_form = LoginForm()
-    register_form = RegistrationForm()  # Create an instance of the registration form
+    register_form = RegistrationForm()  # Create registration form instance
     
     if login_form.validate_on_submit():
         user = User.query.filter_by(email=login_form.email.data.lower()).first()
@@ -41,11 +41,10 @@ def login():
               '<a href="{}">reset your password</a>.'.format(url_for('auth.reset_password_request')),
               'danger')
 
-    # Pass both forms to the template
     return render_template('auth/auth.html', 
-                           login_form=login_form,
-                           register_form=register_form, 
-                           active_tab='login')
+                          login_form=login_form,
+                          register_form=register_form, 
+                          active_tab='login')
 
 @auth.route('/logout')
 @login_required
@@ -57,27 +56,38 @@ def logout():
 
 
 @auth.route('/register', methods=['GET', 'POST'])
-@csrf.exempt
 def register():
     """Handle user registration"""
     if current_user.is_authenticated:
         flash("You're already logged in.", "info")
         return redirect(url_for('farm.dashboard'))
 
-    login_form = LoginForm()  # Create an instance of the login form
+    login_form = LoginForm()  # Create login form instance
     register_form = RegistrationForm()
     
     if register_form.validate_on_submit():
-        # Create new user logic...
-        
-        # Redirect to login page
+        # Create new user
+        user = User(
+            email=register_form.email.data.lower(),
+            username=register_form.username.data,
+            password=register_form.password.data,
+            first_name=register_form.first_name.data,
+            last_name=register_form.last_name.data,
+            phone_number=register_form.phone_number.data,
+            user_type=register_form.user_type.data,
+            is_approved=False  # Default to not approved
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
-    # Pass both forms to the template
     return render_template('auth/auth.html', 
-                           login_form=login_form,
-                           register_form=register_form, 
-                           active_tab='register')
+                          login_form=login_form,
+                          register_form=register_form, 
+                          active_tab='register')
 
 @auth.route('/reset_password_request', methods=['GET', 'POST'])
 def reset_password_request():
