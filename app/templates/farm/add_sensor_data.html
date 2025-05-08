@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Add Sensor Data{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Add Sensor Data</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('farm.add_sensor_data', farm_id=farm.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.sensor_type.label(class="form-label") }}
+                            {{ form.sensor_type(class="form-control") }}
+                            {% if form.sensor_type.errors %}
+                                {% for error in form.sensor_type.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.value.label(class="form-label") }}
+                            {{ form.value(class="form-control") }}
+                            {% if form.value.errors %}
+                                {% for error in form.value.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.unit.label(class="form-label") }}
+                            {{ form.unit(class="form-control") }}
+                            {% if form.unit.errors %}
+                                {% for error in form.unit.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.timestamp.label(class="form-label") }}
+                            {{ form.timestamp(class="form-control", type="datetime-local") }}
+                            {% if form.timestamp.errors %}
+                                {% for error in form.timestamp.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.notes.label(class="form-label") }}
+                            {{ form.notes(class="form-control", rows=3) }}
+                            {% if form.notes.errors %}
+                                {% for error in form.notes.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('farm.view_farm', farm_id=farm.id) }}" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

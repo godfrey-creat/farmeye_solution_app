@@ -8,40 +8,44 @@ from .forms import LoginForm, RegistrationForm, RequestResetPasswordForm, ResetP
 from .models import User
 from .. import db
 from ..utils.email import send_email
+from urllib.parse import urlparse
 
 csrf = CSRFProtect()
 
 @auth.route('/')
 def index():
-    return render_template('dashboard/index.html')
+    """Auth index redirects to login"""
+    return redirect(url_for('auth.login'))
 
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     """Handle user login"""
     if current_user.is_authenticated:
-        return redirect(url_for('auth.home'))  # Redirect authenticated user to the home page
+        return redirect(url_for('farm.dashboard'))
 
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data.lower()).first()
-        if user and user.verify_password(form.password.data):
-            login_user(user, form.remember_me.data)
+    login_form = LoginForm()
+    register_form = RegistrationForm()  # Create an instance of the registration form
+    
+    if login_form.validate_on_submit():
+        user = User.query.filter_by(email=login_form.email.data.lower()).first()
+        if user and user.verify_password(login_form.password.data):
+            login_user(user, login_form.remember_me.data)
             user.last_login = datetime.utcnow()
             db.session.commit()
 
             flash('Login successful! Welcome back.', 'success')
-            return redirect(url_for('auth.home'))  # Redirect to home view
+            return redirect(url_for('farm.dashboard'))
 
-        # Flash error and suggest password reset
         flash('Invalid email or password. Please try again or '
               '<a href="{}">reset your password</a>.'.format(url_for('auth.reset_password_request')),
               'danger')
 
-    return render_template('auth/home.html', form=form)
-
-
-
+    # Pass both forms to the template
+    return render_template('auth/auth.html', 
+                           login_form=login_form,
+                           register_form=register_form, 
+                           active_tab='login')
 
 @auth.route('/logout')
 @login_required
@@ -49,7 +53,7 @@ def logout():
     """Handle user logout"""
     logout_user()
     flash('You have been logged out.', 'info')
-    return redirect(url_for('main.index'))
+    return redirect(url_for('auth.login'))
 
 
 @auth.route('/register', methods=['GET', 'POST'])
@@ -58,40 +62,28 @@ def register():
     """Handle user registration"""
     if current_user.is_authenticated:
         flash("You're already logged in.", "info")
-        return redirect(url_for('auth.home'))
+        return redirect(url_for('farm.dashboard'))
 
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        # Create new user
-        user = User(
-            email=form.email.data.lower(),
-            username=form.username.data,
-            password=form.password.data,
-            first_name=form.first_name.data,
-            last_name=form.last_name.data,
-            phone_number=form.phone_number.data,
-            user_type=form.user_type.data,
-            is_approved=False  # Default to not approved
-        )
-
-        db.session.add(user)
-        db.session.commit()
-
-        # Flash registration success message
-        flash('Registration successful! Please log in.', 'success')
-
+    login_form = LoginForm()  # Create an instance of the login form
+    register_form = RegistrationForm()
+    
+    if register_form.validate_on_submit():
+        # Create new user logic...
+        
         # Redirect to login page
         return redirect(url_for('auth.login'))
 
-    return render_template('auth/auth.html', form=form)
-
-
+    # Pass both forms to the template
+    return render_template('auth/auth.html', 
+                           login_form=login_form,
+                           register_form=register_form, 
+                           active_tab='register')
 
 @auth.route('/reset_password_request', methods=['GET', 'POST'])
 def reset_password_request():
     """Handle password reset request"""
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('farm.dashboard'))
     
     form = RequestResetPasswordForm()
     if form.validate_on_submit():
@@ -115,7 +107,7 @@ def reset_password_request():
 def reset_password(token):
     """Handle password reset with token"""
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('farm.dashboard'))
     
     form = ResetPasswordForm()
     if form.validate_on_submit():
@@ -127,8 +119,7 @@ def reset_password(token):
             flash('The reset link is invalid or has expired.', 'danger')
             return redirect(url_for('auth.reset_password_request'))
     
-    return render_template('auth/reset_password.html', form=form)
-
+    return render_template('auth/reset_password.html', form=form, token=token)
 
 @auth.route('/profile')
 @login_required
