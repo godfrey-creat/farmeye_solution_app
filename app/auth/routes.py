@@ -11,31 +11,36 @@ from ..utils.email import send_email
 
 csrf = CSRFProtect()
 
+@auth.route('/')
+def index():
+    return render_template('auth/index.html')
+
+
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     """Handle user login"""
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
-    
+        return redirect(url_for('auth.home'))  # Redirect authenticated user to the home page
+
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data.lower()).first()
-        if user is not None and user.verify_password(form.password.data):
+        if user and user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
             user.last_login = datetime.utcnow()
             db.session.commit()
-            
-            # Flash login success message
+
             flash('Login successful! Welcome back.', 'success')
-            
-            # Redirect to the page the user was trying to access or to the dashboard
-            next_page = request.args.get('next')
-            if not next_page or not next_page.startswith('/'):
-                next_page = url_for('farm.dashboard')
-            return redirect(next_page)
-        flash('Invalid email or password.', 'danger')
-    
-    return render_template('auth/login.html', form=form)
+            return redirect(url_for('auth.home'))  # Redirect to home view
+
+        # Flash error and suggest password reset
+        flash('Invalid email or password. Please try again or '
+              '<a href="{}">reset your password</a>.'.format(url_for('auth.reset_password_request')),
+              'danger')
+
+    return render_template('auth/home.html', form=form)
+
+
 
 
 @auth.route('/logout')
@@ -52,8 +57,9 @@ def logout():
 def register():
     """Handle user registration"""
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
-    
+        flash("You're already logged in.", "info")
+        return redirect(url_for('auth.home'))
+
     form = RegistrationForm()
     if form.validate_on_submit():
         # Create new user
@@ -64,19 +70,21 @@ def register():
             first_name=form.first_name.data,
             last_name=form.last_name.data,
             phone_number=form.phone_number.data,
-            user_type=form.user_type.data,  # Added user_type field
+            user_type=form.user_type.data,
             is_approved=False  # Default to not approved
         )
-        
+
         db.session.add(user)
         db.session.commit()
-        
+
         # Flash registration success message
-        flash('Registration successful! Your account is pending approval by an administrator.', 'success')
-        
+        flash('Registration successful! Please log in.', 'success')
+
+        # Redirect to login page
         return redirect(url_for('auth.login'))
-    
-    return render_template('auth/register.html', form=form)
+
+    return render_template('auth/auth.html', form=form)
+
 
 
 @auth.route('/reset_password_request', methods=['GET', 'POST'])
