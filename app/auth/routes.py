@@ -13,7 +13,7 @@ csrf = CSRFProtect()
 
 @auth.route('/')
 def index():
-    return render_template('auth/index.html')
+    return render_template('dashboard/index.html')
 
 
 @auth.route('/login', methods=['GET', 'POST'])

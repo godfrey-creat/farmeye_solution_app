@@ -1,0 +1,110 @@
+<div class="mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">10-Day Advisory Timeline</h2>
+        <button class="btn btn-outline text-sm">
+            <i class="fas fa-calendar-alt mr-2"></i> View Calendar
+        </button>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-card">
+        <div class="relative h-20 mb-6">
+            <div class="timeline-line"></div>
+
+            <div class="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 flex justify-between">
+                <!-- Timeline Nodes -->
+                <div class="relative flex flex-col items-center">
+                    <div class="timeline-node current"></div>
+                    <div class="absolute top-10 text-xs font-medium">Today</div>
+                </div>
+
+                <div class="relative flex flex-col items-center">
+                    <div class="timeline-node"></div>
+                    <div class="absolute top-10 text-xs text-medium">Tue</div>
+                </div>
+
+                <div class="relative flex flex-col items-center">
+                    <div class="timeline-node warning"></div>
+                    <div class="absolute top-10 text-xs text-medium">Wed</div>
+                    <div
+                        class="absolute -top-16 bg-white border border-warning rounded-lg px-4 py-2 shadow-lg text-sm w-40">
+                        <div class="text-sm text-warning font-medium">Irrigation</div>
+                        <div class="text-xs text-medium">Recommended</div>
+                    </div>
+                </div>
+
+                <div class="relative flex flex-col items-center">
+                    <div class="timeline-node"></div>
+                    <div class="absolute top-10 text-xs text-medium">Thu</div>
+                </div>
+
+                <div class="relative flex flex-col items-center">
+                    <div class="timeline-node"></div>
+                    <div class="absolute top-10 text-xs text-medium">Fri</div>
+                </div>
+
+                <div class="relative flex flex-col items-center">
+                    <div class="timeline-node"></div>
+                    <div class="absolute top-10 text-xs text-medium">Sat</div>
+                </div>
+
+                <div class="relative flex flex-col items-center">
+                    <div class="timeline-node critical"></div>
+                    <div class="absolute top-10 text-xs text-medium">Sun</div>
+                    <div
+                        class="absolute -top-16 bg-white border border-danger rounded-lg px-4 py-2 shadow-lg text-sm w-40">
+                        <div class="text-sm text-danger font-medium">Harvest</div>
+                        <div class="text-xs text-medium">Critical window</div>
+                    </div>
+                </div>
+
+                <div class="relative flex flex-col items-center">
+                    <div class="timeline-node"></div>
+                    <div class="absolute top-10 text-xs text-medium">Mon</div>
+                </div>
+
+                <div class="relative flex flex-col items-center">
+                    <div class="timeline-node"></div>
+                    <div class="absolute top-10 text-xs text-medium">Tue</div>
+                </div>
+
+                <div class="relative flex flex-col items-center">
+                    <div class="timeline-node"></div>
+                    <div class="absolute top-10 text-xs text-medium">Wed</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
+            <div class="bg-primary bg-opacity-5 rounded-lg p-5 border-l-4 border-primary">
+                <div class="flex items-start">
+                    <div class="bg-primary text-white rounded-lg p-3 mr-4 flex-shrink-0">
+                        <i class="fas fa-tint text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg mb-1">Irrigation Advisory</h4>
+                        <p class="text-medium">Optimal irrigation window opens in 2 days. Soil moisture levels
+                            are projected to drop below 50% by Wednesday.</p>
+                        <button class="mt-3 text-primary font-medium text-sm hover:underline flex items-center">
+                            Schedule irrigation <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-warning bg-opacity-5 rounded-lg p-5 border-l-4 border-warning">
+                <div class="flex items-start">
+                    <div class="bg-warning text-white rounded-lg p-3 mr-4 flex-shrink-0">
+                        <i class="fas fa-seedling text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-lg mb-1">Harvest Advisory</h4>
+                        <p class="text-medium">Critical harvest window begins in 5 days. Crop maturity will
+                            reach optimal levels between Sunday and Tuesday.</p>
+                        <button class="mt-3 text-warning font-medium text-sm hover:underline flex items-center">
+                            View harvest details <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,80 @@
+<!-- Notification button and dropdown -->
+<button id="notificationBtn"
+    class="notification-btn relative p-2 mr-4 rounded-full hover:bg-white hover:bg-opacity-20 transition">
+    <i class="fas fa-bell text-lg"></i>
+    <span
+        class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">3</span>
+</button>
+
+<!-- Notification dropdown -->
+<div id="notificationDropdown"
+    class="notification-dropdown hidden absolute right-4 top-16 bg-white rounded-lg shadow-lg text-dark">
+    <div class="notification-header flex justify-between items-center px-5 py-3">
+        <h3 class="font-semibold">Notifications</h3>
+        <div class="flex items-center">
+            <button class="p-2 rounded-full hover:bg-light transition">
+                <i class="fas fa-cog text-medium"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="notification-list">
+        <!-- Critical notification -->
+        <div class="notification-item notification-critical p-4 flex items-start">
+            <div class="bg-danger p-2 rounded-lg text-white mr-3 flex-shrink-0">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="flex-grow">
+                <h4 class="font-semibold text-sm">Pest Detected</h4>
+                <p class="text-xs text-medium mb-2">Corn earworm detected in sector 4. Immediate action
+                    recommended.</p>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-medium">2h ago</span>
+                    <button
+                        class="bg-danger text-white text-xs px-3 py-1 rounded hover:bg-opacity-90 transition">View
+                        Details</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning notification -->
+        <div class="notification-item notification-warning p-4 flex items-start">
+            <div class="bg-warning p-2 rounded-lg text-white mr-3 flex-shrink-0">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="flex-grow">
+                <h4 class="font-semibold text-sm">Irrigation Needed</h4>
+                <p class="text-xs text-medium mb-2">Moisture levels dropping in sector 2. Schedule
+                    irrigation within 24 hours.</p>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-medium">4h ago</span>
+                    <button
+                        class="bg-warning text-white text-xs px-3 py-1 rounded hover:bg-opacity-90 transition">Schedule
+                        Now</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info notification -->
+        <div class="notification-item notification-info p-4 flex items-start">
+            <div class="bg-water p-2 rounded-lg text-white mr-3 flex-shrink-0">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="flex-grow">
+                <h4 class="font-semibold text-sm">Weather Advisory</h4>
+                <p class="text-xs text-medium mb-2">Heavy rain expected in 36 hours. Consider delaying
+                    fertilizer application.</p>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-medium">12h ago</span>
+                    <button
+                        class="bg-water text-white text-xs px-3 py-1 rounded hover:bg-opacity-90 transition">View
+                        Forecast</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-5 py-3 bg-lighter border-t border-light text-center">
+        <a href="#" class="text-primary text-sm font-medium hover:underline">View All Notifications</a>
+    </div>
+</div>

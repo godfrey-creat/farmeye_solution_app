@@ -1,0 +1,47 @@
+<div class="bg-white rounded-xl overflow-hidden shadow-card">
+    <div class="bg-primary px-6 py-4 text-white flex justify-between items-center">
+        <h3 class="font-semibold text-lg">Satellite Imagery</h3>
+        <div class="flex items-center">
+            <span class="text-sm mr-2">NDVI</span>
+            <div class="ndvi-gradient h-4 w-28 rounded-lg"></div>
+        </div>
+    </div>
+    <div class="p-6">
+        <div class="bg-lighter mb-4 rounded-lg overflow-hidden relative h-64">
+            <img src="/static/images/ndvi-map-placeholder.jpg" alt="NDVI Map" class="w-full h-full object-cover" />
+            <div class="absolute bottom-4 right-4 bg-white shadow-lg rounded-lg px-3 py-2 flex flex-col">
+                <div class="flex items-center mb-1">
+                    <div class="w-3 h-3 rounded-full bg-danger mr-2"></div>
+                    <span class="text-xs">Low vigor</span>
+                </div>
+                <div class="flex items-center mb-1">
+                    <div class="w-3 h-3 rounded-full bg-warning mr-2"></div>
+                    <span class="text-xs">Medium vigor</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-3 h-3 rounded-full bg-primary mr-2"></div>
+                    <span class="text-xs">High vigor</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-between">
+            <div class="flex items-center">
+                <span class="text-sm text-medium mr-2">Map Type:</span>
+                <select class="border border-primary rounded-lg text-sm px-3 py-2 bg-white">
+                    <option selected>NDVI (Vegetation)</option>
+                    <option>Moisture Index</option>
+                    <option>Temperature Map</option>
+                    <option>Growth Stage</option>
+                </select>
+            </div>
+            <div class="flex space-x-3">
+                <button class="btn btn-primary text-sm">
+                    <i class="fas fa-calendar-alt mr-2"></i> History
+                </button>
+                <button class="btn btn-primary text-sm">
+                    <i class="fas fa-download mr-2"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,66 @@
+<aside class="sidebar fixed top-16 left-0 bottom-0 w-64 shadow-lg z-40 transition-transform duration-300 ease-in-out">
+    <div class="px-4 py-4 border-b border-white border-opacity-10">
+        <div class="text-xs uppercase tracking-wide text-white text-opacity-50 mb-1">Current crop</div>
+        <div class="flex items-center">
+            <i class="fas fa-seedling text-primary-light mr-2"></i>
+            <span class="font-medium">Corn - Stage: Vegetative</span>
+        </div>
+    </div>
+    <nav class="py-4">
+        <ul class="space-y-1">
+            <li>
+                <a href="{{ url_for('dashboard.index') }}" class="sidebar-item {% if active_page == 'dashboard' %}active{% endif %} flex items-center px-4 py-3">
+                    <i class="fas fa-tachometer-alt w-6 text-center mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('dashboard.field_map') }}" class="sidebar-item {% if active_page == 'field_map' %}active{% endif %} flex items-center px-4 py-3">
+                    <i class="fas fa-map-marked-alt w-6 text-center mr-3"></i>
+                    <span>Field Map</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('dashboard.analytics') }}" class="sidebar-item {% if active_page == 'analytics' %}active{% endif %} flex items-center px-4 py-3">
+                    <i class="fas fa-chart-line w-6 text-center mr-3"></i>
+                    <span>Analytics</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('dashboard.irrigation') }}" class="sidebar-item {% if active_page == 'irrigation' %}active{% endif %} flex items-center px-4 py-3">
+                    <i class="fas fa-tint w-6 text-center mr-3"></i>
+                    <span>Irrigation</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('dashboard.weather') }}" class="sidebar-item {% if active_page == 'weather' %}active{% endif %} flex items-center px-4 py-3">
+                    <i class="fas fa-cloud-sun-rain w-6 text-center mr-3"></i>
+                    <span>Weather</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('dashboard.pest_control') }}" class="sidebar-item {% if active_page == 'pest_control' %}active{% endif %} flex items-center px-4 py-3">
+                    <i class="fas fa-bug w-6 text-center mr-3"></i>
+                    <span>Pest Control</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('dashboard.schedule') }}" class="sidebar-item {% if active_page == 'schedule' %}active{% endif %} flex items-center px-4 py-3">
+                    <i class="fas fa-calendar-alt w-6 text-center mr-3"></i>
+                    <span>Schedule</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-white border-opacity-10">
+        <a href="#" class="sidebar-item flex items-center px-4 py-3">
+            <i class="fas fa-cog w-6 text-center mr-3"></i>
+            <span>Settings</span>
+        </a>
+        <a href="#" class="sidebar-item flex items-center px-4 py-3">
+            <i class="fas fa-question-circle w-6 text-center mr-3"></i>
+            <span>Help & Support</span>
+        </a>
+    </div>
+</aside>
