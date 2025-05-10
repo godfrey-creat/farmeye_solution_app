@@ -1,0 +1,49 @@
+{% extends "dashboard/inex.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Farm Advisory for {{ farm.name }}</h1>
+    
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">AI-Generated Advisory</h2>
+        <div class="bg-blue-50 p-4 rounded border border-blue-200">
+            <p class="whitespace-pre-line">{{ advisory }}</p>
+        </div>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-6">
+        <!-- Crop Health Card -->
+        <div class="bg-white rounded-lg shadow p-4">
+            <h3 class="font-semibold mb-2">Crop Health</h3>
+            {% if image_data %}
+                <p>Last analysis: {{ image_data.upload_date.strftime('%Y-%m-%d') }}</p>
+                <p>Status: {{ image_data.analysis_result or 'Pending analysis' }}</p>
+            {% else %}
+                <p class="text-gray-500">No recent images analyzed</p>
+            {% endif %}
+        </div>
+        
+        <!-- Soil Conditions Card -->
+        <div class="bg-white rounded-lg shadow p-4">
+            <h3 class="font-semibold mb-2">Soil Conditions</h3>
+            {% if sensor_data %}
+                <p>Moisture: {{ sensor_data.value }} {{ sensor_data.unit }}</p>
+                <p>Last reading: {{ sensor_data.timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
+            {% else %}
+                <p class="text-gray-500">No recent sensor data</p>
+            {% endif %}
+        </div>
+        
+        <!-- Satellite Data Card -->
+        <div class="bg-white rounded-lg shadow p-4">
+            <h3 class="font-semibold mb-2">Satellite Analysis</h3>
+            {% if satellite_data %}
+                <p>Vegetation Index: {{ satellite_data.ndvi }}</p>
+                <p>Status: {{ satellite_data.health_status }}</p>
+            {% else %}
+                <p class="text-gray-500">No satellite data available</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

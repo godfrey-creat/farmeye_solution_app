@@ -11,6 +11,10 @@ from .forms import FarmForm, ImageUploadForm, SensorDataForm
 from .models import Farm, FarmImage, SensorData, Alert
 #from ..decorators import permission_required
 from ..ml.utils import process_farm_image
+import openai
+import requests
+from flask import current_app
+from config import Config
 
 @farm.route('/dashboard')
 @login_required
@@ -288,3 +292,103 @@ def mark_alert_read(alert_id):
     db.session.commit()
     
     return jsonify({'success': True})
+
+
+# Personalized advisory
+@farm.route('/advisory/<int:farm_id>')
+@login_required
+def advisory(farm_id):
+    """Generate farming advisory based on multiple data sources"""
+    # Initialize OpenAI with API key from config
+    openai.api_key = current_app.config['OPENAI_API_KEY']
+    farm = Farm.query.get_or_404(farm_id)
+    
+    # Verify farm ownership
+    if farm.user_id != current_user.id and not current_user.is_admin():
+        abort(403)
+    
+    # Get latest data from different sources
+    latest_image = FarmImage.query.filter_by(farm_id=farm_id).order_by(FarmImage.upload_date.desc()).first()
+    latest_sensor = SensorData.query.filter_by(farm_id=farm_id).order_by(SensorData.timestamp.desc()).first()
+    
+    # Get satellite data (mock - replace with actual API call)
+    satellite_data = get_satellite_data(farm.latitude, farm.longitude) if farm.latitude and farm.longitude else None
+    
+    # Prepare prompt for ChatGPT
+    prompt = f"""
+    Generate a concise farming advisory (under 100 words) for {farm.crop_type} crops based on:
+    - Crop health analysis: {latest_image.analysis_result if latest_image else 'No recent image analysis'}
+    - Soil moisture: {latest_sensor.value if latest_sensor else 'No recent sensor data'} {latest_sensor.unit if latest_sensor else ''}
+    - Satellite vegetation index: {satellite_data.get('ndvi') if satellite_data else 'No satellite data'}
+    - Weather forecast: {get_weather_forecast(farm.location) if farm.location else 'No location data'}
+    
+    Focus on practical recommendations for irrigation, fertilization, and pest control.
+    """
+    
+    # Get AI-generated advisory
+    advisory_text = generate_advisory(prompt)
+    
+    return render_template('farm/advisory.html',
+                         farm=farm,
+                         advisory=advisory_text,
+                         image_data=latest_image,
+                         sensor_data=latest_sensor,
+                         satellite_data=satellite_data,
+                         active_page='dashboard')
+
+# Helper functions for the advisory route
+def get_satellite_data(latitude, longitude):
+    """Mock function to get satellite data - replace with actual API call"""
+    # In production, you might use APIs like Sentinel Hub, Planet, or NASA's Earthdata
+    return {
+        'ndvi': 0.78,  # Normalized Difference Vegetation Index
+        'health_status': 'healthy',
+        'last_updated': datetime.utcnow().strftime('%Y-%m-%d')
+    }
+
+def get_weather_forecast(location):
+    """Get simplified weather forecast"""
+    try:
+        weather_params = {
+            'q': location,
+            'appid': current_app.config['OPENWEATHER_API_KEY'],
+            'units': 'metric'
+        }
+        
+        response = requests.get(current_app.config['OPENWEATHER_BASE_URL'], params=weather_params)
+        response.raise_for_status()
+        data = response.json()
+        
+        current = data['weather'][0]['description']
+        temp = data['main']['temp']
+        return f"Current weather: {current}, {temp}°C"
+        
+    except Exception as e:
+        current_app.logger.error(f"Weather error: {str(e)}")
+        return "Weather data unavailable"
+def generate_advisory(prompt):
+    """Generate advisory using ChatGPT 3.5 with concise output"""
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are an agricultural expert providing concise farming advisories under 100 words."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=150,
+            temperature=0.7
+        )
+        
+        # Extract and clean the response
+        advisory = response.choices[0].message.content.strip()
+        
+        # Ensure it's under 100 words
+        words = advisory.split()
+        if len(words) > 100:
+            advisory = ' '.join(words[:100]) + '...'
+            
+        return advisory
+        
+    except Exception as e:
+        current_app.logger.error(f"Failed to generate advisory: {str(e)}")
+        return "Could not generate advisory at this time. Please check your farm data manually."

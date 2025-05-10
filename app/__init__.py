@@ -1,4 +1,5 @@
 import os
+import openai
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -22,6 +23,8 @@ def create_app(config_name=None):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
+
+    openai.api_key = app.config['OPENAI_API_KEY']
     
     # Initialize extensions with app
     db.init_app(app)

@@ -7,6 +7,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     """Base configuration class"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard-to-guess-string'
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    OPENWEATHER_API_KEY = 'your_openweather_api_key_here'
+    OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5/weather'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.googlemail.com')
     MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
