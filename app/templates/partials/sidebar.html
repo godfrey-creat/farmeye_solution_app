@@ -1,4 +1,13 @@
-<aside class="sidebar fixed top-16 left-0 bottom-0 w-64 shadow-lg z-40 transition-transform duration-300 ease-in-out">
+<aside class="sidebar fixed top-16 left-0 bottom-0 w-64 shadow-lg z-40 transition-transform duration-300 ease-in-out flex flex-col">
+    <style>
+        .sidebar-item:hover {
+            background-color: rgba(25, 111, 61, 0.2);
+        }
+        .sidebar-item.active {
+            background-color: #196F3D;
+            color: white;
+        }
+    </style>
     <div class="px-4 py-4 border-b border-white border-opacity-10">
         <div class="text-xs uppercase tracking-wide text-white text-opacity-50 mb-1">Current crop</div>
         <div class="flex items-center">
@@ -6,46 +15,46 @@
             <span class="font-medium">Corn - Stage: Vegetative</span>
         </div>
     </div>
-    <nav class="py-4">
+    <nav class="py-4 flex-grow overflow-y-auto">
         <ul class="space-y-1">
             <li>
-                <a href="{{ url_for('farm.dashboard') }}" class="sidebar-item {% if active_page == 'dashboard' %}active{% endif %} flex items-center px-4 py-3">
+                <a href="{{ url_for('farm.dashboard') }}" class="sidebar-item {% if active_page == 'dashboard' %}active{% endif %} flex items-center px-4 py-3 rounded-md mx-2 transition-colors">
                     <i class="fas fa-tachometer-alt w-6 text-center mr-3"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('farm.field_map') }}" class="sidebar-item {% if active_page == 'field_map' %}active{% endif %} flex items-center px-4 py-3">
+                <a href="{{ url_for('farm.field_map') }}" class="sidebar-item {% if active_page == 'field_map' %}active{% endif %} flex items-center px-4 py-3 rounded-md mx-2 transition-colors">
                     <i class="fas fa-map-marked-alt w-6 text-center mr-3"></i>
                     <span>Field Map</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('farm.analytics') }}" class="sidebar-item {% if active_page == 'analytics' %}active{% endif %} flex items-center px-4 py-3">
+                <a href="{{ url_for('farm.analytics') }}" class="sidebar-item {% if active_page == 'analytics' %}active{% endif %} flex items-center px-4 py-3 rounded-md mx-2 transition-colors">
                     <i class="fas fa-chart-line w-6 text-center mr-3"></i>
                     <span>Analytics</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('farm.irrigation') }}" class="sidebar-item {% if active_page == 'irrigation' %}active{% endif %} flex items-center px-4 py-3">
+                <a href="{{ url_for('farm.irrigation') }}" class="sidebar-item {% if active_page == 'irrigation' %}active{% endif %} flex items-center px-4 py-3 rounded-md mx-2 transition-colors">
                     <i class="fas fa-tint w-6 text-center mr-3"></i>
                     <span>Irrigation</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('farm.weather') }}" class="sidebar-item {% if active_page == 'weather' %}active{% endif %} flex items-center px-4 py-3">
+                <a href="{{ url_for('farm.weather') }}" class="sidebar-item {% if active_page == 'weather' %}active{% endif %} flex items-center px-4 py-3 rounded-md mx-2 transition-colors">
                     <i class="fas fa-cloud-sun-rain w-6 text-center mr-3"></i>
                     <span>Weather</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('farm.pest_control') }}" class="sidebar-item {% if active_page == 'pest_control' %}active{% endif %} flex items-center px-4 py-3">
+                <a href="{{ url_for('farm.pest_control') }}" class="sidebar-item {% if active_page == 'pest_control' %}active{% endif %} flex items-center px-4 py-3 rounded-md mx-2 transition-colors">
                     <i class="fas fa-bug w-6 text-center mr-3"></i>
                     <span>Pest Control</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('farm.schedule') }}" class="sidebar-item {% if active_page == 'schedule' %}active{% endif %} flex items-center px-4 py-3">
+                <a href="{{ url_for('farm.schedule') }}" class="sidebar-item {% if active_page == 'schedule' %}active{% endif %} flex items-center px-4 py-3 rounded-md mx-2 transition-colors">
                     <i class="fas fa-calendar-alt w-6 text-center mr-3"></i>
                     <span>Schedule</span>
                 </a>
@@ -53,12 +62,12 @@
         </ul>
     </nav>
 
-    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-white border-opacity-10">
-        <a href="#" class="sidebar-item flex items-center px-4 py-3">
+    <div class="mt-auto border-t border-white border-opacity-10 py-2">
+        <a href="#" class="sidebar-item flex items-center px-4 py-3 rounded-md mx-2 transition-colors">
             <i class="fas fa-cog w-6 text-center mr-3"></i>
             <span>Settings</span>
         </a>
-        <a href="#" class="sidebar-item flex items-center px-4 py-3">
+        <a href="#" class="sidebar-item flex items-center px-4 py-3 rounded-md mx-2 transition-colors">
             <i class="fas fa-question-circle w-6 text-center mr-3"></i>
             <span>Help & Support</span>
         </a>

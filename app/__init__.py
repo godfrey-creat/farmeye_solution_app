@@ -39,6 +39,12 @@ def create_app(config_name=None):
     from .farm import farm as farm_blueprint
     app.register_blueprint(farm_blueprint, url_prefix='/farm')
     
+    from .weather import weather as weather_blueprint
+    app.register_blueprint(weather_blueprint, url_prefix='/weather')
+    
+    from .pest import pest as pest_blueprint
+    app.register_blueprint(pest_blueprint, url_prefix='/pest')
+    
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 

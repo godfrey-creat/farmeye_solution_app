@@ -17,6 +17,23 @@ def index():
                               active_page='dashboard')
     return redirect(url_for('auth.login'))
 
+@main.route('/weather')
+@login_required
+def weather_redirect():
+    """Redirect to the weather dashboard in the weather module"""
+    return redirect(url_for('weather.dashboard'))
+
+@main.route('/update_farm_location')
+@login_required
+def update_farm_location_redirect():
+    """Redirect to the update location page in the weather module"""
+    return redirect(url_for('weather.update_location'))
+
+@main.route('/pest_control')
+@login_required
+def pest_control_redirect():
+    """Redirect to the pest control dashboard in the pest module"""
+    return redirect(url_for('pest.dashboard'))
 
 # @main.route('/about')
 # def about():

@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+
+{% block title %}FarmEye - Pest Control{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pest-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .pest-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    .severity-high {
+        background-color: rgba(192, 57, 43, 0.1);
+        border-left: 4px solid #C0392B;
+    }
+    .severity-medium {
+        background-color: rgba(230, 126, 34, 0.1);
+        border-left: 4px solid #E67E22;
+    }
+    .severity-low {
+        background-color: rgba(41, 128, 185, 0.1);
+        border-left: 4px solid #2980B9;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 28px;
+        padding-bottom: 20px;
+    }
+    .timeline-item:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background-color: #CBD5E0;
+    }
+    .timeline-item:after {
+        content: '';
+        position: absolute;
+        left: -5px;
+        top: 0;
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        background-color: #1D8348;
+    }
+    .stage-active {
+        background-color: rgba(29, 131, 72, 0.1);
+        border: 2px solid #1D8348;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="flex justify-between items-center mb-8">
+    <div>
+        <h1 class="text-3xl font-semibold text-dark">Pest Management</h1>
+        <p class="text-medium mt-1">Farm: {{ farm.name }} | Crop: {{ farm.crop_type }}</p>
+    </div>
+    <div class="flex space-x-3">
+        <button onclick="document.getElementById('addPestModal').classList.remove('hidden')" class="btn btn-primary">
+            <i class="fas fa-bug mr-2"></i> Report Pest
+        </button>
+        <button onclick="document.getElementById('updateStageModal').classList.remove('hidden')" class="btn btn-primary">
+            <i class="fas fa-seedling mr-2"></i> Update Farm Stage
+        </button>
+    </div>
+</div>
+
+<!-- Farm Stage Indicator -->
+<div class="mb-8">
+    <h2 class="text-xl font-semibold mb-4">Current Farm Stage</h2>
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+        {% set stages = ['Unprepared Land', 'Prepared Land', 'Germination', 'Vegetative Growth', 'Flowering', 'Harvesting'] %}
+        {% set current_stage = farm_stages[0].stage_name if farm_stages else 'Unprepared Land' %}
+        
+        {% for stage in stages %}
+            <div class="rounded-lg p-4 text-center {{ 'stage-active' if stage == current_stage else 'bg-white' }}">
+                <div class="text-sm font-medium {{ 'text-primary' if stage == current_stage }}">{{ stage }}</div>
+                {% if stage == current_stage and farm_stages %}
+                    <div class="text-xs text-medium mt-1">Started: {{ farm_stages[0].start_date.strftime('%Y-%m-%d') }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Detected Pests Section -->
+<div class="mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Current Pest Detections</h2>
+        <div class="flex space-x-3">
+            <select class="border border-light rounded-lg text-sm px-3 py-2 bg-white">
+                <option>All Severities</option>
+                <option>High Severity</option>
+                <option>Medium Severity</option>
+                <option>Low Severity</option>
+            </select>
+            <select class="border border-light rounded-lg text-sm px-3 py-2 bg-white">
+                <option>All Statuses</option>
+                <option>Active</option>
+                <option>Treated</option>
+                <option>Resolved</option>
+            </select>
+        </div>
+    </div>
+    
+    {% if pest_detections %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for pest in pest_detections %}
+                <div class="bg-white rounded-xl shadow-card overflow-hidden pest-card severity-{{ pest.severity.lower() }}">
+                    <div class="p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold">{{ pest.pest_name }}</h3>
+                            <span class="bg-opacity-10 text-xs font-medium px-2 py-1 rounded-full 
+                                {{ 'bg-danger text-danger' if pest.severity == 'High' else '' }}
+                                {{ 'bg-warning text-warning' if pest.severity == 'Medium' else '' }}
+                                {{ 'bg-water text-water' if pest.severity == 'Low' else '' }}
+                            ">{{ pest.severity }} Severity</span>
+                        </div>
+                        <p class="text-medium text-sm mb-2">{{ pest.description or 'No description provided.' }}</p>
+                        <p class="text-medium text-sm mb-4">
+                            <i class="fas fa-map-marker-alt mr-1"></i> {{ pest.location_in_farm or 'Entire farm' }}
+                        </p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-medium">Detected: {{ pest.detection_date.strftime('%Y-%m-%d') }}</span>
+                            <div class="flex space-x-2">
+                                <button onclick="document.getElementById('pestAction{{ pest.id }}').classList.remove('hidden')" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus-circle mr-1"></i> Add Action
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pest Action Modal -->
+                    <div id="pestAction{{ pest.id }}" class="fixed inset-0 bg-dark bg-opacity-50 flex items-center justify-center z-50 hidden">
+                        <div class="bg-white rounded-xl p-6 max-w-md w-full">
+                            <h3 class="text-xl font-semibold mb-4">Add Action for {{ pest.pest_name }}</h3>
+                            <form action="{{ url_for('pest.add_pest_action', pest_id=pest.id) }}" method="POST">
+                                <div class="mb-4">
+                                    <label class="block text-medium text-sm mb-2" for="action_name">Action Name</label>
+                                    <input type="text" id="action_name" name="action_name" class="w-full border border-light rounded-lg p-2" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-medium text-sm mb-2" for="action_type">Action Type</label>
+                                    <select id="action_type" name="action_type" class="w-full border border-light rounded-lg p-2" required>
+                                        <option value="Chemical">Chemical Treatment</option>
+                                        <option value="Biological">Biological Control</option>
+                                        <option value="Mechanical">Mechanical Removal</option>
+                                        <option value="Cultural">Cultural Practice</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-medium text-sm mb-2" for="description">Description</label>
+                                    <textarea id="description" name="description" class="w-full border border-light rounded-lg p-2" rows="2"></textarea>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-medium text-sm mb-2" for="scheduled_date">Scheduled Date</label>
+                                    <input type="date" id="scheduled_date" name="scheduled_date" class="w-full border border-light rounded-lg p-2" required>
+                                </div>
+                                <div class="flex justify-end space-x-3">
+                                    <button type="button" onclick="document.getElementById('pestAction{{ pest.id }}').classList.add('hidden')" class="btn btn-outline">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Save Action</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-light rounded-xl p-8 text-center">
+            <i class="fas fa-bug text-4xl text-medium mb-4"></i>
+            <h3 class="text-xl font-semibold mb-2">No Pest Detections</h3>
+            <p class="text-medium mb-4">No pests have been detected on your farm yet.</p>
+            <button onclick="document.getElementById('addPestModal').classList.remove('hidden')" class="btn btn-primary">
+                Report a Pest
+            </button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Common Pests & Recommendations -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- Common Pests for Crop -->
+    <div class="lg:col-span-2">
+        <h2 class="text-xl font-semibold mb-4">Common Pests for {{ farm.crop_type }}</h2>
+        <div class="bg-white rounded-xl shadow-card p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for pest in common_pests %}
+                    <div class="border border-light rounded-lg p-4 hover:border-primary transition duration-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-medium">{{ pest.name }}</h3>
+                            <span class="text-xs px-2 py-1 rounded-full 
+                                {{ 'bg-danger bg-opacity-10 text-danger' if pest.severity == 'High' }}
+                                {{ 'bg-warning bg-opacity-10 text-warning' if pest.severity == 'Medium' }}
+                                {{ 'bg-water bg-opacity-10 text-water' if pest.severity == 'Low' }}">
+                                {{ pest.severity }}
+                            </span>
+                        </div>
+                        <p class="text-medium text-sm mb-3">{{ pest.description }}</p>
+                        <button onclick="reportCommonPest('{{ pest.name }}', '{{ pest.severity }}')" class="text-primary text-sm font-medium hover:underline">
+                            <i class="fas fa-plus-circle mr-1"></i> Report Presence
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Actions Timeline -->
+    <div>
+        <h2 class="text-xl font-semibold mb-4">Recent Actions</h2>
+        <div class="bg-white rounded-xl shadow-card p-6">
+            {% if recent_actions %}
+                <div class="timeline">
+                    {% for action in recent_actions %}
+                        <div class="timeline-item">
+                            <h4 class="font-medium">{{ action.action_name }}</h4>
+                            <p class="text-sm text-medium">{{ action.description or 'No description provided.' }}</p>
+                            <div class="flex space-x-2 mt-1 text-xs text-medium">
+                                <span>{{ action.action_type }}</span>
+                                <span>•</span>
+                                <span>{{ action.status }}</span>
+                                <span>•</span>
+                                <span>{{ action.scheduled_date.strftime('%Y-%m-%d') if action.scheduled_date else 'Not scheduled' }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <p class="text-medium">No recent actions recorded</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Labor Management Section -->
+<div class="mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Labor Management</h2>
+        <button onclick="document.getElementById('addLaborModal').classList.remove('hidden')" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus mr-2"></i> Add Task
+        </button>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-card p-6">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-light">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-medium text-medium">Task</th>
+                        <th class="px-4 py-3 text-left text-sm font-medium text-medium">Assigned To</th>
+                        <th class="px-4 py-3 text-left text-sm font-medium text-medium">Priority</th>
+                        <th class="px-4 py-3 text-left text-sm font-medium text-medium">Status</th>
+                        <th class="px-4 py-3 text-left text-sm font-medium text-medium">Due Date</th>
+                        <th class="px-4 py-3 text-left text-sm font-medium text-medium">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-light">
+                    {% for task in farm.labor_tasks[:5] %}
+                        <tr>
+                            <td class="px-4 py-3 text-sm">{{ task.task_name }}</td>
+                            <td class="px-4 py-3 text-sm">{{ task.assigned_to or 'Unassigned' }}</td>
+                            <td class="px-4 py-3 text-sm">
+                                <span class="px-2 py-1 rounded-full text-xs 
+                                    {{ 'bg-danger bg-opacity-10 text-danger' if task.priority == 'High' }}
+                                    {{ 'bg-warning bg-opacity-10 text-warning' if task.priority == 'Medium' }}
+                                    {{ 'bg-water bg-opacity-10 text-water' if task.priority == 'Low' }}">
+                                    {{ task.priority }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm">{{ task.status }}</td>
+                            <td class="px-4 py-3 text-sm">{{ task.end_date.strftime('%Y-%m-%d') if task.end_date else 'Not set' }}</td>
+                            <td class="px-4 py-3 text-sm">
+                                <button class="text-primary hover:underline">Update</button>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-4 py-6 text-medium text-center">No labor tasks added yet</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Pest Modal -->
+<div id="addPestModal" class="fixed inset-0 bg-dark bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full">
+        <h3 class="text-xl font-semibold mb-4">Report Pest Detection</h3>
+        <form action="{{ url_for('pest.add_pest_detection') }}" method="POST">
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="pest_name">Pest Name</label>
+                <input type="text" id="pest_name" name="pest_name" class="w-full border border-light rounded-lg p-2" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="severity">Severity</label>
+                <select id="severity" name="severity" class="w-full border border-light rounded-lg p-2" required>
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="location_in_farm">Location in Farm</label>
+                <input type="text" id="location_in_farm" name="location_in_farm" class="w-full border border-light rounded-lg p-2" placeholder="e.g., North field, Section 3, etc.">
+            </div>
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="description">Description</label>
+                <textarea id="description" name="description" class="w-full border border-light rounded-lg p-2" rows="3" placeholder="Describe the pest and damage observed..."></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('addPestModal').classList.add('hidden')" class="btn btn-outline">Cancel</button>
+                <button type="submit" class="btn btn-primary">Report Pest</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Update Farm Stage Modal -->
+<div id="updateStageModal" class="fixed inset-0 bg-dark bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full">
+        <h3 class="text-xl font-semibold mb-4">Update Farm Stage</h3>
+        <form action="{{ url_for('pest.update_farm_stage') }}" method="POST">
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="stage_name">Stage</label>
+                <select id="stage_name" name="stage_name" class="w-full border border-light rounded-lg p-2" required>
+                    <option value="Unprepared Land">Unprepared Land</option>
+                    <option value="Prepared Land">Prepared Land</option>
+                    <option value="Germination">Germination</option>
+                    <option value="Vegetative Growth">Vegetative Growth</option>
+                    <option value="Flowering">Flowering</option>
+                    <option value="Harvesting">Harvesting</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="description">Notes</label>
+                <textarea id="description" name="description" class="w-full border border-light rounded-lg p-2" rows="3" placeholder="Additional notes about the stage change..."></textarea>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('updateStageModal').classList.add('hidden')" class="btn btn-outline">Cancel</button>
+                <button type="submit" class="btn btn-primary">Update Stage</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Labor Task Modal -->
+<div id="addLaborModal" class="fixed inset-0 bg-dark bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full">
+        <h3 class="text-xl font-semibold mb-4">Add Labor Task</h3>
+        <form action="{{ url_for('pest.add_labor_task') }}" method="POST">
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="task_name">Task Name</label>
+                <input type="text" id="task_name" name="task_name" class="w-full border border-light rounded-lg p-2" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="assigned_to">Assigned To</label>
+                <input type="text" id="assigned_to" name="assigned_to" class="w-full border border-light rounded-lg p-2">
+            </div>
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="priority">Priority</label>
+                <select id="priority" name="priority" class="w-full border border-light rounded-lg p-2" required>
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="description">Description</label>
+                <textarea id="description" name="description" class="w-full border border-light rounded-lg p-2" rows="2"></textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-medium text-sm mb-2" for="stage_id">Related to Farm Stage</label>
+                <select id="stage_id" name="stage_id" class="w-full border border-light rounded-lg p-2">
+                    <option value="">-- Not related to a specific stage --</option>
+                    {% for stage in farm_stages %}
+                        <option value="{{ stage.id }}">{{ stage.stage_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('addLaborModal').classList.add('hidden')" class="btn btn-outline">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Task</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Function to report common pest
+    function reportCommonPest(pestName, severity) {
+        // Pre-fill the form
+        document.getElementById('pest_name').value = pestName;
+        document.getElementById('severity').value = severity;
+        
+        // Open the modal
+        document.getElementById('addPestModal').classList.remove('hidden');
+    }
+    
+    // Function to handle clicks outside modal to close it
+    window.addEventListener('click', function(event) {
+        const modals = [
+            { element: document.getElementById('addPestModal'), clickedOutside: isClickedOutside(event, 'addPestModal') },
+            { element: document.getElementById('updateStageModal'), clickedOutside: isClickedOutside(event, 'updateStageModal') },
+            { element: document.getElementById('addLaborModal'), clickedOutside: isClickedOutside(event, 'addLaborModal') }
+        ];
+        
+        // Also handle the dynamic pest action modals
+        document.querySelectorAll('[id^="pestAction"]').forEach(modal => {
+            modals.push({ element: modal, clickedOutside: isClickedOutside(event, modal.id) });
+        });
+        
+        modals.forEach(modal => {
+            if (modal.element && modal.clickedOutside) {
+                modal.element.classList.add('hidden');
+            }
+        });
+    });
+    
+    function isClickedOutside(event, modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return false;
+        
+        const modalContent = modal.querySelector('div');
+        return event.target === modal && !modalContent.contains(event.target);
+    }
+    
+    // Set today's date as default for scheduled date inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            input.value = today;
+        });
+    });
+</script>
+{% endblock %}

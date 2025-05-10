@@ -55,15 +55,15 @@ def irrigation():
 @login_required
 def weather():
     """Display weather forecast view"""
-    # You would add your weather logic here
-    return render_template('dashboard/weather.html', active_page='weather')
+    # Redirect to the weather module
+    return redirect(url_for('weather.dashboard'))
 
 @farm.route('/pest_control')
 @login_required
 def pest_control():
     """Display pest control view"""
-    # You would add your pest control logic here
-    return render_template('dashboard/pest_control.html', active_page='pest_control')
+    # Redirect to the pest control module
+    return redirect(url_for('pest.dashboard'))
 
 @farm.route('/schedule')
 @login_required
