@@ -22,7 +22,16 @@ class RegistrationForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])
     phone_number = StringField('Phone Number', validators=[DataRequired()])
-    region = StringField('Region', validators=[DataRequired()])
+    region = SelectField('Region', choices=[
+        ('nairobi', 'Nairobi'),
+        ('central', 'Central'),
+        ('coast', 'Coast'),
+        ('eastern', 'Eastern'),
+        ('north-eastern', 'North Eastern'),
+        ('nyanza', 'Nyanza'),
+        ('rift-valley', 'Rift Valley'),
+        ('western', 'Western')
+    ], validators=[DataRequired()])
     user_type = SelectField('User Type', choices=[
         ('small-scale', 'Small-Scale'),
         ('large-scale', 'Large-Scale'),

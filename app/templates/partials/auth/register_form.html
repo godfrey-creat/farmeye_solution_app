@@ -105,6 +105,23 @@
     </div>
     
     <div class="mb-4">
+        <label for="region" class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-map-marker-alt text-gray-400"></i>
+            </div>
+            {{ form.region(class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none", id="region") }}
+        </div>
+        {% if form.region.errors %}
+        <div class="text-red-500 text-xs mt-1">
+            {% for error in form.region.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="mb-4">
         <label for="registerPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
         <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -128,11 +145,11 @@
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-lock text-gray-400"></i>
             </div>
-            {{ form.password2(class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none", placeholder="••••••••", id="confirmPassword") }}
+            {{ form.confirm_password(class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none", placeholder="••••••••", id="confirmPassword") }}
         </div>
-        {% if form.password2.errors %}
+        {% if form.confirm_password.errors %}
         <div class="text-red-500 text-xs mt-1">
-            {% for error in form.password2.errors %}
+            {% for error in form.confirm_password.errors %}
             <span>{{ error }}</span>
             {% endfor %}
         </div>

@@ -3,6 +3,7 @@ from flask import render_template, redirect, url_for, flash, request, current_ap
 from flask_login import login_required, current_user
 from . import main
 from ..auth.models import User
+from ..farm.models import Farm, Alert
 
 @main.route('/')
 def index():

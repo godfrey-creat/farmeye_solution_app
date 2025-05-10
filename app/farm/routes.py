@@ -9,7 +9,6 @@ from .. import db
 from . import farm
 from .forms import FarmForm, ImageUploadForm, SensorDataForm
 from .models import Farm, FarmImage, SensorData, Alert
-from ..auth.models import User
 #from ..decorators import permission_required
 from ..ml.utils import process_farm_image
 
