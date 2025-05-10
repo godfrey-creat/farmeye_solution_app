@@ -1,3 +1,4 @@
+/* Add this to your existing CSS */
 .notification-dropdown {
     width: 360px;
     max-height: 480px;
@@ -5,37 +6,45 @@
     border-radius: 8px;
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
     z-index: 100;
-}
-
-.notification-item {
+  }
+  
+  .notification-item {
     border-bottom: 1px solid rgba(236, 240, 241, 0.5);
     transition: all 0.2s;
-}
-
-.notification-item:hover {
+  }
+  
+  .notification-item:hover {
     background-color: rgba(244, 246, 248, 0.5);
-}
-
-.notification-item:last-child {
+  }
+  
+  .notification-item:last-child {
     border-bottom: none;
-}
-
-.notification-critical {
+  }
+  
+  .notification-critical {
     border-left: 4px solid #C0392B;
-}
-
-.notification-warning {
+  }
+  
+  .notification-warning {
     border-left: 4px solid #F1C40F;
-}
-
-.notification-info {
+  }
+  
+  .notification-info {
     border-left: 4px solid #3498DB;
-}
-
-.notification-header {
+  }
+  
+  .notification-header {
     position: sticky;
     top: 0;
     background: white;
     z-index: 10;
     border-bottom: 1px solid rgba(236, 240, 241, 0.8);
-}
+  }
+  
+  .notification-btn {
+    cursor: pointer;
+  }
+  
+  .notification-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
