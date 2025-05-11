@@ -1,0 +1,91 @@
+/* app/static/css/skeleton.css */
+
+/* Base skeleton loading animation */
+.skeleton-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton-loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(236, 240, 241, 0.2), rgba(236, 240, 241, 0.5), rgba(236, 240, 241, 0.2));
+    animation: skeleton-loading 1.5s infinite;
+    z-index: 10;
+}
+
+.skeleton-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.6);
+    z-index: 9;
+}
+
+/* Skeleton animation */
+@keyframes skeleton-loading {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Custom skeleton styles for different element types */
+.data-card.skeleton-loading .progress-bar,
+.data-card.skeleton-loading .font-semibold,
+.data-card.skeleton-loading .font-medium {
+    position: relative;
+    color: transparent;
+    background-color: #ECF0F1;
+    border-radius: 4px;
+}
+
+.alert-card.skeleton-loading h4,
+.alert-card.skeleton-loading p {
+    color: transparent;
+    background-color: #ECF0F1;
+    border-radius: 4px;
+    position: relative;
+}
+
+.h-80.skeleton-loading {
+    background-color: #ECF0F1;
+    border-radius: 12px;
+}
+
+/* Specific element heights for better looking skeletons */
+.data-card.skeleton-loading .font-semibold {
+    height: 24px;
+    width: 80%;
+    margin-bottom: 8px;
+}
+
+.data-card.skeleton-loading .font-medium {
+    height: 18px;
+    width: 60%;
+}
+
+.alert-card.skeleton-loading h4 {
+    height: 24px;
+    width: 70%;
+    margin-bottom: 8px;
+}
+
+.alert-card.skeleton-loading p {
+    height: 40px;
+    width: 100%;
+}
+
+/* Hide charts while loading */
+.skeleton-loading canvas {
+    opacity: 0;
+}

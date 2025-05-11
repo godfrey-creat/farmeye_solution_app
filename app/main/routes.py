@@ -10,11 +10,21 @@ def index():
     """Home page"""
     if current_user.is_authenticated:
         farms = Farm.query.filter_by(user_id=current_user.id).all()
-        alerts = Alert.query.filter_by(user_id=current_user.id).order_by(Alert.created_at.desc()).limit(5).all()
-        return render_template('dashboard/index.html', 
-                              farms=farms, 
-                              alerts=alerts, 
-                              active_page='dashboard')
+
+        # Get recent alerts for notification count
+        alerts = Alert.query.filter_by(
+            user_id=current_user.id,
+            is_read=False
+        ).order_by(Alert.created_at.desc()).all()
+
+        # Count unread alerts for notification badge
+        unread_count = len(alerts)
+
+        return render_template('dashboard/index.html',
+                               farms=farms,
+                               alerts=alerts,
+                               unread_count=unread_count,
+                               active_page='dashboard')
     return redirect(url_for('auth.login'))
 
 @main.route('/weather')

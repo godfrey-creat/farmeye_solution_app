@@ -1,7 +1,7 @@
 # FarmEye: Smart Farm Monitoring System
 # Core web framework
-Flask
-Werkzeug
+Flask~=3.1.0
+Werkzeug~=3.1.3
 click
 itsdangerous
 Jinja2
@@ -9,19 +9,19 @@ MarkupSafe
 
 # Database
 Flask-SQLAlchemy
-SQLAlchemy
-Flask-Migrate
-alembic
+SQLAlchemy~=2.0.40
+Flask-Migrate~=4.1.0
+alembic~=1.15.2
 pymysql  # For MySQL support in production
 # psycopg2-binary  # For PostgreSQL support in production - Commented out as PostgreSQL is not installed
 
 # Authentication and security
-Flask-Login
+Flask-Login~=0.6.3
 Flask-JWT-Extended
 Flask-Bcrypt
 Flask-WTF
 email-validator
-WTForms
+WTForms~=3.2.1
 PyJWT
 
 # Form handling and validation
@@ -92,3 +92,4 @@ sphinx-rtd-theme
 # Production
 gunicorn  # WSGI HTTP Server
 supervisor  # Process control
+requests
