@@ -5,6 +5,10 @@ import requests
 from datetime import datetime, timedelta
 from . import api
 from ..farm.models import Farm, SensorData, Alert, FarmStage, PestControl
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 
 @api.route('/dashboard-data')
 @login_required
@@ -45,7 +49,7 @@ def dashboard_data():
             }
 
             # Try to get API key from config
-            api_key = current_app.config.get('OPENWEATHER_API_KEY')
+            api_key = os.getenv('OPENWEATHER_API_KEY')
             if api_key:
                 try:
                     weather_url = f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely&units=metric&appid={api_key}"
@@ -89,18 +93,31 @@ def dashboard_data():
         sensor_type='soil_moisture'
     ).order_by(SensorData.timestamp.desc()).first()
 
-    # Mock data for now - would come from actual sensor readings
+    # Soil Health Card Data
     soil_health = {
-        'overall_health': 82,  # Mock percentage
-        'improvement': 2,      # Mock percentage improvement
-        'quality': 76,
-        'nitrogen': 42,        # ppm
-        'phosphorus': 28,      # ppm
+        'status': 'Good',  # Could be derived from sensor data
+        'quality': 76,     # Overall soil health score
+        'nitrogen': 42,    # ppm
+        'phosphorus': 28,  # ppm
         'ph_level': 6.8,
-        'organic_matter': 4.2, # percentage
-        'moisture': soil_moisture.value if soil_moisture else 64, # percentage
+        'organic_matter': 4.2  # percentage
+    }
+
+    # Field Health Card Data
+    field_health = {
+        'status': 'Excellent',
+        'overall_health': 82,  # percentage
+        'improvement': 2,      # percentage improvement
+        'improvement_direction': 'up'  # 'up' or 'down'
+    }
+
+    # Moisture Level Card Data
+    moisture = {
+        'status': 'Normal',
+        'current': soil_moisture.value if soil_moisture else 64,  # percentage
         'last_irrigation': '2 days ago',
-        'next_irrigation': 'Tomorrow'
+        'next_irrigation': 'Tomorrow',
+        'forecast': 'Light rain expected in 36 hours'
     }
 
     # 4. Crop Growth & Harvest
@@ -110,10 +127,12 @@ def dashboard_data():
         status='Active'
     ).first()
 
+    # Crop Growth Card Data
     crop_growth = {
+        'status': 'On Track',
+        'days': '28/62',
+        'progress': 45,  # percentage
         'stage': farm_stage.stage_name if farm_stage else 'Vegetative',
-        'progress': 45,  # percentage completion of current stage
-        'days': '28/62', # days in current growth cycle
         'next_stage': 'Flowering (in 14 days)',
         'harvest_date': 'August 15'
     }
@@ -174,6 +193,8 @@ def dashboard_data():
         'farm_info': farm_info,
         'weather': weather_data,
         'soil_health': soil_health,
+        'field_health': field_health,
+        'moisture': moisture,
         'crop_growth': crop_growth,
         'historical_data': historical_data,
         'alerts': alerts_data,
@@ -206,3 +227,20 @@ def api_debug():
     }
 
     return jsonify(debug_info)
+
+@api.route('/user-profile')
+@login_required
+def user_profile():
+    """Return current user profile information"""
+    profile_data = {
+        'id': current_user.id,
+        'username': current_user.username,
+        'email': current_user.email,
+        'first_name': current_user.first_name,
+        'last_name': current_user.last_name,
+        'full_name': f"{current_user.first_name} {current_user.last_name}",
+        'initials': f"{current_user.first_name[0]}{current_user.last_name[0]}" if current_user.first_name and current_user.last_name else "?",
+        'is_approved': current_user.is_approved
+    }
+
+    return jsonify(profile_data)

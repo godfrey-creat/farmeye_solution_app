@@ -1,34 +1,36 @@
+<!-- templates/partials/soil_health.html -->
 <div class="data-card bg-white p-6">
     <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold">Soil Health</h3>
-        <div class="bg-accent bg-opacity-10 text-accent text-xs font-medium px-2 py-1 rounded-full">Good
+        <div class="bg-accent bg-opacity-10 text-accent text-xs font-medium px-2 py-1 rounded-full">
+            {{ soil_health.status or 'Good' }}
         </div>
     </div>
     <div class="mb-4">
         <div class="flex justify-between mb-1">
             <span class="text-sm text-medium">Overall Quality</span>
-            <span class="text-sm font-medium">76%</span>
+            <span class="text-sm font-medium">{{ soil_health.quality or '76' }}%</span>
         </div>
         <div class="progress-bar bg-light">
-            <div class="bg-soil h-full rounded" style="width: 76%"></div>
+            <div class="bg-soil h-full rounded" style="width: {{ soil_health.quality or '76' }}%"></div>
         </div>
     </div>
     <div class="grid grid-cols-2 gap-4 mt-6">
         <div>
             <div class="text-sm text-medium mb-1">Nitrogen</div>
-            <div class="font-semibold">42 ppm</div>
+            <div class="font-semibold">{{ soil_health.nitrogen or '42' }} ppm</div>
         </div>
         <div>
             <div class="text-sm text-medium mb-1">Phosphorus</div>
-            <div class="font-semibold">28 ppm</div>
+            <div class="font-semibold">{{ soil_health.phosphorus or '28' }} ppm</div>
         </div>
         <div>
             <div class="text-sm text-medium mb-1">pH Level</div>
-            <div class="font-semibold">6.8</div>
+            <div class="font-semibold">{{ soil_health.ph_level or '6.8' }}</div>
         </div>
         <div>
             <div class="text-sm text-medium mb-1">Organic Matter</div>
-            <div class="font-semibold">4.2%</div>
+            <div class="font-semibold">{{ soil_health.organic_matter or '4.2' }}%</div>
         </div>
     </div>
 </div>

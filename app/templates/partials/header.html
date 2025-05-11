@@ -1,4 +1,6 @@
 <header class="bg-primary-dark text-white h-16 flex items-center px-6 fixed top-0 left-0 right-0 z-50 shadow-md">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
+    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
     <div class="flex items-center">
         <!-- Logo -->
         <div class="flex items-center mr-8">
@@ -61,10 +63,20 @@
 
         <!-- User Profile -->
         <button class="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition flex items-center" id="userProfileBtn">
-            <div
-                class="h-8 w-8 bg-primary-light rounded-full flex items-center justify-center text-white font-medium mr-2">
-                JD</div>
-            <span class="font-medium mr-1">John Doe</span>
+            <div class="h-8 w-8 bg-primary-light rounded-full flex items-center justify-center text-white font-medium mr-2">
+                {% if current_user.first_name and current_user.last_name %}
+                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                {% else %}
+                {{ current_user.username[0:2] if current_user.username else "?" }}
+                {% endif %}
+            </div>
+            <span class="font-medium mr-1 hidden md:inline">
+        {% if current_user.first_name and current_user.last_name %}
+            {{ current_user.first_name }} {{ current_user.last_name }}
+        {% else %}
+            {{ current_user.username }}
+        {% endif %}
+    </span>
             <i class="fas fa-chevron-down text-xs"></i>
         </button>
 
@@ -74,4 +86,55 @@
             <i class="fas fa-bars text-xl"></i>
         </button>
     </div>
+    <!-- Add this after the user profile button in header.html -->
+
+    <div id="userProfileDropdown" class="hidden absolute right-4 top-16 bg-white rounded-lg shadow-lg text-dark w-48 z-50">
+        <div class="px-4 py-3 border-b border-light">
+            <div class="font-medium">{{ current_user.first_name }} {{ current_user.last_name }}</div>
+            <div class="text-xs text-medium truncate">{{ current_user.email }}</div>
+        </div>
+        <div class="py-1">
+            <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">
+                <i class="fas fa-user mr-2"></i> Your Profile
+            </a>
+            <a href="#" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">
+                <i class="fas fa-cog mr-2"></i> Settings
+            </a>
+        </div>
+        <div class="py-1 border-t border-light">
+            <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">
+                <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
+            </a>
+        </div>
+    </div>
+
+    <!-- Don't forget to update the JavaScript to toggle this dropdown -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userProfileBtn = document.getElementById('userProfileBtn');
+            const userProfileDropdown = document.getElementById('userProfileDropdown');
+
+            if (userProfileBtn && userProfileDropdown) {
+                userProfileBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userProfileDropdown.classList.toggle('hidden');
+
+                    // Close other dropdowns
+                    document.querySelectorAll('.dropdown').forEach(d => {
+                        if (d !== userProfileDropdown) d.classList.add('hidden');
+                    });
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function() {
+                    userProfileDropdown.classList.add('hidden');
+                });
+
+                // Prevent closing when clicking inside dropdown
+                userProfileDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        });
+    </script>
 </header>

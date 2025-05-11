@@ -1,34 +1,36 @@
+<!-- templates/partials/moisture_level.html -->
 <div class="data-card bg-white p-6">
     <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold">Moisture Level</h3>
-        <div class="bg-water bg-opacity-10 text-water text-xs font-medium px-2 py-1 rounded-full">Normal
+        <div class="bg-water bg-opacity-10 text-water text-xs font-medium px-2 py-1 rounded-full">
+            {{ moisture.status or 'Normal' }}
         </div>
     </div>
     <div class="mb-4">
         <div class="flex justify-between mb-1">
             <span class="text-sm text-medium">Current</span>
-            <span class="text-sm font-medium">64%</span>
+            <span class="text-sm font-medium">{{ moisture.current or '64' }}%</span>
         </div>
         <div class="progress-bar bg-light">
-            <div class="bg-water h-full rounded" style="width: 64%"></div>
+            <div class="bg-water h-full rounded" style="width: {{ moisture.current or '64' }}%"></div>
         </div>
     </div>
     <div class="grid grid-cols-1 gap-3 mt-6">
         <div class="flex justify-between items-center">
             <div>
                 <div class="text-sm text-medium">Last Irrigation</div>
-                <div class="font-medium">2 days ago</div>
+                <div class="font-medium">{{ moisture.last_irrigation or '2 days ago' }}</div>
             </div>
             <div>
                 <div class="text-sm text-medium">Next Scheduled</div>
-                <div class="font-medium">Tomorrow</div>
+                <div class="font-medium">{{ moisture.next_irrigation or 'Tomorrow' }}</div>
             </div>
         </div>
         <div class="pt-2">
             <div class="text-sm text-medium mb-1">Forecast</div>
             <div class="flex items-center">
                 <i class="fas fa-cloud-rain text-water mr-2"></i>
-                <span class="font-medium">Light rain expected in 36 hours</span>
+                <span class="font-medium">{{ moisture.forecast or 'Light rain expected in 36 hours' }}</span>
             </div>
         </div>
     </div>
