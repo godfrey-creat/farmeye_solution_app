@@ -1,0 +1,161 @@
+/* Card styles */
+.data-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.data-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.alert-card {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.alert-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.alert-card-critical {
+    border-left: 4px solid #C0392B;
+    background-color: rgba(192, 57, 43, 0.08);
+}
+
+.alert-card-warning {
+    border-left: 4px solid #F1C40F;
+    background-color: rgba(241, 196, 15, 0.08);
+}
+
+.alert-card-info {
+    border-left: 4px solid #3498DB;
+    background-color: rgba(52, 152, 219, 0.08);
+}
+
+/* Health indicator */
+.health-indicator {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: conic-gradient(var(--color) var(--percentage),
+            #ECF0F1 var(--percentage));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.health-indicator-inner {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 24px;
+    color: #1D8348;
+}
+
+/* Progress bars */
+.progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Timeline styles */
+.timeline-node {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #1D8348;
+    border: 3px solid white;
+    box-shadow: 0 0 0 1px rgba(29, 131, 72, 0.3);
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.timeline-node.current {
+    width: 22px;
+    height: 22px;
+    background-color: #1D8348;
+    border: 4px solid white;
+    box-shadow: 0 0 0 2px rgba(29, 131, 72, 0.5), 0 0 10px rgba(29, 131, 72, 0.3);
+}
+
+.timeline-node.critical {
+    background-color: #C0392B;
+    box-shadow: 0 0 0 1px rgba(192, 57, 43, 0.3);
+}
+
+.timeline-node.warning {
+    background-color: #F1C40F;
+    box-shadow: 0 0 0 1px rgba(241, 196, 15, 0.3);
+}
+
+.timeline-line {
+    height: 4px;
+    background: linear-gradient(to right, #1D8348, #52BE80);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0;
+    right: 0;
+    z-index: 1;
+}
+
+/* NDVI gradient for satellite imagery */
+.ndvi-gradient {
+    background: linear-gradient(to right, #C0392B, #F1C40F, #1D8348);
+    border-radius: 4px;
+}
+
+/* Sensor status indicator */
+.sensor-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.sensor-active {
+    background-color: #1D8348;
+    box-shadow: 0 0 0 2px rgba(29, 131, 72, 0.2);
+}
+
+/* Button styles */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #1D8348;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #196F3D;
+}
+
+.btn-outline {
+    background-color: white;
+    border: 1px solid #1D8348;
+    color: #1D8348;
+}
+
+.btn-outline:hover {
+    background-color: #1D8348;
+    color: white;
+}

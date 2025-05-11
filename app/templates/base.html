@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FarmEye{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#1D8348',
+                        'primary-dark': '#196F3D',
+                        'primary-light': '#52BE80',
+                        'accent': '#F1C40F',
+                        'soil': '#6E2C00',
+                        'water': '#3498DB',
+                        'danger': '#C0392B',
+                        'warning': '#E67E22',
+                        'dark': '#2C3E50',
+                        'medium': '#7F8C8D',
+                        'light': '#ECF0F1',
+                        'lighter': '#F8F9F9',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1)',
+                        'card-hover': '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="font-sans bg-lighter text-dark">
+    <!-- Header will be included here -->
+    {% include 'partials/header.html' %}
+    <!-- After the header and before the main content -->
+    {% include 'partials/flash_messages.html' %}
+    <!-- Sidebar will be included here -->
+    {% include 'partials/sidebar.html' %}
+
+    <!-- Mobile Bottom Navigation (will be shown on small screens) -->
+    {% include 'partials/mobile_nav.html' %}
+
+    <!-- Main Content -->
+    <main class="pt-20 mr-6 mb-6 transition-all duration-300 ease-in-out md:ml-64 sm:ml-3" style="padding-left: 1rem;">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Common JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

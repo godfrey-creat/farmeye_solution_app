@@ -59,4 +59,3 @@ class SensorDataForm(FlaskForm):
     longitude = FloatField('Longitude (optional)', validators=[Optional()])
     notes = TextAreaField('Notes', validators=[Optional()])
     submit = SubmitField('Add Sensor Data')
-

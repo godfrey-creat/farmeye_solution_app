@@ -1,49 +1,13 @@
-<!-- templates/auth/auth.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FarmEye - Authentication</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#1e8a3e',
-                        secondary: '#34a853',
-                        light: '#e6f4ea',
-                        dark: '#0d652d',
-                        accentYellow: '#fbbc04',
-                        accentRed: '#ea4335',
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f8f9fa;
-        }
-        .auth-container {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        .tab-button.active {
-            background-color: rgba(30, 138, 62, 0.1);
-            color: #1e8a3e;
-            border-bottom: 3px solid #1e8a3e;
-        }
-        .input-field:focus {
-            border-color: #1e8a3e;
-            box-shadow: 0 0 0 1px #1e8a3e;
-        }
-    </style>
-</head>
-<body class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+{% extends "auth/auth_base.html" %}
+
+{% block title %}FarmEye - Authentication{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
     <div class="auth-container bg-white rounded-xl w-full max-w-md overflow-hidden">
         <!-- Header -->
         <div class="bg-primary p-6 text-center">
@@ -56,104 +20,318 @@
 
         <!-- Tabs -->
         <div class="flex border-b">
-            <button id="loginTab" class="tab-button active flex-1 py-4 font-medium text-center">Sign In</button>
-            <button id="registerTab" class="tab-button flex-1 py-4 font-medium text-center">Register</button>
+            <button id="loginTab"
+                class="tab-button {% if active_tab == 'login' %}active{% endif %} flex-1 py-4 font-medium text-center focus:outline-none">
+                <i class="fas fa-sign-in-alt mr-2"></i> Sign In
+            </button>
+            <button id="registerTab"
+                class="tab-button {% if active_tab == 'register' %}active{% endif %} flex-1 py-4 font-medium text-center focus:outline-none">
+                <i class="fas fa-user-plus mr-2"></i> Register
+            </button>
         </div>
 
         <!-- Login Form -->
-        <div id="loginForm" class="p-6">
+        <div id="loginForm" class="p-6 {% if active_tab == 'register' %}hidden{% endif %}">
             <form method="POST" action="{{ url_for('auth.login') }}">
-                {{ form.hidden_tag() }}
+                {{ login_form.hidden_tag() }}
+
                 <div class="mb-4">
-                    {{ form.email.label(class="block text-gray-700 mb-2") }}
-                    {{ form.email(class="input-field w-full px-4 py-2 border rounded-lg") }}
-                    {% for error in form.email.errors %}
-                        <p class="text-red-500 text-sm">{{ error }}</p>
-                    {% endfor %}
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-envelope text-gray-400"></i>
+                        </div>
+                        {{ login_form.email(class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md
+                        focus:outline-none", placeholder="your@email.com", id="email") }}
+                    </div>
+                    {% if login_form.email.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in login_form.email.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
+
                 <div class="mb-4">
-                    {{ form.password.label(class="block text-gray-700 mb-2") }}
-                    {{ form.password(class="input-field w-full px-4 py-2 border rounded-lg") }}
-                    {% for error in form.password.errors %}
-                        <p class="text-red-500 text-sm">{{ error }}</p>
-                    {% endfor %}
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        {{ login_form.password(class="input-field pl-10 w-full px-3 py-2 border border-gray-300
+                        rounded-md focus:outline-none", placeholder="••••••••", id="password") }}
+                    </div>
+                    {% if login_form.password.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in login_form.password.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="mb-4">
-                    <label class="inline-flex items-center">
-                        {{ form.remember_me }} <span class="ml-2 text-sm text-gray-600">Remember Me</span>
-                    </label>
+
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        {{ login_form.remember_me(class="h-4 w-4 text-primary border-gray-300 rounded", id="remember")
+                        }}
+                        <label for="remember" class="ml-2 block text-sm text-gray-700">
+                            Remember me
+                        </label>
+                    </div>
+                    <a href="{{ url_for('auth.reset_password_request') }}" class="text-sm text-primary hover:text-dark">
+                        Forgot password?
+                    </a>
                 </div>
-                <div class="mb-4">
-                    {{ form.submit(class="w-full bg-primary hover:bg-green-700 text-white py-2 rounded-lg") }}
-                </div>
-                <p class="text-sm text-gray-600 text-center">
-                    Forgot your password? <a href="{{ url_for('auth.reset_password_request') }}" class="text-primary">Reset here</a>.
+
+                <button type="submit"
+                    class="w-full bg-primary hover:bg-dark text-white py-2 px-4 rounded-md font-medium transition duration-300 mb-4">
+                    Sign In
+                </button>
+
+                <p class="text-sm text-center text-gray-600">
+                    Don't have an account? <button id="switchToRegister" type="button"
+                        class="text-primary hover:text-dark font-medium">Register</button>
                 </p>
             </form>
         </div>
 
-        <!-- Registration Form -->
-        <div id="registerForm" class="p-6 hidden">
+        <!-- Register Form -->
+        <!-- Register Form -->
+        <div id="registerForm" class="p-6 {% if active_tab == 'login' %}hidden{% endif %}">
             <form method="POST" action="{{ url_for('auth.register') }}">
-                {{ form.hidden_tag() }}
+                {{ register_form.hidden_tag() }}
+
                 <div class="mb-4">
-                    {{ form.first_name.label(class="block text-gray-700 mb-2") }}
-                    {{ form.first_name(class="input-field w-full px-4 py-2 border rounded-lg") }}
+                    <label for="registerEmail" class="block text-sm font-medium text-gray-700 mb-1">Email
+                        Address</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-envelope text-gray-400"></i>
+                        </div>
+                        {{ register_form.email(class="input-field pl-10 w-full px-3 py-2 border border-gray-300
+                        rounded-md focus:outline-none", placeholder="your@email.com", id="registerEmail") }}
+                    </div>
+                    {% if register_form.email.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in register_form.email.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            {{ register_form.first_name(class="input-field pl-10 w-full px-3 py-2 border border-gray-300
+                            rounded-md focus:outline-none", placeholder="John", id="firstName") }}
+                        </div>
+                        {% if register_form.first_name.errors %}
+                        <div class="text-red-500 text-xs mt-1">
+                            {% for error in register_form.first_name.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            {{ register_form.last_name(class="input-field pl-10 w-full px-3 py-2 border border-gray-300
+                            rounded-md focus:outline-none", placeholder="Doe", id="lastName") }}
+                        </div>
+                        {% if register_form.last_name.errors %}
+                        <div class="text-red-500 text-xs mt-1">
+                            {% for error in register_form.last_name.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user text-gray-400"></i>
+                        </div>
+                        {{ register_form.username(class="input-field pl-10 w-full px-3 py-2 border border-gray-300
+                        rounded-md focus:outline-none", placeholder="johndoe", id="username") }}
+                    </div>
+                    {% if register_form.username.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in register_form.username.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-phone text-gray-400"></i>
+                        </div>
+                        {{ register_form.phone_number(class="input-field pl-10 w-full px-3 py-2 border border-gray-300
+                        rounded-md focus:outline-none", placeholder="+1234567890", id="phone_number") }}
+                    </div>
+                    {% if register_form.phone_number.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in register_form.phone_number.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="mb-4">
-                    {{ form.last_name.label(class="block text-gray-700 mb-2") }}
-                    {{ form.last_name(class="input-field w-full px-4 py-2 border rounded-lg") }}
+                    <label for="region" class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-map-marker-alt text-gray-400"></i>
+                        </div>
+                        {{ register_form.region(class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none", id="region") }}
+                    </div>
+                    {% if register_form.region.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in register_form.region.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
+
                 <div class="mb-4">
-                    {{ form.username.label(class="block text-gray-700 mb-2") }}
-                    {{ form.username(class="input-field w-full px-4 py-2 border rounded-lg") }}
+                    <label for="user_type" class="block text-sm font-medium text-gray-700 mb-1">User Type</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-users text-gray-400"></i>
+                        </div>
+                        {{ register_form.user_type(class="input-field pl-10 w-full px-3 py-2 border border-gray-300
+                        rounded-md focus:outline-none", id="user_type") }}
+                    </div>
+                    {% if register_form.user_type.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in register_form.user_type.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
+
                 <div class="mb-4">
-                    {{ form.email.label(class="block text-gray-700 mb-2") }}
-                    {{ form.email(class="input-field w-full px-4 py-2 border rounded-lg") }}
+                    <label for="registerPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        {{ register_form.password(class="input-field pl-10 w-full px-3 py-2 border border-gray-300
+                        rounded-md focus:outline-none", placeholder="••••••••", id="registerPassword") }}
+                    </div>
+                    {% if register_form.password.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in register_form.password.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Must be at least 8 characters</p>
                 </div>
-                <div class="mb-4">
-                    {{ form.phone_number.label(class="block text-gray-700 mb-2") }}
-                    {{ form.phone_number(class="input-field w-full px-4 py-2 border rounded-lg") }}
+
+                <div class="mb-6">
+                    <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm
+                        Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        {{ register_form.confirm_password(class="input-field pl-10 w-full px-3 py-2 border
+                        border-gray-300 rounded-md focus:outline-none", placeholder="••••••••", id="confirmPassword") }}
+                    </div>
+                    {% if register_form.confirm_password.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in register_form.confirm_password.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="mb-4">
-                    {{ form.user_type.label(class="block text-gray-700 mb-2") }}
-                    {{ form.user_type(class="input-field w-full px-4 py-2 border rounded-lg") }}
+
+                <div class="flex items-center mb-6">
+                    <input id="terms" name="terms" type="checkbox"
+                        class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" required>
+                    <label for="terms" class="ml-2 block text-sm text-gray-700">
+                        I agree to the <a href="#" class="text-primary hover:text-dark">Terms</a> and <a href="#"
+                            class="text-primary hover:text-dark">Privacy Policy</a>
+                    </label>
                 </div>
-                <div class="mb-4">
-                    {{ form.password.label(class="block text-gray-700 mb-2") }}
-                    {{ form.password(class="input-field w-full px-4 py-2 border rounded-lg") }}
-                </div>
-                <div class="mb-4">
-                    {{ form.confirm_password.label(class="block text-gray-700 mb-2") }}
-                    {{ form.confirm_password(class="input-field w-full px-4 py-2 border rounded-lg") }}
-                </div>
-                <div class="mb-4">
-                    {{ form.submit(class="w-full bg-primary hover:bg-green-700 text-white py-2 rounded-lg") }}
-                </div>
+
+                <button type="submit"
+                    class="w-full bg-primary hover:bg-dark text-white py-2 px-4 rounded-md font-medium transition duration-300 mb-4">
+                    Create Account
+                </button>
+
+                <p class="text-sm text-center text-gray-600">
+                    Already have an account? <button id="switchToLogin" type="button"
+                        class="text-primary hover:text-dark font-medium">Sign in</button>
+                </p>
             </form>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <script>
+{% block extra_js %}
+<script>
+    // Tab switching functionality
+    document.addEventListener('DOMContentLoaded', function () {
         const loginTab = document.getElementById('loginTab');
         const registerTab = document.getElementById('registerTab');
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
+        const switchToRegister = document.getElementById('switchToRegister');
+        const switchToLogin = document.getElementById('switchToLogin');
 
-        loginTab.addEventListener('click', () => {
-            loginTab.classList.add('active');
-            registerTab.classList.remove('active');
-            loginForm.classList.remove('hidden');
-            registerForm.classList.add('hidden');
+        // Function to switch tabs
+        function switchTab(showLogin) {
+            if (showLogin) {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            } else {
+                loginTab.classList.remove('active');
+                registerTab.classList.add('active');
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+            }
+        }
+
+        // Add click event listeners
+        loginTab.addEventListener('click', function () {
+            switchTab(true);
         });
 
-        registerTab.addEventListener('click', () => {
-            registerTab.classList.add('active');
-            loginTab.classList.remove('active');
-            registerForm.classList.remove('hidden');
-            loginForm.classList.add('hidden');
+        registerTab.addEventListener('click', function () {
+            switchTab(false);
         });
-    </script>
-</body>
-</html>
+
+        switchToRegister.addEventListener('click', function () {
+            switchTab(false);
+        });
+
+        switchToLogin.addEventListener('click', function () {
+            switchTab(true);
+        });
+    });
+</script>
+{% endblock %}
