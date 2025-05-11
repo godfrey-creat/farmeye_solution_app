@@ -1,12 +1,12 @@
-# app/__init__.py
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
-from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail
 from .config import config
+
+
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -14,7 +14,6 @@ migrate = Migrate()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
-csrf = CSRFProtect()
 mail = Mail()
 
 def create_app(config_name=None):
@@ -25,12 +24,11 @@ def create_app(config_name=None):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
-    
+
     # Initialize extensions with app
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    csrf.init_app(app)
     mail.init_app(app)
     
     # Register blueprints
@@ -43,14 +41,16 @@ def create_app(config_name=None):
     from .farm import farm as farm_blueprint
     app.register_blueprint(farm_blueprint, url_prefix='/farm')
     
-    # Register main routes
+    from .weather import weather as weather_blueprint
+    app.register_blueprint(weather_blueprint, url_prefix='/weather')
+
+    from .api import api as api_blueprint
+    app.register_blueprint(api_blueprint, url_prefix='/api')
+
+    from .pest import pest as pest_blueprint
+    app.register_blueprint(pest_blueprint, url_prefix='/pest')
+    
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
-    
-    # Create roles
-    @app.before_first_request
-    def create_roles():
-        from .auth.models import Role
-        Role.insert_roles()
-    
+
     return app

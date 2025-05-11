@@ -1,0 +1,12 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-messages container mx-auto px-4 mt-4">
+      {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }} flex items-center justify-between">
+          <div>{{ message|safe }}</div>
+          <button type="button" class="dismiss-flash">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}

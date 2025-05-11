@@ -1,0 +1,104 @@
+<!-- app/templates/auth/auth.html -->
+{% extends "base.html" %}
+
+{% block title %}FarmEye - Authentication{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div class="auth-container bg-white rounded-xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary p-6 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <i class="fas fa-leaf text-3xl text-white mr-2"></i>
+                <span class="text-2xl font-bold text-white">FarmEye</span>
+            </div>
+            <p class="text-white opacity-90">Smart farm monitoring system</p>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="flex border-b">
+            <button id="loginTab" class="tab-button {% if active_tab == 'login' %}active{% endif %} flex-1 py-4 font-medium text-center focus:outline-none">
+                <i class="fas fa-sign-in-alt mr-2"></i> Sign In
+            </button>
+            <button id="registerTab" class="tab-button {% if active_tab == 'register' %}active{% endif %} flex-1 py-4 font-medium text-center focus:outline-none">
+                <i class="fas fa-user-plus mr-2"></i> Register
+            </button>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="loginForm" class="p-6 {% if active_tab == 'register' %}hidden{% endif %}">
+            <!-- Instead of including as a partial, place form directly here -->
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-4">
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-envelope text-gray-400"></i>
+                        </div>
+                        {{ form.email(class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none", placeholder="your@email.com", id="email") }}
+                    </div>
+                    {% if form.email.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in form.email.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        {{ form.password(class="input-field pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none", placeholder="••••••••", id="password") }}
+                    </div>
+                    {% if form.password.errors %}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in form.password.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        {{ form.remember_me(class="h-4 w-4 text-primary border-gray-300 rounded", id="remember") }}
+                        <label for="remember" class="ml-2 block text-sm text-gray-700">
+                            Remember me
+                        </label>
+                    </div>
+                    <a href="{{ url_for('auth.reset_password_request') }}" class="text-sm text-primary hover:text-dark">
+                        Forgot password?
+                    </a>
+                </div>
+                
+                <button type="submit" class="w-full bg-primary hover:bg-dark text-white py-2 px-4 rounded-md font-medium transition duration-300 mb-4">
+                    Sign In
+                </button>
+                
+                <p class="text-sm text-center text-gray-600">
+                    Don't have an account? <button id="switchToRegister" type="button" class="text-primary hover:text-dark font-medium">Register</button>
+                </p>
+            </form>
+        </div>
+        
+        <!-- Register Form -->
+        <div id="registerForm" class="p-6 {% if active_tab == 'login' %}hidden{% endif %}">
+            {% include 'partials/auth/register_form.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

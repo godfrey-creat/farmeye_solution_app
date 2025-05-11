@@ -1,94 +1,95 @@
 # FarmEye: Smart Farm Monitoring System
 # Core web framework
-Flask==2.3.3
-Werkzeug==2.3.7
-click==8.1.7
-itsdangerous==2.1.2
-Jinja2==3.1.2
-MarkupSafe==2.1.3
+Flask~=3.1.0
+Werkzeug~=3.1.3
+click
+itsdangerous
+Jinja2
+MarkupSafe
 
 # Database
-Flask-SQLAlchemy==3.1.1
-SQLAlchemy==2.0.21
-Flask-Migrate==4.0.5
-alembic==1.12.0
-pymysql==1.1.0  # For MySQL support in production
-psycopg2-binary==2.9.7  # For PostgreSQL support in production
+Flask-SQLAlchemy
+SQLAlchemy~=2.0.40
+Flask-Migrate~=4.1.0
+alembic~=1.15.2
+pymysql  # For MySQL support in production
+# psycopg2-binary  # For PostgreSQL support in production - Commented out as PostgreSQL is not installed
 
 # Authentication and security
-Flask-Login==0.6.2
-Flask-JWT-Extended==4.5.3
-Flask-Bcrypt==1.0.1
-Flask-WTF==1.2.1
-email-validator==2.0.0.post2
-WTForms==3.0.1
-PyJWT==2.8.0
+Flask-Login~=0.6.3
+Flask-JWT-Extended
+Flask-Bcrypt
+Flask-WTF
+email-validator
+WTForms~=3.2.1
+PyJWT
 
 # Form handling and validation
-WTForms-SQLAlchemy==0.3
+WTForms-SQLAlchemy
 
 # Email
-Flask-Mail==0.9.1
+Flask-Mail
 
 # Environment variables
-python-dotenv==1.0.0
+python-dotenv
 
 # File uploads and image processing
-Pillow==10.0.1
-Flask-Uploads==0.2.1
+Pillow
+Flask-Uploads
 
 # API and serialization
-Flask-RESTful==0.3.10
-marshmallow==3.20.1
-Flask-Marshmallow==0.15.0
-marshmallow-sqlalchemy==0.29.0
+Flask-RESTful
+marshmallow
+Flask-Marshmallow
+marshmallow-sqlalchemy
 
 # Machine Learning
-tensorflow==2.13.0  # For crop/disease detection models
-scikit-learn==1.3.1  # For various ML tasks
-opencv-python==4.8.1.78  # For image processing
-numpy==1.24.3  # Required by TensorFlow and scikit-learn
-scipy==1.11.3  # Scientific computing
-pandas==2.1.1  # Data manipulation
-matplotlib==3.8.0  # Plotting and visualization
-joblib==1.3.2  # Model serialization
+tensorflow  # For crop/disease detection models
+scikit-learn  # For various ML tasks
+opencv-python  # For image processing
+numpy  # Required by TensorFlow and scikit-learn
+scipy  # Scientific computing
+pandas  # Data manipulation
+matplotlib  # Plotting and visualization
+joblib  # Model serialization
 
 # GIS and satellite imagery
-earthengine-api==0.1.374  # Google Earth Engine API
-geojson==3.0.1  # GeoJSON support
-pyproj==3.6.1  # Cartographic projections
-rasterio==1.3.8  # Raster data processing
-geopandas==0.14.0  # Geospatial data operations
+earthengine-api  # Google Earth Engine API
+geojson  # GeoJSON support
+pyproj  # Cartographic projections
+rasterio  # Raster data processing
+geopandas  # Geospatial data operations
 
 # Async tasks and scheduling
-celery==5.3.4  # For background tasks like data processing
-redis==5.0.1  # For Celery broker
-APScheduler==3.10.4  # For scheduled tasks
+celery  # For background tasks like data processing
+redis  # For Celery broker
+APScheduler  # For scheduled tasks
 
 # Data visualization
-plotly==5.17.0  # Interactive charts
-dash==2.14.0  # Dashboard components
+plotly  # Interactive charts
+dash  # Dashboard components
 
 # AWS integration (for cloud storage)
-boto3==1.28.51
+boto3
 
 # Testing
-pytest==7.4.2
-pytest-flask==1.2.0
-coverage==7.3.2
-factory-boy==3.3.0
-faker==19.6.2  # For generating test data
+pytest
+pytest-flask
+coverage
+factory-boy
+faker  # For generating test data
 
 # Development tools
-Flask-DebugToolbar==0.13.1
-black==23.9.1  # Code formatting
-flake8==6.1.0  # Code linting
-isort==5.12.0  # Import sorting
+Flask-DebugToolbar
+black  # Code formatting
+flake8  # Code linting
+isort  # Import sorting
 
 # Documentation
-Sphinx==7.2.6
-sphinx-rtd-theme==1.3.0
+Sphinx
+sphinx-rtd-theme
 
 # Production
-gunicorn==21.2.0  # WSGI HTTP Server
-supervisor==4.2.5  # Process control
+gunicorn  # WSGI HTTP Server
+supervisor  # Process control
+requests

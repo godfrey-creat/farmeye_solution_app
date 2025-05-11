@@ -3,66 +3,54 @@ from flask import render_template, redirect, url_for, flash, request, current_ap
 from flask_login import login_required, current_user
 from . import main
 from ..auth.models import User
+from ..farm.models import Farm, Alert
 
 @main.route('/')
 def index():
     """Home page"""
-    return render_template('index.html')
+    if current_user.is_authenticated:
+        farms = Farm.query.filter_by(user_id=current_user.id).all()
 
-@main.route('/about')
-def about():
-    """About page"""
-    return render_template('about.html')
+        # Get recent alerts for notification count
+        alerts = Alert.query.filter_by(
+            user_id=current_user.id,
+            is_read=False
+        ).order_by(Alert.created_at.desc()).all()
 
-@main.route('/contact')
-def contact():
-    """Contact page"""
-    return render_template('contact.html')
+        # Count unread alerts for notification badge
+        unread_count = len(alerts)
 
-# run.py - Application entry point
-import os
-from app import create_app, db
-from app.auth.models import User, Role
-from flask_migrate import Migrate
+        return render_template('dashboard/index.html',
+                               farms=farms,
+                               alerts=alerts,
+                               unread_count=unread_count,
+                               active_page='dashboard')
+    return redirect(url_for('auth.login'))
 
-app = create_app(os.getenv('FLASK_CONFIG') or 'development')
-migrate = Migrate(app, db)
+@main.route('/weather')
+@login_required
+def weather_redirect():
+    """Redirect to the weather dashboard in the weather module"""
+    return redirect(url_for('weather.dashboard'))
 
-@app.shell_context_processor
-def make_shell_context():
-    """Make database objects available in Flask shell"""
-    return dict(db=db, User=User, Role=Role)
+@main.route('/update_farm_location')
+@login_required
+def update_farm_location_redirect():
+    """Redirect to the update location page in the weather module"""
+    return redirect(url_for('weather.update_location'))
 
-@app.cli.command()
-def create_admin():
-    """Create a default admin user"""
-    admin_email = os.getenv('ADMIN_EMAIL', 'admin@farmeye.com')
-    admin_password = os.getenv('ADMIN_PASSWORD', 'admin123')  # Use a secure password in production
-    
-    if User.query.filter_by(email=admin_email).first() is None:
-        admin_role = Role.query.filter_by(name='Admin').first()
-        if admin_role is None:
-            from app.auth.models import Role, Permission
-            admin_role = Role(name='Admin')
-            admin_role.permissions = Permission.ADMIN | Permission.APPROVE_USERS | Permission.VIEW_DATA | Permission.UPLOAD_DATA
-            db.session.add(admin_role)
-            db.session.commit()
-        
-        admin = User(
-            email=admin_email,
-            username='admin',
-            password=admin_password,
-            first_name='Admin',
-            last_name='User',
-            phone_number='1234567890',
-            role=admin_role,
-            is_approved=True
-        )
-        db.session.add(admin)
-        db.session.commit()
-        print('Admin user created successfully!')
-    else:
-        print('Admin user already exists.')
+@main.route('/pest_control')
+@login_required
+def pest_control_redirect():
+    """Redirect to the pest control dashboard in the pest module"""
+    return redirect(url_for('pest.dashboard'))
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# @main.route('/about')
+# def about():
+#    """About page"""
+#    return render_template('about.html')
+
+# @main.route('/contact')
+# def contact():
+#    """Contact page"""
+#    return render_template('contact.html')

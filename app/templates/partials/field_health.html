@@ -1,0 +1,22 @@
+<!-- templates/partials/field_health.html -->
+<div class="data-card bg-white p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Field Health</h3>
+        <div class="bg-primary-light bg-opacity-10 text-primary-dark text-xs font-medium px-2 py-1 rounded-full">
+            {{ field_health.status or 'Excellent' }}
+        </div>
+    </div>
+    <div class="flex justify-center my-4">
+        <div class="health-indicator" style="--color: #52BE80; --percentage: {{ field_health.overall_health or '82' }}%">
+            <div class="health-indicator-inner">
+                {{ field_health.overall_health or '82' }}%
+            </div>
+        </div>
+    </div>
+    <div class="mt-4 text-center">
+        <div class="inline-flex items-center text-sm font-medium">
+            <i class="fas fa-arrow-{{ 'up' if field_health.improvement_direction|default('up') == 'up' else 'down' }} text-primary-light mr-1"></i>
+            <span>{{ field_health.improvement or '2' }}% improvement from last week</span>
+        </div>
+    </div>
+</div>
