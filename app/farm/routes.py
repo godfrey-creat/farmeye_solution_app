@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from .. import db
 from . import farm
 from .forms import FarmForm, ImageUploadForm, SensorDataForm
-from .models import Farm, FarmImage, SensorData, Alert, CropHealth, Sensor, WeatherData
+from .models import Farm, FarmImage, SensorData, Alert, CropHealth, Sensor, WeatherData, FarmStage
 #from ..decorators import permission_required
 from ..ml.utils import process_farm_image
 import openai
@@ -29,12 +29,22 @@ def dashboard():
     if not current_user.is_approved:
         flash('Your account is pending approval. Some features may be limited.', 'warning')
     
+    # Mock soil_health data (replace with actual logic)
+    soil_health = {
+        'status': 'Good',
+        'quality': 76,
+        'nitrogen': 42,
+        'phosphorus': 28,
+        'ph_level': 6.8,
+        'organic_matter': 4.2
+    }
+
     # Always render the template directly, don't redirect
     return render_template('dashboard/index.html', 
-                          farms=farms, 
-                          alerts=alerts, 
-                          active_page='dashboard')
-
+                           farms=farms, 
+                           alerts=alerts, 
+                           soil_health=soil_health, 
+                           active_page='dashboard')
 @farm.route('/field_map')
 @login_required
 def field_map():
@@ -548,3 +558,173 @@ def generate_advisory(prompt):
     except Exception as e:
         current_app.logger.error(f"Failed to generate advisory: {str(e)}")
         return "Could not generate advisory at this time. Please check your farm data manually."
+    
+@farm.route('/api/dashboard-data')
+@login_required
+def dashboard_data():
+    """API endpoint that provides dashboard data in JSON format"""
+    # Get the user's farm
+    farm = Farm.query.filter_by(user_id=current_user.id).first()
+
+    if not farm:
+        return jsonify({
+            'error': 'No farm found. Please register a farm first.'
+        }), 404
+
+    # Get the selected field (for now, we'll use a mock field)
+    field = "Field A-12"  # This would come from the database in a real application
+
+    # 1. Farm & Field Information
+    farm_info = {
+        'name': farm.name,
+        'field': field,
+        'last_updated': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    }
+
+    # 2. Weather & Forecast
+    # Try to extract latitude and longitude from the farm location
+    weather_data = {}
+    try:
+        # Check if location contains lat/long information
+        if ',' in farm.location:
+            lat, lon = map(float, farm.location.split(','))
+
+            # Call OpenWeather API (if configured)
+            if hasattr(current_app.config, 'OPENWEATHER_API_KEY') and current_app.config['OPENWEATHER_API_KEY']:
+                weather_url = f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely&units=metric&appid={current_app.config['OPENWEATHER_API_KEY']}"
+                response = requests.get(weather_url)
+
+                if response.status_code == 200:
+                    data = response.json()
+                    current = data['current']
+
+                    weather_data = {
+                        'temperature': round(current['temp']),
+                        'condition': current['weather'][0]['main'],
+                        'icon': current['weather'][0]['icon'],
+                        'forecast': 'Light rain expected in 36 hours' if 'rain' in data['daily'][1] else 'No precipitation expected'
+                    }
+            else:
+                # Fallback if OpenWeather not configured
+                weather_data = {
+                    'temperature': 24,  # Fallback data
+                    'condition': 'Sunny',
+                    'icon': '01d',
+                    'forecast': 'Weather forecast unavailable (API not configured)'
+                }
+        else:
+            # Fallback if no location set
+            weather_data = {
+                'temperature': 24,  # Fallback data
+                'condition': 'Sunny',
+                'icon': '01d',
+                'forecast': 'Set farm location for weather forecast'
+            }
+    except Exception as e:
+        current_app.logger.error(f"Weather API error: {str(e)}")
+        weather_data = {
+            'temperature': 24,  # Fallback data
+            'condition': 'Sunny',
+            'icon': '01d',
+            'forecast': 'Weather forecast unavailable'
+        }
+
+    # 3. Soil & Field Health
+    # Get the latest sensor data
+    soil_moisture = SensorData.query.filter_by(
+        farm_id=farm.id,
+        sensor_type='soil_moisture'
+    ).order_by(SensorData.timestamp.desc()).first()
+
+    # Mock data for now - would come from actual sensor readings
+    soil_health = {
+        'overall_health': 82,  # Mock percentage
+        'improvement': 2,      # Mock percentage improvement
+        'quality': 76,
+        'nitrogen': 42,        # ppm
+        'phosphorus': 28,      # ppm
+        'ph_level': 6.8,
+        'organic_matter': 4.2, # percentage
+        'moisture': soil_moisture.value if soil_moisture else 64, # percentage
+        'last_irrigation': '2 days ago',
+        'next_irrigation': 'Tomorrow'
+    }
+
+    # 4. Crop Growth & Harvest
+    # Get the current farm stage
+    farm_stage = FarmStage.query.filter_by(
+        farm_id=farm.id,
+        status='Active'
+    ).first()
+
+    crop_growth = {
+        'stage': farm_stage.stage_name if farm_stage else 'Vegetative',
+        'progress': 45,  # percentage completion of current stage
+        'days': '28/62', # days in current growth cycle
+        'next_stage': 'Flowering (in 14 days)',
+        'harvest_date': 'August 15'
+    }
+
+    # 5. Field Metrics Historical Data
+    # This would come from sensor history, but for now we'll use mock data
+    historical_data = {
+        'temperature': [22, 24, 26, 25, 27, 26, 24, 25, 26, 28, 29, 27, 26, 24, 23],
+        'moisture': [68, 65, 62, 60, 58, 75, 72, 68, 65, 62, 59, 56, 53, 70, 68],
+        'growth': [2.1, 2.3, 2.8, 3.0, 3.2, 3.1, 2.9, 2.7, 2.5, 2.4, 2.2, 2.0, 1.9, 1.8, 1.7],
+        'soil_health': [76, 75, 74, 76, 78, 80, 78, 77, 76, 75, 74, 73, 75, 78, 77],
+        'dates': ['May 1', 'May 3', 'May 5', 'May 7', 'May 9', 'May 11', 'May 13', 'May 15', 'May 17', 'May 19', 'May 21', 'May 23', 'May 25', 'May 27', 'May 29']
+    }
+
+    # 6. Alerts and Recommendations
+    # Get recent alerts
+    alerts = Alert.query.filter_by(
+        farm_id=farm.id,
+        is_read=False
+    ).order_by(Alert.created_at.desc()).limit(3).all()
+
+    alerts_data = []
+    for alert in alerts:
+        alerts_data.append({
+            'id': alert.id,
+            'title': alert.alert_type,  # Using alert_type as the title
+            'message': alert.message,
+            'severity': alert.severity,
+            'created_at': alert.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        })
+
+    # 7. Recommended Actions
+    # These would come from an AI recommendation system or predefined rules
+    # Using mock data for now
+    recommendations = [
+        {
+            'action': 'Apply Fertilizer',
+            'description': 'Nitrogen levels in sectors 2 and 3 are below optimal. Apply supplemental fertilizer within 48 hours.',
+            'priority': 'High',
+            'due': 'Tomorrow'
+        },
+        {
+            'action': 'Pest Treatment',
+            'description': 'Early signs of corn earworm detected in sector 4. Apply organic pesticide to prevent infestation.',
+            'priority': 'Medium',
+            'due': 'In 3 days'
+        },
+        {
+            'action': 'Equipment Maintenance',
+            'description': 'Irrigation system inspection recommended. Last maintenance was performed 45 days ago.',
+            'priority': 'Info',
+            'due': 'This week'
+        }
+    ]
+
+    # Combine all data into a single response
+    response_data = {
+        'farm_info': farm_info,
+        'weather': weather_data,
+        'soil_health': soil_health,
+        'crop_growth': crop_growth,
+        'historical_data': historical_data,
+        'alerts': alerts_data,
+        'recommendations': recommendations
+    }
+
+    return jsonify(response_data)

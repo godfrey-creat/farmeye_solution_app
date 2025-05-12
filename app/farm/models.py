@@ -132,3 +132,44 @@ class Alert(db.Model):
 
     def __repr__(self):
         return f"<Alert Type: {self.alert_type}, Status: {self.status}, Created At: {self.created_at}>"
+    
+class FarmStage(db.Model):
+    __tablename__ = 'farm_stages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    stage_name = db.Column(db.String(50), nullable=False)  # Unprepared, Prepared, Germination, Growth, Flowering, Harvesting
+    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    end_date = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), default='Active')  # Active, Completed
+    description = db.Column(db.Text)
+    
+    # Relationship with Farm
+    farm = db.relationship('Farm', backref='farm_stages', lazy=True)
+    # Relationship with Labor tasks
+    labor_tasks = db.relationship('LaborTask', backref='farm_stage', lazy=True)
+
+    def __repr__(self):
+        return f"<FarmStage {self.stage_name}, Farm: {self.farm_id}, Status: {self.status}>"
+
+class LaborTask(db.Model):
+    __tablename__ = 'labor_tasks'
+
+    id = db.Column(db.Integer, primary_key=True)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    stage_id = db.Column(db.Integer, db.ForeignKey('farm_stages.id'), nullable=True)
+    task_name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    assigned_to = db.Column(db.String(100), nullable=True)
+    start_date = db.Column(db.DateTime, nullable=True)
+    end_date = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), default='Pending')  # Pending, In Progress, Completed, Cancelled
+    priority = db.Column(db.String(20), default='Medium')  # Low, Medium, High
+    labor_hours = db.Column(db.Float, nullable=True)
+    cost = db.Column(db.Float, nullable=True)
+    
+    # Relationship with Farm
+    farm = db.relationship('Farm', backref='labor_tasks', lazy=True)
+
+    def __repr__(self):
+        return f"<LaborTask {self.task_name}, Farm: {self.farm_id}, Status: {self.status}>"
