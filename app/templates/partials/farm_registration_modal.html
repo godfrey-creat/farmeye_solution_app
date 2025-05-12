@@ -1,0 +1,147 @@
+<!-- templates/partials/farm_registration_modal.html -->
+<div id="farmRegistrationModal" class="modal-overlay">
+    <div class="modal-sidebar">
+        <div class="p-4 bg-white border-b flex justify-between items-center">
+            <h2 class="text-2xl font-bold">Farm Management</h2>
+            <button class="text-gray-500 hover:text-gray-700" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="overflow-y-auto h-full pb-20">
+            <!-- Farm Information -->
+            <div class="form-section">
+                <h3>Farm Information</h3>
+                <div class="input-group">
+                    <label>Farm Name</label>
+                    <input type="text" name="name" placeholder="Enter farm name" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="input-group">
+                        <label>Size (Acres)</label>
+                        <input type="number" name="size_acres" placeholder="Farm size in acres" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Crop Type</label>
+                        <input type="text" name="crop_type" placeholder="Primary crop type" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Details -->
+            <div class="form-section">
+                <h3>Location Details</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="input-group">
+                        <label>Latitude</label>
+                        <input type="text" name="latitude" placeholder="Farm latitude" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Longitude</label>
+                        <input type="text" name="longitude" placeholder="Farm longitude" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Region</label>
+                    <select name="region" required>
+                        <option value="">Select region</option>
+                        <!-- Add regions dynamically -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Soil Information -->
+            <div class="form-section">
+                <h3>Soil Information</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="input-group">
+                        <label>Soil Type</label>
+                        <select name="soil_type" required>
+                            <option value="">Select soil type</option>
+                            <option value="clay">Clay</option>
+                            <option value="loam">Loam</option>
+                            <option value="sandy">Sandy</option>
+                            <option value="silt">Silt</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>pH Level</label>
+                        <input type="number" name="ph_level" step="0.1" placeholder="Soil pH level">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Additional Soil Notes</label>
+                    <textarea name="soil_notes" rows="3" placeholder="Any additional information about soil conditions"></textarea>
+                </div>
+            </div>
+
+            <!-- Irrigation System -->
+            <div class="form-section">
+                <h3>Irrigation System</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="input-group">
+                        <label>Irrigation Type</label>
+                        <select name="irrigation_type">
+                            <option value="">Select type</option>
+                            <option value="drip">Drip Irrigation</option>
+                            <option value="sprinkler">Sprinkler System</option>
+                            <option value="flood">Flood Irrigation</option>
+                            <option value="manual">Manual Watering</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Water Source</label>
+                        <select name="water_source">
+                            <option value="">Select source</option>
+                            <option value="well">Well</option>
+                            <option value="river">River/Stream</option>
+                            <option value="rain">Rainwater Collection</option>
+                            <option value="municipal">Municipal Supply</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Details -->
+            <div class="form-section">
+                <h3>Additional Details</h3>
+                <div class="input-group">
+                    <label>Farm Description</label>
+                    <textarea name="description" rows="4" placeholder="Detailed description of your farm"></textarea>
+                </div>
+            </div>
+
+            <!-- Team Members -->
+            <div class="form-section">
+                <h3>Team Members</h3>
+                <div id="teamMembers" class="space-y-4">
+                    <!-- Template for team member -->
+                    <div class="team-member grid grid-cols-3 gap-4 items-center">
+                        <div class="input-group mb-0">
+                            <input type="email" placeholder="Email address" class="w-full">
+                        </div>
+                        <div class="input-group mb-0">
+                            <select class="w-full">
+                                <option value="viewer">Viewer</option>
+                                <option value="editor">Editor</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <button type="button" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="mt-4 text-primary hover:text-primary-dark">
+                    <i class="fas fa-plus mr-2"></i>Add Team Member
+                </button>
+            </div>
+        </div>
+
+        <!-- Fixed bottom action buttons -->
+        <div class="fixed bottom-0 right-0 w-600px bg-white border-t p-4 flex justify-end space-x-4">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Farm</button>
+        </div>
+    </div>
+</div>

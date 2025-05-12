@@ -23,6 +23,7 @@ Flask-WTF
 email-validator
 WTForms~=3.2.1
 PyJWT
+Flask-CORS==4.0.0
 
 # Form handling and validation
 WTForms-SQLAlchemy

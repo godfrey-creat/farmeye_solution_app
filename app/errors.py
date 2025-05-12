@@ -29,6 +29,10 @@ def init_app(app):
 def request_wants_json():
     """Check if the request prefers JSON response"""
     from flask import request
+    best = request.accept_mimetypes \
+        .best_match(['application/json', 'text/html'])
+    return best == 'application/json' or \
+        request.path.startswith('/api/')
 
     # Check Accept header for preferred response type
     best = request.accept_mimetypes.best_match(['application/json', 'text/html'])

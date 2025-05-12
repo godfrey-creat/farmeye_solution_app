@@ -38,9 +38,10 @@
         }
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    {% block extra_css %}{% endblock %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/skeleton.css') }}">
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    {% block extra_css %}{% endblock %}    <link rel="stylesheet" href="{{ url_for('static', filename='css/skeleton.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/modals.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script type="module" src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </head>
 
 <body class="font-sans bg-lighter text-dark">
