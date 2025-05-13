@@ -13,12 +13,11 @@ from wtforms.validators import DataRequired, Length
 class FarmForm(FlaskForm):
     farm_name = StringField('Farm Name', validators=[DataRequired(), Length(1, 100)])
     region = SelectField('Farm Region', choices=[
-        ('central', 'Central'), ('coast', 'Coast'), ('eastern', 'Eastern'), 
+        ('central', 'Central'), ('coast', 'Coast'), ('eastern', 'Eastern'),
         ('nairobi', 'Nairobi'), ('north_eastern', 'North Eastern'),
         ('nyanza', 'Nyanza'), ('rift_valley', 'Rift Valley'), ('western', 'Western')
     ], validators=[DataRequired()])
     submit = SubmitField('Next: Add Field')
-
 
 class FieldForm(FlaskForm):
     field_name = StringField('Field Name', validators=[DataRequired()])

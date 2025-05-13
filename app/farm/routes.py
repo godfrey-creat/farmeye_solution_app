@@ -251,16 +251,29 @@ def register_farm():
         db.session.commit()
         session['farm_id'] = farm.id
         return redirect(url_for('add_field'))
-    return render_template('register_farm.html', form=form)
+    return render_template('farm/register_farm.html', form=form)
 
-@farm.route('/add-field', methods=['GET', 'POST'])
-def add_field():
+farm_bp = Blueprint('farm', __name__)
+
+@farm_bp.route('/create-farm', methods=['GET', 'POST'])
+def create_farm():
+    form = FarmForm()
+    if form.validate_on_submit():
+        farm = Farm(
+            name=form.farm_name.data,
+            region=form.region.data,
+            user_id=1  # replace with current_user.id if using login system
+        )
+        db.session.add(farm)
+        db.session.commit()
+        flash("Farm created. Now add fields.", "success")
+        return redirect(url_for('farm.add_field', farm_id=farm.id))
+    return render_template('farm/create_farm.html', form=form)
+
+@farm_bp.route('/add-field/<int:farm_id>', methods=['GET', 'POST'])
+def add_field(farm_id):
     form = FieldForm()
     if form.validate_on_submit():
-        farm_id = session.get('farm_id')
-        if not farm_id:
-            return redirect(url_for('register_farm'))
-
         field = Field(
             name=form.field_name.data,
             crop_type=form.crop_type.data,
@@ -273,14 +286,12 @@ def add_field():
         )
         db.session.add(field)
         db.session.commit()
-
+        flash("Field added successfully!", "success")
         if form.add_another.data:
-            return redirect(url_for('add_field'))
-        elif form.finish.data:
-            session.pop('farm_id', None)
-            return redirect(url_for('success'))
-
-    return render_template('add_field.html', form=form)
+            return redirect(url_for('farm.add_field', farm_id=farm_id))
+        else:
+            return redirect(url_for('dashboard'))  # or wherever your app should go next
+    return render_template('farm/add_field.html', form=form)
 
 @farm.route('/success')
 def success():
