@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Add Field
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Add a Field to Your Farm</h2>
+    <form method="POST" action="{{ url_for('farm.add_field', farm_id=farm.id) }}">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            <label for="field_name">Field Name</label>
+            {{ form.field_name(class="form-control", id="field_name") }}
+            {% if form.field_name.errors %}
+                <small class="text-danger">{{ form.field_name.errors[0] }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="crop_type">Crop Type</label>
+            {{ form.crop_type(class="form-control", id="crop_type") }}
+            {% if form.crop_type.errors %}
+                <small class="text-danger">{{ form.crop_type.errors[0] }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="latitude">Latitude</label>
+            {{ form.latitude(class="form-control", id="latitude") }}
+            {% if form.latitude.errors %}
+                <small class="text-danger">{{ form.latitude.errors[0] }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="longitude">Longitude</label>
+            {{ form.longitude(class="form-control", id="longitude") }}
+            {% if form.longitude.errors %}
+                <small class="text-danger">{{ form.longitude.errors[0] }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="farming_method">Farming Method</label>
+            {{ form.farming_method(class="form-control", id="farming_method") }}
+            {% if form.farming_method.errors %}
+                <small class="text-danger">{{ form.farming_method.errors[0] }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="smart_devices">Smart Devices</label>
+            {{ form.smart_devices(class="form-control", id="smart_devices") }}
+            {% if form.smart_devices.errors %}
+                <small class="text-danger">{{ form.smart_devices.errors[0] }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="monitoring_goals">Monitoring Goals</label>
+            {{ form.monitoring_goals(class="form-control", id="monitoring_goals") }}
+            {% if form.monitoring_goals.errors %}
+                <small class="text-danger">{{ form.monitoring_goals.errors[0] }}</small>
+            {% endif %}
+        </div>
+
+        <div class="form-check mb-3">
+            {{ form.add_another(class="form-check-input", id="add_another") }}
+            <label class="form-check-label" for="add_another">Add Another Field</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <a href="{{ url_for('farm.dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

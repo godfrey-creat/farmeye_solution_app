@@ -242,35 +242,34 @@ def schedule():
     # You would add your schedule logic here
     return render_template('dashboard/schedule.html', active_page='schedule')
 
-@farm.route('/register-farm', methods=['GET', 'POST'])
-def register_farm():
-    form = FarmForm()
-    if form.validate_on_submit():
-        farm = Farm(name=form.farm_name.data, region=form.region.data)
-        db.session.add(farm)
-        db.session.commit()
-        session['farm_id'] = farm.id
-        return redirect(url_for('add_field'))
-    return render_template('farm/register_farm.html', form=form)
+# @farm.route('/register-farm', methods=['GET', 'POST'])
+# def register_farm():
+#     form = FarmForm()
+#     if form.validate_on_submit():
+#         farm = Farm(name=form.farm_name.data, region=form.region.data)
+#         db.session.add(farm)
+#         db.session.commit()
+#         session['farm_id'] = farm.id
+#         return redirect(url_for('add_field'))
+#     return render_template('farm/register_farm.html', form=form)
 
-farm_bp = Blueprint('farm', __name__)
 
-@farm_bp.route('/create-farm', methods=['GET', 'POST'])
+@farm.route('/create_farm', methods=['GET', 'POST'])
 def create_farm():
     form = FarmForm()
     if form.validate_on_submit():
         farm = Farm(
             name=form.farm_name.data,
             region=form.region.data,
-            user_id=1  # replace with current_user.id if using login system
+            user_id = current_user.id  # replace with current_user.id if using login system
         )
         db.session.add(farm)
         db.session.commit()
         flash("Farm created. Now add fields.", "success")
         return redirect(url_for('farm.add_field', farm_id=farm.id))
-    return render_template('farm/create_farm.html', form=form)
+    return render_template('farm/register_farm.html', form=form)
 
-@farm_bp.route('/add-field/<int:farm_id>', methods=['GET', 'POST'])
+@farm.route('/add-field/<int:farm_id>', methods=['GET', 'POST'])
 def add_field(farm_id):
     form = FieldForm()
     if form.validate_on_submit():

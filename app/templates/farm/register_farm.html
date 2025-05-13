@@ -77,692 +77,76 @@
     </header>
 
     <!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Farm Manager Info -->
-        <div class="lg:col-span-1">
-            <div class="bg-white shadow rounded-lg p-6 sticky top-4">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">Farm Manager Information</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">First Name</label>
-                        <div class="mt-1 p-2 bg-gray-50 rounded-md border border-gray-200">John</div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Last Name</label>
-                        <div class="mt-1 p-2 bg-gray-50 rounded-md border border-gray-200">Farmer</div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <div class="mt-1 p-2 bg-gray-50 rounded-md border border-gray-200">john@example.com</div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Region</label>
-                        <div class="mt-1 p-2 bg-gray-50 rounded-md border border-gray-200">Midwest</div>
+    <form method="POST" action="{{ url_for('farm.create_farm') }}" id="farm-registration-form">
+        {{ form.hidden_tag() }}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Farm Manager Info -->
+            <div class="lg:col-span-1">
+                <div class="bg-white shadow rounded-lg p-6 sticky top-4">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Farm Manager Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">First Name</label>
+                            <div class="mt-1 p-2 bg-gray-50 rounded-md border border-gray-200">{{ current_user.firstname }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                            <div class="mt-1 p-2 bg-gray-50 rounded-md border border-gray-200">{{ current_user.lastname }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            <div class="mt-1 p-2 bg-gray-50 rounded-md border border-gray-200">{{ current_user.email }}</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Region</label>
+                            <div class="mt-1 p-2 bg-gray-50 rounded-md border border-gray-200">{{ current_user.region }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Registration Forms -->
-        <div class="lg:col-span-2">
-            <!-- Team Members Section -->
-            <div class="bg-white shadow rounded-lg p-6 mb-8">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-800">Team Members</h2>
-                    <button id="add-team-member" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
-                        <i class="fas fa-plus mr-2"></i> Add Member
+            <!-- Registration Forms -->
+            <div class="lg:col-span-2">
+                <!-- Team Members Section -->
+                <div class="bg-white shadow rounded-lg p-6 mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Team Members</h2>
+                        <button type="button" id="add-team-member" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
+                            <i class="fas fa-plus mr-2"></i> Add Member
+                        </button>
+                    </div>
+                    
+                    <div id="teamMembers" class="space-y-4">
+                        <!-- Team member rows will be added here -->
+                    </div>
+                </div>
+
+                <!-- Farms Section -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Farms</h2>
+                        <button type="button" id="add-farm" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
+                            <i class="fas fa-plus mr-2"></i> Add Farm
+                        </button>
+                    </div>
+                    
+                    <div id="farms" class="space-y-6">
+                        <!-- Farm sections will be added here -->
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="mt-8 text-right">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium text-lg flex items-center mx-auto">
+                        <i class="fas fa-check-circle mr-2"></i> Complete Registration
                     </button>
                 </div>
-                
-                <div id="teamMembers" class="space-y-4">
-                    <!-- Team member rows will be added here -->
-                </div>
-            </div>
-
-            <!-- Farms Section -->
-            <div class="bg-white shadow rounded-lg p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-800">Farms</h2>
-                    <button id="add-farm" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
-                        <i class="fas fa-plus mr-2"></i> Add Farm
-                    </button>
-                </div>
-                
-                <div id="farms" class="space-y-6">
-                    <!-- Farm sections will be added here -->
-                </div>
-            </div>
-
-            <!-- Submit Button -->
-            <div class="mt-8 text-right">
-                <button id="submit-form" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium text-lg flex items-center mx-auto">
-                    <i class="fas fa-check-circle mr-2"></i> Complete Registration
-                </button>
             </div>
         </div>
-    </div>
-
-    <!-- Success Modal -->
-    <div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <div class="text-center">
-                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-check text-green-600 text-2xl"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Registration Successful!</h3>
-                <p class="text-gray-600 mb-6">Your farm(s) have been successfully registered. You'll be redirected to your dashboard shortly.</p>
-                <button id="close-success" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
-                    Continue
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Error Modal -->
-    <div id="error-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <div class="text-center">
-                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-exclamation text-red-600 text-2xl"></i>
-                </div>
-                <h3 id="error-title" class="text-2xl font-bold text-gray-800 mb-2">Registration Error</h3>
-                <p id="error-message" class="text-gray-600 mb-6">There was an issue with your registration. Please check the form and try again.</p>
-                <button id="close-error" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
-                    Try Again
-                </button>
-            </div>
-        </div>
-    </div>
+    </form>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-    // class FarmRegistrationController {
-    //     constructor() {
-    //         this.teamMembers = [];
-    //         this.farms = [];
-    //         this.initializeEventListeners();
-    //         this.initializeSampleData();
-    //     }
-
-    //     initializeEventListeners() {
-    //         // Add Team Member button
-    //         document.getElementById('add-team-member').addEventListener('click', () => {
-    //             this.addTeamMemberRow();
-    //         });
-
-    //         // Add Farm button
-    //         document.getElementById('add-farm').addEventListener('click', () => {
-    //             this.addFarmSection();
-    //         });
-
-    //         // Submit Form button
-    //         document.getElementById('submit-form').addEventListener('click', () => {
-    //             this.submitForm();
-    //         });
-
-    //         // Close modals
-    //         document.getElementById('close-success').addEventListener('click', () => {
-    //             document.getElementById('success-modal').classList.add('hidden');
-    //             // In a real app, this would redirect to dashboard
-    //         });
-
-    //         document.getElementById('close-error').addEventListener('click', () => {
-    //             document.getElementById('error-modal').classList.add('hidden');
-    //         });
-    //     }
-
-    //     initializeSampleData() {
-    //         // Add one team member and one farm by default
-    //         this.addTeamMemberRow();
-    //         this.addFarmSection();
-    //     }
-
-    //     // Add new team member row
-    //     addTeamMemberRow() {
-    //         const teamMember = {
-    //             id: Date.now().toString(),
-    //             firstName: '',
-    //             lastName: '',
-    //             email: '',
-    //             role: 'Laborer'
-    //         };
-
-    //         const row = this.createTeamMemberRow(teamMember);
-    //         document.getElementById('teamMembers').appendChild(row);
-    //         this.teamMembers.push(teamMember);
-    //     }
-
-    //     // Create team member row HTML
-    //     createTeamMemberRow(teamMember) {
-    //         const row = document.createElement('div');
-    //         row.className = 'border border-gray-200 rounded-md p-4';
-    //         row.dataset.id = teamMember.id;
-
-    //         row.innerHTML = `
-    //             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    //                 <div>
-    //                     <label class="block text-sm font-medium text-gray-700">First Name</label>
-    //                     <input type="text" class="team-first-name mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-    //                 </div>
-    //                 <div>
-    //                     <label class="block text-sm font-medium text-gray-700">Last Name</label>
-    //                     <input type="text" class="team-last-name mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-    //                 </div>
-    //                 <div>
-    //                     <label class="block text-sm font-medium text-gray-700">Email</label>
-    //                     <input type="email" class="team-email mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-    //                 </div>
-    //                 <div>
-    //                     <label class="block text-sm font-medium text-gray-700">Role</label>
-    //                     <select class="team-role mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-    //                         <option value="Laborer">Laborer</option>
-    //                         <option value="Farm Guide">Farm Guide</option>
-    //                         <option value="Harvester">Harvester</option>
-    //                         <option value="Irrigator">Irrigator</option>
-    //                         <option value="Planter">Planter</option>
-    //                         <option value="Weeder">Weeder</option>
-    //                     </select>
-    //                 </div>
-    //             </div>
-    //             <div class="mt-4 flex justify-end">
-    //                 <button class="remove-team-member bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-    //                     <i class="fas fa-trash-alt mr-1"></i> Remove
-    //                 </button>
-    //             </div>
-    //         `;
-
-    //         // Set initial values
-    //         row.querySelector('.team-first-name').value = teamMember.firstName;
-    //         row.querySelector('.team-last-name').value = teamMember.lastName;
-    //         row.querySelector('.team-email').value = teamMember.email;
-    //         row.querySelector('.team-role').value = teamMember.role;
-
-    //         // Add event listener for remove button
-    //         row.querySelector('.remove-team-member').addEventListener('click', () => {
-    //             if (confirm('Are you sure you want to remove this team member?')) {
-    //                 row.remove();
-    //                 this.teamMembers = this.teamMembers.filter(member => member.id !== teamMember.id);
-    //             }
-    //         });
-
-    //         // Add input change listeners
-    //         const inputs = row.querySelectorAll('input, select');
-    //         inputs.forEach(input => {
-    //             input.addEventListener('change', (e) => {
-    //                 const member = this.teamMembers.find(m => m.id === teamMember.id);
-    //                 if (member) {
-    //                     if (e.target.classList.contains('team-first-name')) member.firstName = e.target.value;
-    //                     if (e.target.classList.contains('team-last-name')) member.lastName = e.target.value;
-    //                     if (e.target.classList.contains('team-email')) member.email = e.target.value;
-    //                     if (e.target.classList.contains('team-role')) member.role = e.target.value;
-    //                 }
-    //             });
-    //         });
-
-    //         return row;
-    //     }
-
-    //     // Add new farm section
-    //     addFarmSection() {
-    //         const farm = {
-    //             id: Date.now().toString(),
-    //             name: '',
-    //             region: 'Midwest', // Default to user's region
-    //             fields: []
-    //         };
-
-    //         const section = this.createFarmSection(farm);
-    //         document.getElementById('farms').appendChild(section);
-    //         this.farms.push(farm);
-    //     }
-
-    //     // Create farm section HTML
-    //     createFarmSection(farm) {
-    //         const section = document.createElement('div');
-    //         section.className = 'border border-gray-200 rounded-md p-4';
-    //         section.dataset.id = farm.id;
-
-    //         section.innerHTML = `
-    //             <div class="mb-4">
-    //                 <h3 class="text-lg font-medium text-gray-800">Farm Details</h3>
-    //             </div>
-    //             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-    //                 <div>
-    //                     <label class="block text-sm font-medium text-gray-700">Farm Name</label>
-    //                     <input type="text" class="farm-name mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-    //                 </div>
-    //                 <div>
-    //                     <label class="block text-sm font-medium text-gray-700">Region</label>
-    //                     <input type="text" class="farm-region mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-    //                 </div>
-    //             </div>
-                
-    //             <div class="mb-4">
-    //                 <div class="flex justify-between items-center">
-    //                     <h4 class="font-medium text-gray-700">Fields</h4>
-    //                     <button class="add-field bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-    //                         <i class="fas fa-plus mr-1"></i> Add Field
-    //                     </button>
-    //                 </div>
-    //                 <div class="fields mt-4 space-y-4">
-    //                     <!-- Field sections will be added here -->
-    //                 </div>
-    //             </div>
-                
-    //             <div class="flex justify-end">
-    //                 <button class="remove-farm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-    //                     <i class="fas fa-trash-alt mr-1"></i> Remove Farm
-    //                 </button>
-    //             </div>
-    //         `;
-
-    //         // Set initial values
-    //         section.querySelector('.farm-name').value = farm.name;
-    //         section.querySelector('.farm-region').value = farm.region;
-
-    //         // Add event listener for remove button
-    //         section.querySelector('.remove-farm').addEventListener('click', () => {
-    //             if (confirm('Are you sure you want to remove this farm and all its fields?')) {
-    //                 section.remove();
-    //                 this.farms = this.farms.filter(f => f.id !== farm.id);
-    //             }
-    //         });
-
-    //         // Add field button
-    //         section.querySelector('.add-field').addEventListener('click', () => {
-    //             this.addField(section, farm);
-    //         });
-
-    //         // Add input change listeners
-    //         const inputs = section.querySelectorAll('input');
-    //         inputs.forEach(input => {
-    //             input.addEventListener('change', (e) => {
-    //                 const currentFarm = this.farms.find(f => f.id === farm.id);
-    //                 if (currentFarm) {
-    //                     if (e.target.classList.contains('farm-name')) currentFarm.name = e.target.value;
-    //                     if (e.target.classList.contains('farm-region')) currentFarm.region = e.target.value;
-    //                 }
-    //             });
-    //         });
-
-    //         return section;
-    //     }
-
-    //     // Add field to farm
-    //     addField(farmSection, farm) {
-    //         const field = {
-    //             id: Date.now().toString(),
-    //             name: '',
-    //             boundaries: []
-    //         };
-
-    //         const fieldSection = this.createFieldSection(field, farmSection, farm);
-    //         farmSection.querySelector('.fields').appendChild(fieldSection);
-    //         farm.fields.push(field);
-    //     }
-
-    //     // Create field section HTML
-    //     createFieldSection(field, farmSection, farm) {
-    //         const section = document.createElement('div');
-    //         section.className = 'border border-gray-200 rounded-md p-4';
-    //         section.dataset.id = field.id;
-
-    //         section.innerHTML = `
-    //             <div class="mb-4">
-    //                 <div class="flex justify-between items-center">
-    //                     <h4 class="font-medium text-gray-700">Field Details</h4>
-    //                     <button class="remove-field bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-    //                         <i class="fas fa-trash-alt mr-1"></i> Remove Field
-    //                     </button>
-    //                 </div>
-    //                 <div class="mt-2">
-    //                     <label class="block text-sm font-medium text-gray-700">Field Name</label>
-    //                     <input type="text" class="field-name mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-    //                 </div>
-    //             </div>
-                
-    //             <div class="mb-4">
-    //                 <div class="flex justify-between items-center">
-    //                     <h4 class="font-medium text-gray-700">Boundary Markers</h4>
-    //                     <button class="add-boundary bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-    //                         <i class="fas fa-plus mr-1"></i> Add Marker
-    //                     </button>
-    //                 </div>
-    //                 <p class="text-xs text-gray-500 mt-1">Add at least 3 markers to define the field boundaries</p>
-                    
-    //                 <div class="map-preview mt-2 rounded-md overflow-hidden relative">
-    //                     <!-- Markers will be added here dynamically -->
-    //                     <div class="absolute inset-0 flex items-center justify-center text-gray-400">
-    //                         <i class="fas fa-map-marked-alt text-3xl"></i>
-    //                     </div>
-    //                 </div>
-                    
-    //                 <div class="boundary-markers mt-4 space-y-3">
-    //                     <!-- Boundary marker rows will be added here -->
-    //                 </div>
-    //             </div>
-    //         `;
-
-    //         // Set initial values
-    //         section.querySelector('.field-name').value = field.name;
-
-    //         // Add event listener for remove button
-    //         section.querySelector('.remove-field').addEventListener('click', () => {
-    //             if (confirm('Are you sure you want to remove this field and all its boundary markers?')) {
-    //                 section.remove();
-    //                 const currentFarm = this.farms.find(f => f.id === farm.id);
-    //                 if (currentFarm) {
-    //                     currentFarm.fields = currentFarm.fields.filter(f => f.id !== field.id);
-    //                 }
-    //             }
-    //         });
-
-    //         // Add boundary button
-    //         section.querySelector('.add-boundary').addEventListener('click', () => {
-    //             this.addBoundaryMarker(section, field);
-    //         });
-
-    //         // Add input change listeners
-    //         section.querySelector('.field-name').addEventListener('change', (e) => {
-    //             const currentFarm = this.farms.find(f => f.id === farm.id);
-    //             if (currentFarm) {
-    //                 const currentField = currentFarm.fields.find(f => f.id === field.id);
-    //                 if (currentField) {
-    //                     currentField.name = e.target.value;
-    //                 }
-    //             }
-    //         });
-
-    //         return section;
-    //     }
-
-    //     // Add boundary marker to field
-    //     addBoundaryMarker(fieldSection, field) {
-    //         const marker = {
-    //             id: Date.now().toString(),
-    //             lat: '',
-    //             lng: ''
-    //         };
-
-    //         const markerRow = this.createBoundaryMarkerRow(marker, fieldSection, field);
-    //         fieldSection.querySelector('.boundary-markers').appendChild(markerRow);
-    //         field.boundaries.push(marker);
-    //         this.updateMapPreview(fieldSection, field);
-    //     }
-
-    //     // Create boundary marker row HTML
-    //     createBoundaryMarkerRow(marker, fieldSection, field) {
-    //         const row = document.createElement('div');
-    //         row.className = 'grid grid-cols-1 md:grid-cols-3 gap-3 items-end';
-    //         row.dataset.id = marker.id;
-
-    //         row.innerHTML = `
-    //             <div>
-    //                 <label class="block text-sm font-medium text-gray-700">Latitude</label>
-    //                 <input type="number" step="any" class="marker-lat mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="e.g. 40.7128" required>
-    //             </div>
-    //             <div>
-    //                 <label class="block text-sm font-medium text-gray-700">Longitude</label>
-    //                 <input type="number" step="any" class="marker-lng mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="e.g. -74.0060" required>
-    //             </div>
-    //             <div class="flex space-x-2">
-    //                 <button class="get-location bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-    //                     <i class="fas fa-location-arrow mr-1"></i> Current
-    //                 </button>
-    //                 <button class="remove-marker bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-    //                     <i class="fas fa-trash-alt mr-1"></i>
-    //                 </button>
-    //             </div>
-    //         `;
-
-    //         // Set initial values
-    //         row.querySelector('.marker-lat').value = marker.lat;
-    //         row.querySelector('.marker-lng').value = marker.lng;
-
-    //         // Add event listener for remove button
-    //         row.querySelector('.remove-marker').addEventListener('click', () => {
-    //             if (confirm('Are you sure you want to remove this boundary marker?')) {
-    //                 row.remove();
-    //                 field.boundaries = field.boundaries.filter(m => m.id !== marker.id);
-    //                 this.updateMapPreview(fieldSection, field);
-    //             }
-    //         });
-
-    //         // Add event listener for current location button
-    //         row.querySelector('.get-location').addEventListener('click', () => {
-    //             this.getCurrentLocation(
-    //                 row.querySelector('.marker-lat'),
-    //                 row.querySelector('.marker-lng'),
-    //                 marker,
-    //                 fieldSection,
-    //                 field
-    //             );
-    //         });
-
-    //         // Add input change listeners
-    //         const inputs = row.querySelectorAll('input');
-    //         inputs.forEach(input => {
-    //             input.addEventListener('change', (e) => {
-    //                 const currentMarker = field.boundaries.find(m => m.id === marker.id);
-    //                 if (currentMarker) {
-    //                     if (e.target.classList.contains('marker-lat')) currentMarker.lat = e.target.value;
-    //                     if (e.target.classList.contains('marker-lng')) currentMarker.lng = e.target.value;
-    //                     this.updateMapPreview(fieldSection, field);
-    //                 }
-    //             });
-    //         });
-
-    //         return row;
-    //     }
-
-    //     // Get current location
-    //     getCurrentLocation(latInput, lngInput, marker, fieldSection, field) {
-    //         if (navigator.geolocation) {
-    //             latInput.disabled = true;
-    //             lngInput.disabled = true;
-                
-    //             // Show loading state
-    //             const button = latInput.parentElement.parentElement.querySelector('.get-location');
-    //             const originalHTML = button.innerHTML;
-    //             button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Locating...';
-    //             button.disabled = true;
-                
-    //             navigator.geolocation.getCurrentPosition(
-    //                 (position) => {
-    //                     latInput.value = position.coords.latitude.toFixed(6);
-    //                     lngInput.value = position.coords.longitude.toFixed(6);
-    //                     marker.lat = latInput.value;
-    //                     marker.lng = lngInput.value;
-                        
-    //                     // Restore button
-    //                     button.innerHTML = originalHTML;
-    //                     button.disabled = false;
-    //                     latInput.disabled = false;
-    //                     lngInput.disabled = false;
-                        
-    //                     this.updateMapPreview(fieldSection, field);
-    //                 },
-    //                 (error) => {
-    //                     console.error('Error getting location:', error);
-    //                     alert('Could not get your current location. Please enter coordinates manually.');
-                        
-    //                     // Restore button
-    //                     button.innerHTML = originalHTML;
-    //                     button.disabled = false;
-    //                     latInput.disabled = false;
-    //                     lngInput.disabled = false;
-    //                 }
-    //             );
-    //         } else {
-    //             alert('Geolocation is not supported by your browser. Please enter coordinates manually.');
-    //         }
-    //     }
-
-    //     // Update map preview with markers
-    //     updateMapPreview(fieldSection, field) {
-    //         const mapPreview = fieldSection.querySelector('.map-preview');
-    //         mapPreview.innerHTML = '';
-            
-    //         // Add markers to the preview
-    //         field.boundaries.forEach(marker => {
-    //             if (marker.lat && marker.lng) {
-    //                 const lat = parseFloat(marker.lat);
-    //                 const lng = parseFloat(marker.lng);
-                    
-    //                 // Normalize coordinates to fit within the preview (simple approximation)
-    //                 // In a real app, you'd use proper map projection
-    //                 const x = ((lng + 180) / 360) * 100;
-    //                 const y = ((90 - lat) / 180) * 100;
-                    
-    //                 const markerElement = document.createElement('div');
-    //                 markerElement.className = 'marker';
-    //                 markerElement.style.left = `${x}%`;
-    //                 markerElement.style.top = `${y}%`;
-                    
-    //                 // Add tooltip
-    //                 markerElement.title = `Lat: ${marker.lat}, Lng: ${marker.lng}`;
-                    
-    //                 mapPreview.appendChild(markerElement);
-    //             }
-    //         });
-            
-    //         // Show placeholder if no markers
-    //         if (field.boundaries.length === 0 || !field.boundaries.some(m => m.lat && m.lng)) {
-    //             const placeholder = document.createElement('div');
-    //             placeholder.className = 'absolute inset-0 flex items-center justify-center text-gray-400';
-    //             placeholder.innerHTML = '<i class="fas fa-map-marked-alt text-3xl"></i>';
-    //             mapPreview.appendChild(placeholder);
-    //         }
-    //     }
-
-    //     // Validate form data
-    //     validateForm() {
-    //         let isValid = true;
-    //         const errors = [];
-            
-    //         // Validate team members
-    //         if (this.teamMembers.length === 0) {
-    //             errors.push('Please add at least one team member');
-    //             isValid = false;
-    //         } else {
-    //             this.teamMembers.forEach((member, index) => {
-    //                 if (!member.firstName || !member.lastName || !member.email) {
-    //                     errors.push(`Team member ${index + 1} is missing required fields`);
-    //                     isValid = false;
-    //                 }
-                    
-    //                 // Simple email validation
-    //                 if (member.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email)) {
-    //                     errors.push(`Team member ${index + 1} has an invalid email address`);
-    //                     isValid = false;
-    //                 }
-    //             });
-    //         }
-            
-    //         // Validate farms
-    //         if (this.farms.length === 0) {
-    //             errors.push('Please add at least one farm');
-    //             isValid = false;
-    //         } else {
-    //             this.farms.forEach((farm, farmIndex) => {
-    //                 if (!farm.name) {
-    //                     errors.push(`Farm ${farmIndex + 1} is missing a name`);
-    //                     isValid = false;
-    //                 }
-                    
-    //                 // Validate fields
-    //                 if (farm.fields.length === 0) {
-    //                     errors.push(`Farm "${farm.name}" has no fields`);
-    //                     isValid = false;
-    //                 } else {
-    //                     farm.fields.forEach((field, fieldIndex) => {
-    //                         if (!field.name) {
-    //                             errors.push(`Field ${fieldIndex + 1} in farm "${farm.name}" is missing a name`);
-    //                             isValid = false;
-    //                         }
-                            
-    //                         // Validate boundary markers
-    //                         if (field.boundaries.length < 3) {
-    //                             errors.push(`Field "${field.name}" in farm "${farm.name}" needs at least 3 boundary markers`);
-    //                             isValid = false;
-    //                         } else {
-    //                             field.boundaries.forEach((marker, markerIndex) => {
-    //                                 if (!marker.lat || !marker.lng) {
-    //                                     errors.push(`Boundary marker ${markerIndex + 1} in field "${field.name}" is missing coordinates`);
-    //                                     isValid = false;
-    //                                 }
-    //                             });
-    //                         }
-    //                     });
-    //                 }
-    //             });
-    //         }
-            
-    //         if (!isValid) {
-    //             this.showError('Validation Error', errors.join('<br>'));
-    //         }
-            
-    //         return isValid;
-    //     }
-
-    //     // Show error message
-    //     showError(title, message) {
-    //         document.getElementById('error-title').textContent = title;
-    //         document.getElementById('error-message').innerHTML = message;
-    //         document.getElementById('error-modal').classList.remove('hidden');
-    //     }
-
-    //     // Submit form data
-    //     async submitForm() {
-    //         if (!this.validateForm()) {
-    //             return;
-    //         }
-            
-    //         // Prepare form data
-    //         const formData = {
-    //             manager: {
-    //                 firstName: 'John', // From the read-only section
-    //                 lastName: 'Farmer',
-    //                 email: 'john@example.com',
-    //                 region: 'Midwest'
-    //             },
-    //             teamMembers: this.teamMembers,
-    //             farms: this.farms
-    //         };
-            
-    //         // Show loading state on submit button
-    //         const submitButton = document.getElementById('submit-form');
-    //         const originalHTML = submitButton.innerHTML;
-    //         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
-    //         submitButton.disabled = true;
-            
-    //         try {
-    //             // In a real app, this would be an actual API call
-    //             // For this demo, we'll simulate a network request
-    //             await new Promise(resolve => setTimeout(resolve, 1500));
-                
-    //             // Simulate success
-    //             document.getElementById('success-modal').classList.remove('hidden');
-                
-    //             // In a real app, this would redirect to dashboard
-    //             // setTimeout(() => { window.location.href = '/dashboard'; }, 3000);
-    //         } catch (error) {
-    //             console.error('Error:', error);
-    //             this.showError('Submission Failed', 'There was an error submitting your farm registration. Please try again.');
-    //         } finally {
-    //             // Restore button
-    //             submitButton.innerHTML = originalHTML;
-    //             submitButton.disabled = false;
-    //         }
-    //     }
-    // }
-
-    // // Initialize the controller when the DOM is loaded
-    // document.addEventListener('DOMContentLoaded', () => {
-    //     const controller = new FarmRegistrationController();
-    // });
-</script>
 <script src="{{ url_for('static', filename='js/farm_registration.js') }}"></script>
 {% endblock %}
