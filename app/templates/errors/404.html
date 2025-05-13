@@ -1,0 +1,14 @@
+
+{% block title %}404 - Page Not Found{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center">
+    <div class="text-center">
+        <h1 class="text-6xl font-bold text-primary mb-4">404</h1>
+        <p class="text-xl text-gray-600 mb-8">{{ error_message|default('Page not found') }}</p>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+            <i class="fas fa-home mr-2"></i>Return to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
 # app/api/routes.py
-from flask import jsonify, current_app
+from flask import jsonify, current_app, request
 from flask_login import login_required, current_user
 import requests
 from datetime import datetime, timedelta
@@ -22,7 +22,12 @@ load_dotenv()
 @login_required
 def dashboard_data():
     """API endpoint that provides dashboard data in JSON format"""
-    # Get the user's farms
+    # Get time range from query params
+    time_range = request.args.get("range", "30")
+    try:
+        time_range = int(time_range)
+    except ValueError:
+        time_range = 30  # Get the user's farms
     farms = Farm.query.filter_by(user_id=current_user.id).all()
     farm_team_memberships = FarmTeamMember.query.filter_by(
         user_id=current_user.id
@@ -31,7 +36,15 @@ def dashboard_data():
     all_farms = farms + team_farms
 
     if not all_farms:
-        return jsonify({"error": "No farm found. Please register a farm first."}), 404
+        return jsonify(
+            {
+                "error": "No farm found. Please register a farm first.",
+                "metrics": {},
+                "recommendations": [],
+                "alerts": [],
+                "historical_data": None,
+            }
+        )
 
     # Use the first farm as the primary farm
     farm = all_farms[0]
@@ -153,48 +166,21 @@ def dashboard_data():
         "stage": farm_stage.stage_name if farm_stage else "Vegetative",
         "next_stage": "Flowering (in 14 days)",
         "harvest_date": "August 15",
-    }
+    }  # 5. Field Metrics Historical Data
+    # Generate dates for the selected time range
+    dates = [
+        (datetime.now() - timedelta(days=i)).strftime("%b %d")
+        for i in range(time_range)
+    ]
+    dates.reverse()
 
-    # 5. Field Metrics Historical Data
-    # This would come from sensor history, but for now we'll use mock data
+    # Generate mock data for the selected time range
     historical_data = {
-        "temperature": [22, 24, 26, 25, 27, 26, 24, 25, 26, 28, 29, 27, 26, 24, 23],
-        "moisture": [68, 65, 62, 60, 58, 75, 72, 68, 65, 62, 59, 56, 53, 70, 68],
-        "growth": [
-            2.1,
-            2.3,
-            2.8,
-            3.0,
-            3.2,
-            3.1,
-            2.9,
-            2.7,
-            2.5,
-            2.4,
-            2.2,
-            2.0,
-            1.9,
-            1.8,
-            1.7,
-        ],
-        "soil_health": [76, 75, 74, 76, 78, 80, 78, 77, 76, 75, 74, 73, 75, 78, 77],
-        "dates": [
-            "May 1",
-            "May 3",
-            "May 5",
-            "May 7",
-            "May 9",
-            "May 11",
-            "May 13",
-            "May 15",
-            "May 17",
-            "May 19",
-            "May 21",
-            "May 23",
-            "May 25",
-            "May 27",
-            "May 29",
-        ],
+        "temperature": generate_mock_data(time_range, 20, 30),
+        "moisture": generate_mock_data(time_range, 50, 80),
+        "growth": generate_mock_data(time_range, 1.5, 3.5, 1),
+        "soil_health": generate_mock_data(time_range, 70, 85),
+        "dates": dates,
     }
 
     # 6. Alerts and Recommendations
@@ -314,3 +300,121 @@ def user_profile():
     }
 
     return jsonify(profile_data)
+
+
+@api.route("/metric-data", methods=["GET"])
+@login_required
+def metric_data():
+    """API endpoint that provides metric-specific data for charts"""
+    metric = request.args.get("metric", "").lower()
+    time_range = int(request.args.get("range", "30"))
+
+    # Get the user's farm
+    farm = Farm.query.filter_by(user_id=current_user.id).first()
+    if not farm:
+        return jsonify({"error": "No farm found. Please register a farm first."}), 404
+
+    # Generate dates for the time range
+    dates = [
+        (datetime.now() - timedelta(days=i)).strftime("%b %d")
+        for i in range(time_range)
+    ]
+    dates.reverse()
+
+    # Get historical data based on metric type
+    if metric == "temperature":
+        data = {
+            "labels": dates,
+            "datasets": [
+                {
+                    "label": "Temperature (°C)",
+                    "data": generate_mock_data(
+                        time_range, 20, 30
+                    ),  # Mock data between 20-30°C
+                    "borderColor": "#F1C40F",
+                    "backgroundColor": "rgba(241, 196, 15, 0.1)",
+                    "borderWidth": 3,
+                    "pointRadius": 4,
+                    "pointBackgroundColor": "#F1C40F",
+                    "tension": 0.3,
+                    "fill": True,
+                }
+            ],
+        }
+    elif metric == "moisture":
+        data = {
+            "labels": dates,
+            "datasets": [
+                {
+                    "label": "Soil Moisture (%)",
+                    "data": generate_mock_data(
+                        time_range, 50, 80
+                    ),  # Mock data between 50-80%
+                    "borderColor": "#3498DB",
+                    "backgroundColor": "rgba(52, 152, 219, 0.1)",
+                    "borderWidth": 3,
+                    "pointRadius": 4,
+                    "pointBackgroundColor": "#3498DB",
+                    "tension": 0.3,
+                    "fill": True,
+                }
+            ],
+        }
+    elif metric == "growth":
+        data = {
+            "labels": dates,
+            "datasets": [
+                {
+                    "label": "Growth Rate (cm/day)",
+                    "data": generate_mock_data(
+                        time_range, 1.5, 3.5, 1
+                    ),  # Mock data between 1.5-3.5 cm/day
+                    "borderColor": "#2ECC71",
+                    "backgroundColor": "rgba(46, 204, 113, 0.1)",
+                    "borderWidth": 3,
+                    "pointRadius": 4,
+                    "pointBackgroundColor": "#2ECC71",
+                    "tension": 0.3,
+                    "fill": True,
+                }
+            ],
+        }
+    elif metric == "soil health":
+        data = {
+            "labels": dates,
+            "datasets": [
+                {
+                    "label": "Soil Health Score",
+                    "data": generate_mock_data(
+                        time_range, 70, 85
+                    ),  # Mock data between 70-85
+                    "borderColor": "#6E2C00",
+                    "backgroundColor": "rgba(110, 44, 0, 0.1)",
+                    "borderWidth": 3,
+                    "pointRadius": 4,
+                    "pointBackgroundColor": "#6E2C00",
+                    "tension": 0.3,
+                    "fill": True,
+                }
+            ],
+        }
+    else:
+        return jsonify({"error": "Invalid metric specified"}), 400
+
+    return jsonify(data)
+
+
+def generate_mock_data(count, min_val, max_val, decimals=0):
+    """Generate mock data points with some realistic variation"""
+    import random
+
+    data = []
+    value = random.uniform(min_val, max_val)
+
+    for _ in range(count):
+        # Add some random variation while staying within bounds
+        change = random.uniform(-2, 2)
+        value = max(min_val, min(max_val, value + change))
+        data.append(round(value, decimals))
+
+    return data

@@ -96,11 +96,10 @@
 <!-- Charts Section -->
 <div class="mb-8">
     <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Field Metrics</h2>
-        <select class="border border-primary rounded-lg text-sm px-3 py-2 bg-white">
-            <option>Last 7 days</option>
-            <option selected>Last 30 days</option>
-            <option>This season</option>
+        <h2 class="text-xl font-semibold">Field Metrics</h2>        <select id="timeRangeSelector" class="border border-primary rounded-lg text-sm px-3 py-2 bg-white">
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">This season</option>
         </select>
     </div>
     <div class="bg-white rounded-xl p-6 shadow-card">

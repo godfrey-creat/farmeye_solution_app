@@ -16,12 +16,20 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from .. import db
 from . import farm
-from .forms import FarmForm, ImageUploadForm, SensorDataForm
-from .models import Farm, FarmImage, SensorData, Alert, FarmTeamMember
-
-# from ..decorators import permission_required
-from ..ml.utils import process_farm_image
-from flask import Blueprint, jsonify, current_app
+from .forms import FarmForm, ImageUploadForm, SensorDataForm, FarmRegistrationForm
+from .models import (
+    Farm,
+    FarmImage,
+    Field,
+    BoundaryMarker,
+    SensorData,
+    Alert,
+    FarmTeamMember,
+    FarmStage,
+    PestControl,
+)
+from ..auth.models import User  # Add this import
+from ..decorators import require_farm_registration
 import requests
 from datetime import datetime, timedelta
 from ..farm.models import Farm, SensorData, Alert, FarmStage, PestControl
@@ -29,6 +37,7 @@ from ..farm.models import Farm, SensorData, Alert, FarmStage, PestControl
 
 @farm.route("/dashboard")
 @login_required
+@require_farm_registration
 def dashboard():
     """Display farmer's dashboard with overview of farms"""
     # Get user's farms and alerts even if not approved
@@ -116,6 +125,7 @@ def dashboard():
 
 @farm.route("/field_map")
 @login_required
+@require_farm_registration
 def field_map():
     """Display field map view"""
     # You would add your field map logic here
@@ -124,6 +134,7 @@ def field_map():
 
 @farm.route("/analytics")
 @login_required
+@require_farm_registration
 def analytics():
     """Display analytics view"""
     # You would add your analytics logic here
@@ -132,6 +143,7 @@ def analytics():
 
 @farm.route("/irrigation")
 @login_required
+@require_farm_registration
 def irrigation():
     """Display irrigation management view"""
     # You would add your irrigation logic here
@@ -140,6 +152,7 @@ def irrigation():
 
 @farm.route("/weather")
 @login_required
+@require_farm_registration
 def weather():
     """Display weather forecast view"""
     # Redirect to the weather module
@@ -148,6 +161,7 @@ def weather():
 
 @farm.route("/pest_control")
 @login_required
+@require_farm_registration
 def pest_control():
     """Display pest control view"""
     # Redirect to the pest control module
@@ -156,6 +170,7 @@ def pest_control():
 
 @farm.route("/schedule")
 @login_required
+@require_farm_registration
 def schedule():
     """Display schedule view"""
     # You would add your schedule logic here
@@ -163,124 +178,111 @@ def schedule():
 
 
 @farm.route("/register", methods=["GET", "POST"])
+@farm.route("/register_farm", methods=["GET", "POST"])
 @login_required
 def register_farm():
-    """Register a new farm"""
-    if not current_user.is_approved:
-        if request.is_json:
-            return (
-                jsonify(
-                    {
-                        "error": "Your account must be approved before registering a farm."
-                    }
-                ),
-                403,
-            )
-        flash("Your account must be approved before registering a farm.", "warning")
+    """Handle farm registration for new users"""
+    has_farm = Farm.query.filter_by(user_id=current_user.id).first() is not None
+    if has_farm and request.method == "GET":
         return redirect(url_for("farm.dashboard"))
 
     if request.method == "POST":
         if request.is_json:
+            data = request.get_json()
             try:
-                data = request.get_json()
+                # Begin transaction
+                db.session.begin_nested()
 
-                # Basic validation
-                required_fields = ["name", "size_acres", "crop_type"]
-                for field in required_fields:
-                    if not data.get(field):
-                        return jsonify({"error": f"{field} is required"}), 400
+                # Process farms
+                for farm_data in data.get("farms", []):
+                    farm = Farm(
+                        name=farm_data["name"],
+                        region=farm_data["region"],
+                        user_id=current_user.id,
+                        created_at=datetime.utcnow(),
+                    )
+                    db.session.add(farm)
+                    db.session.flush()
 
-                # Create new farm with extended fields
-                farm = Farm(
-                    name=data["name"],
-                    size=float(
-                        data["size_acres"]
-                    ),  # Keep size field for backwards compatibility
-                    size_acres=float(data["size_acres"]),
-                    crop_type=data["crop_type"],
-                    description=data.get("description", ""),
-                    user_id=current_user.id,
-                    latitude=data.get("latitude"),
-                    longitude=data.get("longitude"),
-                    region=data.get("region"),
-                    soil_type=data.get("soil_type"),
-                    ph_level=data.get("ph_level"),
-                    soil_notes=data.get("soil_notes"),
-                    irrigation_type=data.get("irrigation_type"),
-                    water_source=data.get("water_source"),
-                )
+                    # Process fields
+                    for field_data in farm_data.get("fields", []):
+                        field = Field(
+                            name=field_data["name"],
+                            farm_id=farm.id,
+                            created_at=datetime.utcnow(),
+                        )
+                        db.session.add(field)
+                        db.session.flush()
 
-                # Set location from coordinates if provided
-                if data.get("latitude") and data.get("longitude"):
-                    farm.location = f"({data['latitude']}, {data['longitude']})"
-                else:
-                    farm.location = data.get("region", "Unknown")
+                        # Process boundaries
+                        for boundary in field_data.get("boundaries", []):
+                            marker = BoundaryMarker(
+                                field_id=field.id,
+                                latitude=float(boundary["lat"]),
+                                longitude=float(boundary["lng"]),
+                                created_at=datetime.utcnow(),
+                            )
+                            db.session.add(marker)
 
-                db.session.add(farm)
+                # Process team members
+                for member in data.get("teamMembers", []):
+                    user = User.query.filter_by(email=member["email"]).first()
+                    if not user:
+                        user = User(
+                            email=member["email"],
+                            username=member["email"].split("@")[0],
+                            first_name=member["firstName"],
+                            last_name=member["lastName"],
+                            user_type="team_member",
+                            is_approved=False,
+                        )
+                        db.session.add(user)
+                        db.session.flush()
+
+                    # Add team member to farms
+                    for farm in Farm.query.filter_by(user_id=current_user.id).all():
+                        exists = FarmTeamMember.query.filter_by(
+                            farm_id=farm.id, user_id=user.id
+                        ).first()
+
+                        if not exists:
+                            team_member = FarmTeamMember(
+                                farm_id=farm.id,
+                                user_id=user.id,
+                                role=member["role"],
+                                added_at=datetime.utcnow(),
+                                added_by=current_user.id,
+                            )
+                            db.session.add(team_member)
+
                 db.session.commit()
-
-                # Process team members if provided
-                if data.get("team_members"):
-                    try:
-                        from ..auth.models import User
-
-                        for member in data["team_members"]:
-                            user = User.query.filter_by(email=member["email"]).first()
-                            if user:
-                                team_member = FarmTeamMember(
-                                    farm_id=farm.id,
-                                    user_id=user.id,
-                                    role=member["role"],
-                                    added_by=current_user.id,
-                                )
-                                db.session.add(team_member)
-                        db.session.commit()
-                    except Exception as e:
-                        current_app.logger.error(f"Error adding team members: {str(e)}")
-                        # Don't fail the whole request if team member addition fails
-
-                return (
-                    jsonify(
-                        {"message": "Farm registered successfully!", "farm_id": farm.id}
-                    ),
-                    201,
+                return jsonify(
+                    {"success": True, "message": "Farm registration successful!"}
                 )
 
             except Exception as e:
                 db.session.rollback()
-                current_app.logger.error(f"Error registering farm: {str(e)}")
-                return jsonify({"error": str(e)}), 500
-        else:
-            # Handle regular form submission
-            form = FarmForm()
-            if form.validate_on_submit():
-                try:
-                    farm = Farm(
-                        name=form.name.data,
-                        location=form.location.data,
-                        size_acres=form.size_acres.data,
-                        crop_type=form.crop_type.data,
-                        description=form.description.data,
-                        user_id=current_user.id,
-                    )
-                    db.session.add(farm)
-                    db.session.commit()
-                    flash("Farm registered successfully!", "success")
-                    return redirect(url_for("farm.view_farm", farm_id=farm.id))
-                except Exception as e:
-                    db.session.rollback()
-                    current_app.logger.error(f"Error registering farm: {str(e)}")
-                    flash("An error occurred while registering the farm.", "error")
-
-    # GET request - show the registration form
-    form = FarmForm()
+                current_app.logger.error(f"Farm registration error: {str(e)}")
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": "An error occurred during registration. Please try again.",
+                        }
+                    ),
+                    500,
+                )  # For GET requests, render the registration page with CSRF protection
+    form = FarmRegistrationForm()
     return render_template(
-        "farm/register_farm.html", form=form, active_page="dashboard"
+        "farm/farm_registration_standalone.html",
+        form=form,
+        current_user=current_user,  # Add current_user to template context
     )
 
 
 @farm.route("/view/<int:farm_id>")
 @login_required
+@require_farm_registration
 def view_farm(farm_id):
     """View details of a specific farm"""
     farm = Farm.query.get_or_404(farm_id)
@@ -332,6 +334,7 @@ def view_farm(farm_id):
 
 @farm.route("/edit/<int:farm_id>", methods=["GET", "POST"])
 @login_required
+@require_farm_registration
 def edit_farm(farm_id):
     """Edit farm details"""
     farm = Farm.query.get_or_404(farm_id)
@@ -370,6 +373,7 @@ def edit_farm(farm_id):
 
 @farm.route("/upload_image/<int:farm_id>", methods=["GET", "POST"])
 @login_required
+@require_farm_registration
 def upload_image(farm_id):
     """Upload farm image for analysis"""
     farm = Farm.query.get_or_404(farm_id)
@@ -424,6 +428,7 @@ def upload_image(farm_id):
 
 @farm.route("/add_sensor_data/<int:farm_id>", methods=["GET", "POST"])
 @login_required
+@require_farm_registration
 def add_sensor_data(farm_id):
     """Manually add sensor data"""
     farm = Farm.query.get_or_404(farm_id)
@@ -459,6 +464,7 @@ def add_sensor_data(farm_id):
 
 @farm.route("/alerts")
 @login_required
+@require_farm_registration
 def alerts():
     """View all alerts for user's farms"""
     # Get user's farms
@@ -512,6 +518,7 @@ def debug():
     return jsonify(debug_info)
 
 
+@farm.route("/api/dashboard-data")
 @login_required
 def dashboard_data():
     """API endpoint that provides dashboard data in JSON format"""
@@ -521,201 +528,34 @@ def dashboard_data():
     if not farm:
         return jsonify({"error": "No farm found. Please register a farm first."}), 404
 
-    # Get the selected field (for now, we'll use a mock field)
-    field = "Field A-12"  # This would come from the database in a real application
+    # Get the selected field
+    field = Field.query.filter_by(farm_id=farm.id).first()
+    field_name = field.name if field else "No fields available"
 
-    # 1. Farm & Field Information
+    # Farm & Field Information
     farm_info = {
         "name": farm.name,
-        "field": field,
+        "field": field_name,
         "last_updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
-    # 2. Weather & Forecast
-    # Try to extract latitude and longitude from the farm location
-    weather_data = {}
-    try:
-        # Check if location contains lat/long information
-        if "," in farm.location:
-            lat, lon = map(float, farm.location.split(","))
-
-            # Call OpenWeather API (if configured)
-            if (
-                hasattr(current_app.config, "OPENWEATHER_API_KEY")
-                and current_app.config["OPENWEATHER_API_KEY"]
-            ):
-                weather_url = f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely&units=metric&appid={current_app.config['OPENWEATHER_API_KEY']}"
-                response = requests.get(weather_url)
-
-                if response.status_code == 200:
-                    data = response.json()
-                    current = data["current"]
-
-                    weather_data = {
-                        "temperature": round(current["temp"]),
-                        "condition": current["weather"][0]["main"],
-                        "icon": current["weather"][0]["icon"],
-                        "forecast": (
-                            "Light rain expected in 36 hours"
-                            if "rain" in data["daily"][1]
-                            else "No precipitation expected"
-                        ),
-                    }
-            else:
-                # Fallback if OpenWeather not configured
-                weather_data = {
-                    "temperature": 24,  # Fallback data
-                    "condition": "Sunny",
-                    "icon": "01d",
-                    "forecast": "Weather forecast unavailable (API not configured)",
-                }
-        else:
-            # Fallback if no location set
-            weather_data = {
-                "temperature": 24,  # Fallback data
-                "condition": "Sunny",
-                "icon": "01d",
-                "forecast": "Set farm location for weather forecast",
-            }
-    except Exception as e:
-        current_app.logger.error(f"Weather API error: {str(e)}")
-        weather_data = {
-            "temperature": 24,  # Fallback data
-            "condition": "Sunny",
-            "icon": "01d",
-            "forecast": "Weather forecast unavailable",
-        }
-
-    # 3. Soil & Field Health
-    # Get the latest sensor data
-    soil_moisture = (
-        SensorData.query.filter_by(farm_id=farm.id, sensor_type="soil_moisture")
+    # Get recent sensor data
+    sensors = (
+        SensorData.query.filter_by(farm_id=farm.id)
         .order_by(SensorData.timestamp.desc())
-        .first()
-    )
-
-    # Mock data for now - would come from actual sensor readings
-    soil_health = {
-        "overall_health": 82,  # Mock percentage
-        "improvement": 2,  # Mock percentage improvement
-        "quality": 76,
-        "nitrogen": 42,  # ppm
-        "phosphorus": 28,  # ppm
-        "ph_level": 6.8,
-        "organic_matter": 4.2,  # percentage
-        "moisture": soil_moisture.value if soil_moisture else 64,  # percentage
-        "last_irrigation": "2 days ago",
-        "next_irrigation": "Tomorrow",
-    }
-
-    # 4. Crop Growth & Harvest
-    # Get the current farm stage
-    farm_stage = FarmStage.query.filter_by(farm_id=farm.id, status="Active").first()
-
-    crop_growth = {
-        "stage": farm_stage.stage_name if farm_stage else "Vegetative",
-        "progress": 45,  # percentage completion of current stage
-        "days": "28/62",  # days in current growth cycle
-        "next_stage": "Flowering (in 14 days)",
-        "harvest_date": "August 15",
-    }
-
-    # 5. Field Metrics Historical Data
-    # This would come from sensor history, but for now we'll use mock data
-    historical_data = {
-        "temperature": [22, 24, 26, 25, 27, 26, 24, 25, 26, 28, 29, 27, 26, 24, 23],
-        "moisture": [68, 65, 62, 60, 58, 75, 72, 68, 65, 62, 59, 56, 53, 70, 68],
-        "growth": [
-            2.1,
-            2.3,
-            2.8,
-            3.0,
-            3.2,
-            3.1,
-            2.9,
-            2.7,
-            2.5,
-            2.4,
-            2.2,
-            2.0,
-            1.9,
-            1.8,
-            1.7,
-        ],
-        "soil_health": [76, 75, 74, 76, 78, 80, 78, 77, 76, 75, 74, 73, 75, 78, 77],
-        "dates": [
-            "May 1",
-            "May 3",
-            "May 5",
-            "May 7",
-            "May 9",
-            "May 11",
-            "May 13",
-            "May 15",
-            "May 17",
-            "May 19",
-            "May 21",
-            "May 23",
-            "May 25",
-            "May 27",
-            "May 29",
-        ],
-    }
-
-    # 6. Alerts and Recommendations
-    # Get recent alerts
-    alerts = (
-        Alert.query.filter_by(farm_id=farm.id, is_read=False)
-        .order_by(Alert.created_at.desc())
-        .limit(3)
+        .limit(5)
         .all()
     )
-
-    alerts_data = []
-    for alert in alerts:
-        alerts_data.append(
-            {
-                "id": alert.id,
-                "title": alert.alert_type,  # Using alert_type as the title
-                "message": alert.message,
-                "severity": alert.severity,
-                "created_at": alert.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            }
-        )
-
-    # 7. Recommended Actions
-    # These would come from an AI recommendation system or predefined rules
-    # Using mock data for now
-    recommendations = [
+    sensor_data = [
         {
-            "action": "Apply Fertilizer",
-            "description": "Nitrogen levels in sectors 2 and 3 are below optimal. Apply supplemental fertilizer within 48 hours.",
-            "priority": "High",
-            "due": "Tomorrow",
-        },
-        {
-            "action": "Pest Treatment",
-            "description": "Early signs of corn earworm detected in sector 4. Apply organic pesticide to prevent infestation.",
-            "priority": "Medium",
-            "due": "In 3 days",
-        },
-        {
-            "action": "Equipment Maintenance",
-            "description": "Irrigation system inspection recommended. Last maintenance was performed 45 days ago.",
-            "priority": "Info",
-            "due": "This week",
-        },
+            "type": s.sensor_type,
+            "value": s.value,
+            "unit": s.unit,
+            "timestamp": s.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        for s in sensors
     ]
 
-    # Combine all data into a single response
-    response_data = {
-        "farm_info": farm_info,
-        "weather": weather_data,
-        "soil_health": soil_health,
-        "crop_growth": crop_growth,
-        "historical_data": historical_data,
-        "alerts": alerts_data,
-        "recommendations": recommendations,
-    }
-
-    return jsonify(response_data)
+    return jsonify(
+        {"success": True, "data": {"farm_info": farm_info, "sensor_data": sensor_data}}
+    )

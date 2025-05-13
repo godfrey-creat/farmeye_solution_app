@@ -14,14 +14,18 @@ login_manager = LoginManager()
 login_manager.login_view = "auth.login"
 login_manager.login_message_category = "info"
 
+
 @login_manager.unauthorized_handler
 def unauthorized():
     from flask import request, jsonify, redirect, url_for
-    if request.path.startswith('/api/'):
+
+    if request.path.startswith("/api/"):
         return jsonify({"error": "Unauthorized", "message": "Please log in"}), 401
-    return redirect(url_for('auth.login'))
+    return redirect(url_for("auth.login"))
+
 
 mail = Mail()
+
 
 def create_app(config_name=None):
     """Create and configure the Flask application"""
@@ -40,38 +44,49 @@ def create_app(config_name=None):
 
     # Initialize error handlers
     from . import errors
+
     errors.init_app(app)
 
     # Configure CORS
-    CORS(app, resources={
-        r"/api/*": {
-            "origins": "*",
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True
-        }
-    })
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": "*",
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization"],
+                "supports_credentials": True,
+            }
+        },
+    )
 
     # Register blueprints
     from .main import main as main_blueprint
+
     app.register_blueprint(main_blueprint)
 
     from .auth import auth as auth_blueprint
+
     app.register_blueprint(auth_blueprint, url_prefix="/auth")
 
     from .admin import admin as admin_blueprint
+
     app.register_blueprint(admin_blueprint, url_prefix="/admin")
 
     from .farm import farm as farm_blueprint
+
     app.register_blueprint(farm_blueprint, url_prefix="/farm")
 
     from .weather import weather as weather_blueprint
+
     app.register_blueprint(weather_blueprint, url_prefix="/weather")
 
     from .api import api as api_blueprint
+
     app.register_blueprint(api_blueprint, url_prefix="/api")
 
     from .pest import pest as pest_blueprint
+
     app.register_blueprint(pest_blueprint, url_prefix="/pest")
 
     return app

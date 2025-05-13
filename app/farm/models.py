@@ -34,7 +34,15 @@ class Farm(db.Model):
     crop_health = db.relationship("CropHealth", backref="farm", lazy=True)
     weather_data = db.relationship("WeatherData", backref="farm", lazy=True)
     images = db.relationship("FarmImage", backref="farm", lazy=True)
-    team_members = db.relationship("FarmTeamMember", backref="farm", lazy=True)
+    fields = db.relationship(
+        "Field",
+        backref=db.backref("farm_ref", lazy=True),
+        lazy=True,
+        cascade="all, delete-orphan",
+    )
+    team_members = db.relationship(
+        "FarmTeamMember", backref="farm", lazy=True, cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Farm {self.name}, Location: {self.location}>"
@@ -288,3 +296,37 @@ class FarmTeamMember(db.Model):
 
     def __repr__(self):
         return f"<FarmTeamMember user_id={self.user_id} farm_id={self.farm_id} role={self.role}>"
+
+
+class Field(db.Model):
+    """Field model representing a section of a farm"""
+
+    __tablename__ = "fields"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), nullable=False)
+    farm_id = db.Column(db.Integer, db.ForeignKey("farms.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationship to boundary markers
+    boundaries = db.relationship(
+        "BoundaryMarker", backref="field", lazy=True, cascade="all, delete-orphan"
+    )
+
+
+class BoundaryMarker(db.Model):
+    """BoundaryMarker model representing GPS coordinates for field boundaries"""
+
+    __tablename__ = "boundary_markers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    field_id = db.Column(db.Integer, db.ForeignKey("fields.id"), nullable=False)
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
