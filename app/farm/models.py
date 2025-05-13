@@ -31,7 +31,7 @@ class Sensor(db.Model):
     __tablename__ = 'sensors'
 
     id = db.Column(db.Integer, primary_key=True)
-    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False)
     sensor_type = db.Column(db.String(50), nullable=False)  # E.g., Humidity, Temperature, etc.
     location = db.Column(db.String(200), nullable=False)
     install_date = db.Column(db.DateTime, default=datetime.utcnow)
@@ -56,7 +56,7 @@ class SensorData(db.Model):
     unit = db.Column(db.String(20))  # e.g., 'celsius', '%', 'pH'
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
-    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'))
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     
     # Use string reference for User
@@ -69,7 +69,7 @@ class CropHealth(db.Model):
     __tablename__ = 'crop_health'
 
     id = db.Column(db.Integer, primary_key=True)
-    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False)
     assessment_date = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(50), nullable=False)  # Healthy, Needs Attention, etc.
     notes = db.Column(db.Text, nullable=True)
@@ -82,7 +82,7 @@ class WeatherData(db.Model):
     __tablename__ = 'weather_data'
 
     id = db.Column(db.Integer, primary_key=True)
-    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     temperature = db.Column(db.Float, nullable=False)
     humidity = db.Column(db.Float, nullable=False)
@@ -97,7 +97,7 @@ class FarmImage(db.Model):
     __tablename__ = 'farm_images'
 
     id = db.Column(db.Integer, primary_key=True)
-    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False)
     image_url = db.Column(db.String(200), nullable=False)  # URL or path to the image
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
     # Added fields from auth.models
@@ -118,7 +118,7 @@ class Alert(db.Model):
     __tablename__ = 'alerts'
 
     id = db.Column(db.Integer, primary_key=True)
-    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     alert_type = db.Column(db.String(50), nullable=False)  # E.g., 'Sensor Failure', 'Weather Alert', etc.
