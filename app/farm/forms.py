@@ -1,31 +1,59 @@
 # app/farm/forms.py
 from flask_wtf import FlaskForm
+from wtforms.validators import NumberRange, Optional
 from flask_wtf.file import FileField, FileAllowed, FileRequired
-from wtforms import StringField, FloatField, TextAreaField, SelectField, SubmitField
+from wtforms import FloatField, SelectMultipleField, BooleanField, RadioField
+from wtforms import FloatField, SelectMultipleField, BooleanField, RadioField, TextAreaField
 from wtforms.validators import DataRequired, Length, Optional, NumberRange
 
+from flask_wtf import FlaskForm
+from wtforms import StringField, SelectField, SubmitField
+from wtforms.validators import DataRequired, Length
+
 class FarmForm(FlaskForm):
-    """Form for creating or updating farm information"""
-    name = StringField('Farm Name', validators=[
-        DataRequired(), 
-        Length(1, 100)
+    farm_name = StringField('Farm Name', validators=[DataRequired(), Length(1, 100)])
+    region = SelectField('Farm Region', choices=[
+        ('central', 'Central'), ('coast', 'Coast'), ('eastern', 'Eastern'), 
+        ('nairobi', 'Nairobi'), ('north_eastern', 'North Eastern'),
+        ('nyanza', 'Nyanza'), ('rift_valley', 'Rift Valley'), ('western', 'Western')
+    ], validators=[DataRequired()])
+    submit = SubmitField('Next: Add Field')
+
+
+class FieldForm(FlaskForm):
+    field_name = StringField('Field Name', validators=[DataRequired()])
+    crop_type = StringField('Crop Type', validators=[DataRequired()])
+    latitude = StringField('Latitude', validators=[Optional()])
+    longitude = StringField('Longitude', validators=[Optional()])
+    farming_method = SelectField('Farming Method', choices=[
+        ('conventional', 'Conventional'), ('organic', 'Organic'),
+        ('hydroponic', 'Hydroponic'), ('greenhouse', 'Greenhouse'),
+        ('zero_grazing', 'Zero-grazing')
+    ], validators=[DataRequired()])
+    smart_devices = SelectMultipleField('Smart Devices', choices=[
+        ('soil_moisture_sensor', 'Soil Moisture Sensors'),
+        ('weather_station', 'Weather Station'),
+        ('livestock_tracker', 'Livestock Trackers'),
+        ('cctv', 'CCTV Cameras'),
+        ('temp_humidity', 'Temperature/Humidity Sensors'),
+        ('auto_feeder', 'Automated Feeders'),
+        ('drone', 'Drone Surveillance')
     ])
-    location = StringField('Location', validators=[
-        DataRequired(), 
-        Length(1, 200)
+    monitoring_goals = SelectMultipleField('Monitoring Goals', choices=[
+        ('crop_health', 'Real-time Crop Health'),
+        ('soil_moisture', 'Soil Moisture & Nutrients'),
+        ('livestock_health', 'Livestock Movement/Health'),
+        ('water_usage', 'Water Usage Efficiency'),
+        ('pest_alerts', 'Pest/Disease Alerts'),
+        ('yield_prediction', 'Yield Prediction'),
+        ('weather_forecast', 'Weather Forecasting'),
+        ('auto_irrigation', 'Automated Irrigation')
     ])
-    size_acres = FloatField('Size (acres)', validators=[
-        DataRequired(),
-        NumberRange(min=0.1, message='Farm size must be greater than 0.1 acres')
-    ])
-    crop_type = StringField('Primary Crop Type', validators=[
-        DataRequired(), 
-        Length(1, 100)
-    ])
-    description = TextAreaField('Description', validators=[
-        Optional()
-    ])
-    submit = SubmitField('Save Farm')
+    consent = BooleanField('I consent to smart monitoring.', validators=[DataRequired()])
+    add_another = SubmitField('Add Another Field')
+    finish = SubmitField('Finish Registration')
+
+
 
 class ImageUploadForm(FlaskForm):
     """Form for uploading farm images"""

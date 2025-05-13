@@ -123,6 +123,11 @@
     </div>
 </div>
 
+<div id="advisory-section" class="bg-white rounded-xl shadow-card p-5 mb-6">
+    <h3 class="text-xl font-semibold mb-3">Farming Advisory</h3>
+    <p class="text-medium text-sm">Loading advisory...</p>
+</div>
+
 <!-- Advisory Timeline -->
 {% include 'partials/timeline.html' %}
 
@@ -190,6 +195,14 @@
         </div>
     </div>
     {% endblock %}
+
+{% for farm in farms %}
+<div class="farm-card">
+    <h3>{{ farm.name }}</h3>
+    <p>Location: {{ farm.location }}</p>
+    <p>Crop Type: {{ farm.crop_type }}</p>
+</div>
+{% endfor %}
     
     {% block extra_js %}
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>

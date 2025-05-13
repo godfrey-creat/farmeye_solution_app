@@ -1,0 +1,89 @@
+<!-- templates/dashboard/irrigation.html -->
+{% extends "base.html" %}
+
+{% block title %}FarmEye - Irrigation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="flex justify-between items-center mb-8">
+    <div>
+        <h1 class="text-3xl font-semibold text-dark">Irrigation Dashboard</h1>
+        <p class="text-medium mt-1">Monitor and manage your irrigation system effectively.</p>
+    </div>
+</div>
+
+<!-- Irrigation Overview -->
+<div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Current Status -->
+    <div class="data-card bg-white p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Current Status</h3>
+            <div class="bg-accent bg-opacity-10 text-accent text-xs font-medium px-2 py-1 rounded-full">
+                {{ irrigation.status or "Optimal" }}
+            </div>
+        </div>
+        <div>
+            <div class="text-medium text-sm">Water Level</div>
+            <div class="font-semibold text-lg">{{ irrigation.water_level or "75%" }}</div>
+        </div>
+    </div>
+
+    <!-- Last Irrigation -->
+    <div class="data-card bg-white p-6">
+        <h3 class="text-lg font-semibold mb-4">Last Irrigation</h3>
+        <p class="text-medium text-sm">Date: {{ irrigation.last_irrigation.date or "Yesterday" }}</p>
+        <p class="text-medium text-sm">Duration: {{ irrigation.last_irrigation.duration or "45 minutes" }}</p>
+    </div>
+
+    <!-- Upcoming Schedule -->
+    <div class="data-card bg-white p-6">
+        <h3 class="text-lg font-semibold mb-4">Upcoming Schedule</h3>
+        <p class="text-medium text-sm">Next Irrigation: {{ irrigation.schedule.next or "Tomorrow at 6:00 AM" }}</p>
+        <p class="text-medium text-sm">Recommended Duration: {{ irrigation.schedule.duration or "30 minutes" }}</p>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="data-card bg-white p-6">
+        <h3 class="text-lg font-semibold mb-4">Recommendations</h3>
+        <p class="text-medium text-sm">{{ irrigation.recommendation or "No additional irrigation required today." }}</p>
+    </div>
+</div>
+
+<!-- Historical Data -->
+<div class="mb-8">
+    <h2 class="text-xl font-semibold mb-4">Irrigation History</h2>
+    <div class="bg-white rounded-xl p-6 shadow-card">
+        {% if irrigation.history %}
+            <table class="table-auto w-full text-left">
+                <thead>
+                    <tr class="text-medium border-b">
+                        <th class="py-2">Date</th>
+                        <th class="py-2">Duration</th>
+                        <th class="py-2">Water Used</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in irrigation.history %}
+                    <tr>
+                        <td class="py-2">{{ record.date }}</td>
+                        <td class="py-2">{{ record.duration }}</td>
+                        <td class="py-2">{{ record.water_used }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-medium text-sm">No irrigation history available.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/irrigation.js') }}"></script>
+{% endblock %}

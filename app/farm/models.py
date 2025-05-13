@@ -2,29 +2,30 @@ from datetime import datetime
 from app import db  # Import db from app package instead of creating a new instance
 
 class Farm(db.Model):
-    __tablename__ = 'farms'
-
+    __tablename__ = 'farm'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    location = db.Column(db.String(200), nullable=False)
-    size = db.Column(db.Float, nullable=False)  # Size in acres/hectares
-    size_acres = db.Column(db.Float)  # Added from auth models
-    crop_type = db.Column(db.String(50), nullable=False)
-    description = db.Column(db.Text)  # Added from auth models
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Use string reference instead of direct class reference
-    # This breaks the circular dependency
-    owner = db.relationship('User', backref='farms', lazy=True, foreign_keys=[user_id])
-    sensors = db.relationship('Sensor', backref='farm', lazy=True)
-    crop_health = db.relationship('CropHealth', backref='farm', lazy=True)
-    weather_data = db.relationship('WeatherData', backref='farm', lazy=True)
-    images = db.relationship('FarmImage', backref='farm', lazy=True)
+    region = db.Column(db.String(50), nullable=False)
+    fields = db.relationship('Field', backref='farm', cascade="all, delete-orphan")
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     def __repr__(self):
-        return f"<Farm {self.name}, Location: {self.location}>"
+        return f"<Farm {self.name} in {self.region}>"
+
+class Field(db.Model):
+    __tablename__ = 'fields'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    crop_type = db.Column(db.String(100), nullable=False)
+    latitude = db.Column(db.String(50), nullable=True)
+    longitude = db.Column(db.String(50), nullable=True)
+    farming_method = db.Column(db.String(50), nullable=False)
+    smart_devices = db.Column(db.String(200))  # comma-separated list
+    monitoring_goals = db.Column(db.String(200))  # comma-separated list
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False)
+    
+    def __repr__(self):
+        return f"<Field {self.name} in {self.farm.name}>"
 
 class Sensor(db.Model):
     __tablename__ = 'sensors'
@@ -137,7 +138,7 @@ class FarmStage(db.Model):
     __tablename__ = 'farm_stages'
 
     id = db.Column(db.Integer, primary_key=True)
-    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False)
     stage_name = db.Column(db.String(50), nullable=False)  # Unprepared, Prepared, Germination, Growth, Flowering, Harvesting
     start_date = db.Column(db.DateTime, default=datetime.utcnow)
     end_date = db.Column(db.DateTime, nullable=True)
@@ -156,7 +157,7 @@ class LaborTask(db.Model):
     __tablename__ = 'labor_tasks'
 
     id = db.Column(db.Integer, primary_key=True)
-    farm_id = db.Column(db.Integer, db.ForeignKey('farms.id'), nullable=False)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False)
     stage_id = db.Column(db.Integer, db.ForeignKey('farm_stages.id'), nullable=True)
     task_name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)

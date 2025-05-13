@@ -2,15 +2,15 @@
 import os
 import uuid
 from datetime import datetime
-from flask import render_template, redirect, url_for, flash, request, current_app, jsonify, abort
+from flask import render_template, redirect, url_for, flash, request, current_app, jsonify, abort, session
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from .. import db
 from . import farm
 from .forms import FarmForm, ImageUploadForm, SensorDataForm
-from .models import Farm, FarmImage, SensorData, Alert, CropHealth, Sensor, WeatherData, FarmStage
-#from ..decorators import permission_required
+from .models import Farm, Field, FarmImage, SensorData, Alert, CropHealth, Sensor, WeatherData, FarmStage
 from ..ml.utils import process_farm_image
+from .forms import FarmForm, FieldForm
 import openai
 import requests
 from flask import current_app
@@ -242,31 +242,49 @@ def schedule():
     # You would add your schedule logic here
     return render_template('dashboard/schedule.html', active_page='schedule')
 
-@farm.route('/register', methods=['GET', 'POST'])
-@login_required
+@farm.route('/register-farm', methods=['GET', 'POST'])
 def register_farm():
-    """Register a new farm"""
-    if not current_user.is_approved:
-        flash('Your account must be approved before registering a farm.', 'warning')
-        return redirect(url_for('farm.dashboard'))
-    
     form = FarmForm()
     if form.validate_on_submit():
-        farm = Farm(
-            name=form.name.data,
-            location=form.location.data,
-            size_acres=form.size_acres.data,
-            crop_type=form.crop_type.data,
-            description=form.description.data,
-            user_id=current_user.id
-        )
+        farm = Farm(name=form.farm_name.data, region=form.region.data)
         db.session.add(farm)
         db.session.commit()
-        flash('Farm registered successfully!', 'success')
-        return redirect(url_for('farm.view_farm', farm_id=farm.id))
-    
-    # Create a template for this in the next phase
-    return render_template('farm/register_farm.html', form=form, active_page='dashboard')
+        session['farm_id'] = farm.id
+        return redirect(url_for('add_field'))
+    return render_template('register_farm.html', form=form)
+
+@farm.route('/add-field', methods=['GET', 'POST'])
+def add_field():
+    form = FieldForm()
+    if form.validate_on_submit():
+        farm_id = session.get('farm_id')
+        if not farm_id:
+            return redirect(url_for('register_farm'))
+
+        field = Field(
+            name=form.field_name.data,
+            crop_type=form.crop_type.data,
+            latitude=form.latitude.data,
+            longitude=form.longitude.data,
+            farming_method=form.farming_method.data,
+            smart_devices=','.join(form.smart_devices.data),
+            monitoring_goals=','.join(form.monitoring_goals.data),
+            farm_id=farm_id
+        )
+        db.session.add(field)
+        db.session.commit()
+
+        if form.add_another.data:
+            return redirect(url_for('add_field'))
+        elif form.finish.data:
+            session.pop('farm_id', None)
+            return redirect(url_for('success'))
+
+    return render_template('add_field.html', form=form)
+
+@farm.route('/success')
+def success():
+    return "Farm and fields registered successfully!"
 
 @farm.route('/view/<int:farm_id>')
 @login_required
@@ -558,6 +576,19 @@ def generate_advisory(prompt):
     except Exception as e:
         current_app.logger.error(f"Failed to generate advisory: {str(e)}")
         return "Could not generate advisory at this time. Please check your farm data manually."
+    
+@farm.route('/api/advisory/<int:farm_id>', methods=['GET'])
+@login_required
+def api_advisory(farm_id):
+    """API endpoint to fetch advisory data"""
+    farm = Farm.query.get_or_404(farm_id)
+    # Ensure user owns the farm
+    if farm.user_id != current_user.id and not current_user.is_admin():
+        abort(403)
+    
+    # Reuse the advisory logic
+    advisory_text = advisory(farm_id)
+    return jsonify({"advisory": advisory_text})
     
 @farm.route('/api/dashboard-data')
 @login_required
