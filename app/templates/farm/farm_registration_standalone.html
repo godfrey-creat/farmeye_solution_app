@@ -397,9 +397,8 @@
         transform: translateY(20px);
         transition: opacity 0.3s ease-out, transform 0.3s ease-out;
       }
-    </style>
-    <script src="{{ url_for('static', filename='js/farm_registration.js') }}"></script>
+    </style>    <!-- Load form manager first since farm_registration.js depends on it -->
     <script src="{{ url_for('static', filename='js/formStateManager.js') }}"></script>
-    
+    <script src="{{ url_for('static', filename='js/farm_registration.js') }}"></script>
   </body>
 </html>

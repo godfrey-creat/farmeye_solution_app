@@ -195,11 +195,32 @@ def register_farm():
 
                 # Process farms
                 for farm_data in data.get("farms", []):
+
+                    crop_type = "Mixed"
+                    if farm_data.get("fields") and len(farm_data["fields"]) > 0:
+                        first_field = farm_data["fields"][0]
+                        if first_field.get("cropType"):
+                            crop_type = first_field["cropType"]
+
                     farm = Farm(
                         name=farm_data["name"],
                         region=farm_data["region"],
+                        location=farm_data.get("location", farm_data["region"]),
+                        size=farm_data.get("size", 0.0),
+                        size_acres=farm_data.get("size_acres", 0.0),
+                        crop_type=farm_data.get("cropType", crop_type),
+                        description=farm_data.get("description", ""),
+                        water_source=farm_data.get("waterSource", "NA"),
+                        irrigation_type=farm_data.get("irrigationType", "NA"),
+                        latitude=farm_data.get("latitude"),
+                        longitude=farm_data.get("longitude"),
+                        # Set defaults for fields to be updated later
+                        soil_type="NA",
+                        ph_level=None,
+                        soil_notes="To be updated",
                         user_id=current_user.id,
                         created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
                     )
                     db.session.add(farm)
                     db.session.flush()

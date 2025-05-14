@@ -1,104 +1,3 @@
-// Rename SectionController to avoid conflicts
-class FarmSectionController {
-  constructor(sectionId, editBtnId, visibilityBtnId, defaultCollapsed = true) {
-    this.section = document.getElementById(sectionId);
-    this.editBtn = document.getElementById(editBtnId);
-    this.visibilityBtn = document.getElementById(visibilityBtnId);
-    this.chevronIcon = this.visibilityBtn?.querySelector("i");
-    this.isVisible = !defaultCollapsed;
-    this.isEditing = false;
-    this.originalHeight = this.section?.scrollHeight || 0;
-
-    this.initialize();
-  }
-
-  initialize() {
-    if (!this.section || !this.visibilityBtn) return;
-
-    // Set initial state
-    if (!this.isVisible) {
-      this.section.style.maxHeight = "0";
-      this.section.style.opacity = "0";
-      this.section.style.marginTop = "0";
-      this.chevronIcon.style.transform = "rotate(-180deg)";
-    } else {
-      this.section.style.maxHeight = this.originalHeight + "px";
-      this.section.style.opacity = "1";
-      this.section.style.marginTop = "0.75rem";
-    }
-
-    // Add transitions
-    this.section.style.transition =
-      "max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, margin 0.3s ease-in-out";
-
-    // Add event listeners
-    this.setupEventListeners();
-  }
-
-  setupEventListeners() {
-    this.visibilityBtn.addEventListener("click", () => this.toggleVisibility());
-
-    if (this.editBtn) {
-      this.editBtn.addEventListener("click", () => this.toggleEdit());
-    }
-  }
-
-  updateVisibility(visible) {
-    this.isVisible = visible;
-    this.chevronIcon.style.transform = this.isVisible
-      ? "rotate(0deg)"
-      : "rotate(-180deg)";
-
-    if (this.isVisible) {
-      this.section.style.maxHeight = this.originalHeight + "px";
-      this.section.style.opacity = "1";
-      this.section.style.marginTop = "0.75rem";
-    } else {
-      this.section.style.maxHeight = "0";
-      this.section.style.opacity = "0";
-      this.section.style.marginTop = "0";
-    }
-  }
-
-  toggleVisibility() {
-    this.updateVisibility(!this.isVisible);
-
-    // If closing while editing, save changes
-    if (!this.isVisible && this.isEditing && this.editBtn) {
-      this.toggleEdit();
-    }
-  }
-
-  toggleEdit() {
-    this.isEditing = !this.isEditing;
-
-    if (this.isEditing) {
-      // Enable editing and ensure section is visible
-      this.updateVisibility(true);
-      this.editBtn.innerHTML = '<i class="fas fa-save mr-1"></i> Save';
-      this.editBtn.classList.remove("bg-blue-600", "hover:bg-blue-700");
-      this.editBtn.classList.add("bg-green-600", "hover:bg-green-700");
-
-      this.section.querySelectorAll("input").forEach((input) => {
-        input.removeAttribute("readonly");
-        input.classList.remove("border-gray-300");
-        input.classList.add("border-blue-400", "ring-1", "ring-blue-200");
-      });
-    } else {
-      // Disable editing
-      this.editBtn.innerHTML = '<i class="fas fa-edit mr-1"></i> Edit';
-      this.editBtn.classList.remove("bg-green-600", "hover:bg-green-700");
-      this.editBtn.classList.add("bg-blue-600", "hover:bg-blue-700");
-
-      this.section.querySelectorAll("input").forEach((input) => {
-        input.setAttribute("readonly", true);
-        input.classList.remove("border-blue-400", "ring-1", "ring-blue-200");
-        input.classList.add("border-gray-300");
-      });
-    }
-  }
-}
-
 // Section Controller for managing collapsible sections
 class SectionController {
   constructor(sectionId, editBtnId, visibilityBtnId, defaultCollapsed = true) {
@@ -178,6 +77,17 @@ class SectionController {
         input.classList.add("border-blue-400", "ring-1", "ring-blue-200");
       });
     } else {
+      // Save changes when toggling edit mode off
+      const formManager = window.formManager;
+      if (formManager && this.section.id === "manager-info") {
+        const data = {
+          firstName: this.section.querySelector("#first_name").value,
+          lastName: this.section.querySelector("#last_name").value,
+          email: this.section.querySelector("#email").value,
+        };
+        formManager.updateManagerInfo(data);
+      }
+
       // Disable editing
       this.editBtn.innerHTML = '<i class="fas fa-edit mr-1"></i> Edit';
       this.editBtn.classList.remove("bg-green-600", "hover:bg-green-700");
@@ -194,6 +104,57 @@ class SectionController {
 
 // Use the working controller from the version you had
 class FarmRegistrationController {
+  calculateFieldArea(boundaries) {
+    if (boundaries.length < 3) return 0;
+
+    // Convert to radians
+    const toRad = (deg) => (deg * Math.PI) / 180;
+
+    // Shoelace formula for spherical earth
+    let area = 0;
+    const R = 6371000; // Earth radius in meters
+
+    for (let i = 0; i < boundaries.length; i++) {
+      const j = (i + 1) % boundaries.length;
+      const lat1 = toRad(boundaries[i].lat);
+      const lat2 = toRad(boundaries[j].lat);
+      const lon1 = toRad(boundaries[i].lng);
+      const lon2 = toRad(boundaries[j].lng);
+
+      area += (lon2 - lon1) * (2 + Math.sin(lat1) + Math.sin(lat2));
+    }
+
+    area = Math.abs((area * R * R) / 2);
+    return area / 10000; // Convert to hectares
+  }
+
+  async getLocationFromCoordinates(lat, lng) {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`
+      );
+      const data = await response.json();
+
+      // Extract more specific location information
+      if (data.address) {
+        // Try to get the most relevant location name
+        const location =
+          data.address.village ||
+          data.address.town ||
+          data.address.city ||
+          data.address.county ||
+          data.address.state_district ||
+          data.address.state;
+        return location || data.display_name;
+      }
+
+      return data.display_name || "Unknown Location";
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return null; // Return null to indicate failure
+    }
+  }
+
   constructor() {
     this.teamMembers = [];
     this.farms = [];
@@ -207,12 +168,25 @@ class FarmRegistrationController {
     this.setupFormSubmission();
     this.loadExistingFarms();
   }
+
+  // Add these methods to your class
+  showSuccess(title, message) {
+    document.getElementById("success-message").textContent = message;
+    document.getElementById("success-modal").classList.remove("hidden");
+    setTimeout(() => {
+      window.location.href = "/farm/dashboard";
+    }, 5000);
+  }
+
+  showError(title, message) {
+    document.getElementById("error-title").textContent = title;
+    document.getElementById("error-message").innerHTML = message;
+    document.getElementById("error-modal").classList.remove("hidden");
+  }
+
   initializeEventListeners() {
     const addTeamMemberBtn = document.getElementById("add-team-member");
     const addFarmBtn = document.getElementById("add-farm");
-    const submitFormBtn = document.getElementById("submit-form");
-    const closeSuccessBtn = document.getElementById("close-success");
-    const closeErrorBtn = document.getElementById("close-error");
 
     if (addTeamMemberBtn) {
       addTeamMemberBtn.addEventListener("click", () => {
@@ -226,41 +200,47 @@ class FarmRegistrationController {
       });
     }
 
-    if (submitFormBtn) {
-      submitFormBtn.addEventListener("click", () => {
-        this.submitForm();
-      });
-    }
+    // Call the setup method
+    this.setupModalHandlers();
+  }
+
+  setupModalHandlers() {
+    const closeSuccessBtn = document.getElementById("close-success");
+    const closeErrorBtn = document.getElementById("close-error");
 
     if (closeSuccessBtn) {
       closeSuccessBtn.addEventListener("click", () => {
-        document.getElementById("success-modal")?.classList.add("hidden");
+        document.getElementById("success-modal").classList.add("hidden");
+        window.location.href = "/farm/dashboard";
       });
     }
 
     if (closeErrorBtn) {
       closeErrorBtn.addEventListener("click", () => {
-        document.getElementById("error-modal")?.classList.add("hidden");
+        document.getElementById("error-modal").classList.add("hidden");
       });
     }
   }
 
+  if(submitFormBtn) {
+    submitFormBtn.addEventListener("click", () => {
+      this.submitForm();
+    });
+  }
+
+  if(closeSuccessBtn) {
+    closeSuccessBtn.addEventListener("click", () => {
+      document.getElementById("success-modal")?.classList.add("hidden");
+    });
+  }
+
+  if(closeErrorBtn) {
+    closeErrorBtn.addEventListener("click", () => {
+      document.getElementById("error-modal")?.classList.add("hidden");
+    });
+  }
+
   initializeSectionControllers() {
-    // Initialize section controllers with the renamed class
-    new FarmSectionController(
-      "manager-info",
-      "toggle-manager-edit",
-      "toggle-manager-visibility",
-      true // Start expanded
-    );
-
-    new FarmSectionController(
-      "team-members",
-      null,
-      "toggle-team-visibility",
-      true // Start expanded
-    );
-
     // Initialize section controllers
     new SectionController(
       "manager-info",
@@ -386,9 +366,9 @@ class FarmRegistrationController {
       if (e.target === modal) this.closeModal();
     });
 
-    modalForm.addEventListener("submit", (e) => {
+    modalForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      this.handleModalSave();
+      await this.handleModalSave();
     });
   }
 
@@ -542,11 +522,37 @@ class FarmRegistrationController {
                                     <option value="Rice">Rice</option>
                                 </select>
                             </div>
+                            <div>
+                <label class="block text-sm font-medium text-gray-700">Water Source</label>
+                <select name="waterSource" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                    <option value="">Select water source</option>
+                    <option value="River">River</option>
+                    <option value="Well">Well</option>
+                    <option value="Borehole">Borehole</option>
+                    <option value="Dam">Dam/Reservoir</option>
+                    <option value="Rainwater">Rainwater Harvesting</option>
+                    <option value="Municipal">Municipal Supply</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Irrigation Type</label>
+                <select name="irrigationType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                    <option value="">Select irrigation type</option>
+                    <option value="Drip">Drip Irrigation</option>
+                    <option value="Sprinkler">Sprinkler</option>
+                    <option value="Flood">Flood/Furrow</option>
+                    <option value="Center Pivot">Center Pivot</option>
+                    <option value="Rain-fed">Rain-fed (No irrigation)</option>
+                </select>
+            </div>
                         </div>
                         <button type="button" class="remove-field-btn text-red-600 hover:text-red-800 ml-2">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
+
+                    
 
                     <!-- Boundary Markers Section -->
                     <div class="boundary-markers-section mt-4">
@@ -561,6 +567,13 @@ class FarmRegistrationController {
                             <!-- Markers will be added here -->
                         </div>
                     </div>
+                    <div>
+                <label class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea name="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Brief description of your farm">${
+                      data ? data.description : ""
+                    }</textarea>
+            </div>
                 </div>
             </template>
 
@@ -634,9 +647,11 @@ class FarmRegistrationController {
     }
   }
 
-  handleModalSave() {
+  async handleModalSave() {
     const formData = new FormData(document.getElementById("modal-form"));
+    console.log("Form data entries:", Array.from(formData.entries()));
     const data = Object.fromEntries(formData.entries());
+    console.log("Converted form data:", data);
 
     if (this.currentModalType === "team-member") {
       if (this.currentModalData) {
@@ -672,8 +687,129 @@ class FarmRegistrationController {
           .appendChild(this.createTeamMemberRow(newMember));
       }
     } else if (this.currentModalType === "farm") {
-      const formData = new FormData(document.getElementById("modal-form"));
+      const modalForm = document.getElementById("modal-form");
       const farmData = Object.fromEntries(formData.entries());
+      console.log("Farm Data from Modal:", farmData);
+      console.log("Farm Name specifically:", farmData.farmName);
+
+      // Collect fields directly here
+      const fields = [];
+      const fieldEntries = modalForm.querySelectorAll(".field-entry");
+      console.log("Number of field entries found:", fieldEntries.length);
+
+      fieldEntries.forEach((fieldEntry, index) => {
+        const fieldNameInput = fieldEntry.querySelector(
+          'input[name="fieldName"]'
+        );
+        const fieldName = fieldNameInput?.value;
+
+        console.log(`Field ${index} - Name:`, fieldName);
+
+        if (!fieldName || fieldName.trim() === "") {
+          console.log(`Field ${index} skipped - no name`);
+          return;
+        }
+
+        // Get crop type for this field
+        const cropTypeSelect = fieldEntry.querySelector(
+          'select[name="cropType"]'
+        );
+        const cropType = cropTypeSelect?.value || "";
+
+        const boundaries = [];
+        const markersContainer = fieldEntry.querySelector(".markers-container");
+        const markerEntries =
+          markersContainer?.querySelectorAll(".marker-entry") || [];
+
+        console.log(
+          `Field ${index} - Number of markers:`,
+          markerEntries.length
+        );
+
+        markerEntries.forEach((markerEntry, markerIndex) => {
+          const latInput = markerEntry.querySelector('input[name="latitude"]');
+          const lngInput = markerEntry.querySelector('input[name="longitude"]');
+
+          const lat = latInput?.value;
+          const lng = lngInput?.value;
+
+          console.log(
+            `Field ${index}, Marker ${markerIndex} - Lat: ${lat}, Lng: ${lng}`
+          );
+
+          if (lat && lng) {
+            boundaries.push({
+              lat: parseFloat(lat),
+              lng: parseFloat(lng),
+            });
+          }
+        });
+
+        // Only add field if it has at least 3 boundaries
+        if (boundaries.length >= 3) {
+          fields.push({
+            id: Date.now().toString() + Math.random(),
+            name: fieldName,
+            cropType: cropType,
+            boundaries: boundaries,
+          });
+          console.log(
+            `Field ${index} added with ${boundaries.length} boundaries`
+          );
+        } else {
+          console.log(
+            `Field ${index} skipped - only ${boundaries.length} boundaries (minimum 3 required)`
+          );
+        }
+      });
+
+      console.log("Total fields collected:", fields.length);
+
+      // Calculate total farm area from all fields
+      let totalArea = 0;
+      fields.forEach((field) => {
+        totalArea += this.calculateFieldArea(field.boundaries);
+      });
+      console.log("Total farm area calculated:", totalArea, "hectares");
+
+      // Get center coordinates for geocoding
+      let centerLat = 0,
+        centerLng = 0,
+        coordCount = 0;
+      fields.forEach((field) => {
+        field.boundaries.forEach((boundary) => {
+          centerLat += boundary.lat;
+          centerLng += boundary.lng;
+          coordCount++;
+        });
+      });
+
+      if (coordCount > 0) {
+        centerLat /= coordCount;
+        centerLng /= coordCount;
+      }
+
+      // Get location name from coordinates
+      let locationName = farmData.region; // Default to region
+      if (centerLat && centerLng) {
+        try {
+          const geocodedLocation = await this.getLocationFromCoordinates(
+            centerLat,
+            centerLng
+          );
+          if (geocodedLocation) {
+            locationName = geocodedLocation;
+            console.log("Geocoded location:", locationName);
+          }
+        } catch (error) {
+          console.error("Failed to geocode location:", error);
+          // Fall back to region if geocoding fails
+        }
+      }
+
+      // Get the first field's crop type for the farm's primary crop
+      const primaryCropType =
+        fields.length > 0 && fields[0].cropType ? fields[0].cropType : "Mixed";
 
       if (this.currentModalData) {
         // Update existing farm
@@ -681,6 +817,17 @@ class FarmRegistrationController {
         if (farm) {
           farm.name = farmData.farmName;
           farm.region = farmData.region;
+          farm.location = locationName;
+          farm.description = farmData.description || "";
+          farm.waterSource = farmData.waterSource;
+          farm.irrigationType = farmData.irrigationType;
+          farm.size = totalArea;
+          farm.size_acres = totalArea * 2.47105; // Convert hectares to acres
+          farm.latitude = centerLat;
+          farm.longitude = centerLng;
+          farm.cropType = primaryCropType;
+          farm.fields = fields;
+          console.log("Updated farm:", farm);
         }
       } else {
         // Add new farm
@@ -688,18 +835,28 @@ class FarmRegistrationController {
           id: Date.now().toString(),
           name: farmData.farmName,
           region: farmData.region,
-          fields: [],
+          location: locationName,
+          description: farmData.description || "",
+          waterSource: farmData.waterSource,
+          irrigationType: farmData.irrigationType,
+          size: totalArea,
+          size_acres: totalArea * 2.47105,
+          latitude: centerLat,
+          longitude: centerLng,
+          cropType: primaryCropType,
+          fields: fields,
         };
+        console.log("Adding new farm with geocoded location:", newFarm);
         this.farms.push(newFarm);
       }
 
+      console.log("All farms after update:", this.farms);
       this.renderFarms();
     }
 
     this.closeModal();
   }
 
-  // Add new farm section
   addFarmSection() {
     const farm = {
       id: Date.now().toString(),
@@ -806,79 +963,6 @@ class FarmRegistrationController {
     farm.fields.push(field);
   }
 
-  // Create field section HTML
-  createFieldSection(field, farmSection, farm) {
-    const section = document.createElement("div");
-    section.className = "border border-gray-200 rounded-md p-4";
-    section.dataset.id = field.id;
-    section.innerHTML = `
-            <div class="mb-4">
-                <div class="flex justify-between items-center">
-                    <h4 class="font-medium text-gray-700">Field Details</h4>
-                    <button class="remove-field bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-                        <i class="fas fa-trash-alt mr-1"></i> Remove Field
-                    </button>
-                </div>
-                <div class="mt-2">
-                    <label class="block text-sm font-medium text-gray-700">Field Name</label>
-                    <input type="text" class="field-name mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                </div>
-            </div>
-            
-            <div class="mb-4">
-                <div class="flex justify-between items-center">
-                    <h4 class="font-medium text-gray-700">Boundary Markers</h4>
-                    <button class="add-boundary bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-                        <i class="fas fa-plus mr-1"></i> Add Marker
-                    </button>
-                </div>
-                <p class="text-xs text-gray-500 mt-1">Add at least 3 markers to define the field boundaries</p>
-                
-                <div class="boundary-markers mt-4 space-y-3">
-                    <!-- Boundary marker rows will be added here -->
-                </div>
-            </div>
-        `;
-
-    // Set initial values
-    section.querySelector(".field-name").value = field.name;
-
-    // Add event listener for remove button
-    section.querySelector(".remove-field").addEventListener("click", () => {
-      if (
-        confirm(
-          "Are you sure you want to remove this field and all its boundary markers?"
-        )
-      ) {
-        section.remove();
-        const currentFarm = this.farms.find((f) => f.id === farm.id);
-        if (currentFarm) {
-          currentFarm.fields = currentFarm.fields.filter(
-            (f) => f.id !== field.id
-          );
-        }
-      }
-    });
-
-    // Add boundary button
-    section.querySelector(".add-boundary").addEventListener("click", () => {
-      this.addBoundaryMarker(section, field);
-    });
-
-    // Add input change listeners
-    section.querySelector(".field-name").addEventListener("change", (e) => {
-      const currentFarm = this.farms.find((f) => f.id === farm.id);
-      if (currentFarm) {
-        const currentField = currentFarm.fields.find((f) => f.id === field.id);
-        if (currentField) {
-          currentField.name = e.target.value;
-        }
-      }
-    });
-
-    return section;
-  }
-
   // Add boundary marker to field
   addBoundaryMarker(fieldSection, field) {
     const marker = {
@@ -889,68 +973,6 @@ class FarmRegistrationController {
     const markerRow = this.createBoundaryMarkerRow(marker, fieldSection, field);
     fieldSection.querySelector(".boundary-markers").appendChild(markerRow);
     field.boundaries.push(marker);
-  }
-
-  // Create boundary marker row HTML
-  createBoundaryMarkerRow(marker, fieldSection, field) {
-    const row = document.createElement("div");
-    row.className = "grid grid-cols-1 md:grid-cols-3 gap-3 items-end";
-    row.dataset.id = marker.id;
-    row.innerHTML = `
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Latitude</label>
-                <input type="number" step="any" class="marker-lat mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="e.g. 40.7128" required>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Longitude</label>
-                <input type="number" step="any" class="marker-lng mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="e.g. -74.0060" required>
-            </div>
-            <div class="flex space-x-2">
-                <button class="get-location bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-                    <i class="fas fa-location-arrow mr-1"></i> Current
-                </button>
-                <button class="remove-marker bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm flex items-center">
-                    <i class="fas fa-trash-alt mr-1"></i>
-                </button>
-            </div>
-        `;
-
-    // Set initial values
-    row.querySelector(".marker-lat").value = marker.lat;
-    row.querySelector(".marker-lng").value = marker.lng;
-
-    // Add event listener for remove button
-    row.querySelector(".remove-marker").addEventListener("click", () => {
-      if (confirm("Are you sure you want to remove this boundary marker?")) {
-        row.remove();
-        field.boundaries = field.boundaries.filter((m) => m.id !== marker.id);
-      }
-    });
-
-    // Add event listener for current location button
-    row.querySelector(".get-location").addEventListener("click", () => {
-      this.getCurrentLocation(
-        row.querySelector(".marker-lat"),
-        row.querySelector(".marker-lng"),
-        marker
-      );
-    });
-
-    // Add input change listeners
-    const inputs = row.querySelectorAll("input");
-    inputs.forEach((input) => {
-      input.addEventListener("change", (e) => {
-        const currentMarker = field.boundaries.find((m) => m.id === marker.id);
-        if (currentMarker) {
-          if (e.target.classList.contains("marker-lat"))
-            currentMarker.lat = e.target.value;
-          if (e.target.classList.contains("marker-lng"))
-            currentMarker.lng = e.target.value;
-        }
-      });
-    });
-
-    return row;
   }
 
   // Get current location
@@ -1002,6 +1024,7 @@ class FarmRegistrationController {
 
   // Validate form data
   validateForm() {
+    console.log("Starting validation. Current farms:", this.farms);
     let isValid = true;
     const errors = [];
 
@@ -1089,35 +1112,64 @@ class FarmRegistrationController {
 
   // Submit form data
   async submitForm() {
-    console.log('=== FORM SUBMISSION STARTED ===');
+    console.log("=== FORM SUBMISSION STARTED ===");
+    console.log("Current farms before validation:", this.farms);
+
     if (!this.validateForm()) {
-        console.log('Form validation failed');
+      console.log("Form validation failed");
       return;
     }
 
     // Get CSRF token
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    console.log('CSRF Token:', csrfToken);
+    console.log("CSRF Token:", csrfToken);
+
     // Prepare form data
     const formData = {
-      manager: {
-        firstName: document.getElementById("first_name").value,
-        lastName: document.getElementById("last_name").value,
-        email: document.getElementById("email").value,
-      },
-      teamMembers: this.teamMembers,
-      farms: this.farms,
+      teamMembers: this.teamMembers.map((member) => ({
+        firstName: member.firstName,
+        lastName: member.lastName,
+        email: member.email,
+        role: member.role,
+      })),
+      farms: this.farms.map((farm) => ({
+        name: farm.name,
+        region: farm.region,
+        location: farm.location,
+        description: farm.description,
+        waterSource: farm.waterSource,
+        irrigationType: farm.irrigationType,
+        size: farm.size,
+        size_acres: farm.size_acres,
+        latitude: farm.latitude,
+        longitude: farm.longitude,
+        cropType: farm.cropType,
+        fields: farm.fields.map((field) => ({
+          name: field.name,
+          cropType: field.cropType,
+          boundaries: field.boundaries.map((boundary) => ({
+            lat: boundary.lat,
+            lng: boundary.lng,
+          })),
+        })),
+      })),
     };
 
+    console.log("=== FORM DATA BEING SUBMITTED ===");
+    console.log(JSON.stringify(formData, null, 2));
+
+    const requestUrl = "/farm/register";
+
     // Show loading state on submit button
-    const submitButton = document.getElementById("submit-form");
+    const submitButton = document.querySelector('button[type="submit"]');
     const originalHTML = submitButton.innerHTML;
     submitButton.innerHTML =
       '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
     submitButton.disabled = true;
 
     try {
-      const response = await fetch("/farm/register_farm", {
+      console.log("Sending request to server...");
+      const response = await fetch(requestUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1127,25 +1179,29 @@ class FarmRegistrationController {
         credentials: "same-origin",
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Registration failed");
-      }
+      console.log("=== SERVER RESPONSE ===");
+      console.log("Response Status:", response.status);
+      console.log("Response OK:", response.ok);
 
-      const data = await response.json();
-      if (data.success) {
-        document.getElementById("success-modal").classList.remove("hidden");
-        // Redirect to dashboard after a delay
-        setTimeout(() => {
-          window.location.href = "/farm/dashboard";
-        }, 2000);
+      const responseData = await response.json();
+      console.log("Response Data:", responseData);
+
+      if (response.ok && responseData.success) {
+        console.log("=== SUBMISSION SUCCESSFUL ===");
+        this.showSuccess(
+          "Registration Successful",
+          responseData.message ||
+            "Your farm has been registered successfully. Redirecting to dashboard..."
+        );
       } else {
-        throw new Error(data.error || "Registration failed");
+        // Handle error response
+        throw new Error(responseData.error || "Registration failed");
       }
     } catch (error) {
+      console.error("=== SUBMISSION ERROR ===");
       console.error("Error:", error);
       this.showError(
-        "Submission Failed",
+        "Registration Failed",
         error.message ||
           "There was an error submitting your farm registration. Please try again."
       );
@@ -1153,6 +1209,7 @@ class FarmRegistrationController {
       // Restore button
       submitButton.innerHTML = originalHTML;
       submitButton.disabled = false;
+      console.log("=== FORM SUBMISSION COMPLETED ===");
     }
   }
 
@@ -1161,89 +1218,8 @@ class FarmRegistrationController {
     if (form) {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        await this.handleFormSubmission(form);
+        await this.submitForm(form);
       });
-    }
-
-    // Setup modal close handlers
-    document.getElementById("close-success")?.addEventListener("click", () => {
-      document.getElementById("success-modal").classList.add("hidden");
-      // Redirect to dashboard after success
-      window.location.href = "/dashboard";
-    });
-
-    document.getElementById("close-error")?.addEventListener("click", () => {
-      document.getElementById("error-modal").classList.add("hidden");
-    });
-  }
-  async handleFormSubmission(form) {
-    try {
-      // Show loading state on submit button
-      const submitButton = document.querySelector('button[type="submit"]');
-      const originalBtnHTML = submitButton.innerHTML;
-      submitButton.innerHTML =
-        '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
-      submitButton.disabled = true;
-
-      const formData = new FormData(form);
-      const response = await fetch(form.action, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "X-Requested-With": "XMLHttpRequest",
-          Accept: "application/json",
-        },
-      });
-
-      let result;
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        // If response is not JSON, get the text content
-        const text = await response.text();
-        // Create a temporary element to parse the HTML and extract error message
-        const temp = document.createElement("div");
-        temp.innerHTML = text;
-        const errorMessage =
-          temp.querySelector(".error-message")?.textContent ||
-          temp.querySelector(".alert-danger")?.textContent ||
-          "An unexpected error occurred";
-        result = { message: errorMessage };
-      }
-
-      if (response.ok) {
-        // Show success modal
-        const successModal = document.getElementById("success-modal");
-        const successMessage = document.getElementById("success-message");
-        successModal.classList.remove("hidden");
-
-        // Start countdown
-        let countdown = 5;
-        const timer = setInterval(() => {
-          countdown--;
-          successMessage.textContent = `Your farm has been successfully registered. Redirecting to dashboard in ${countdown} seconds...`;
-          if (countdown <= 0) {
-            clearInterval(timer);
-            window.location.href = "/farm/dashboard";
-          }
-        }, 1000);
-      } else {
-        // Show error modal with message
-        document.getElementById("error-modal").classList.remove("hidden");
-        document.getElementById("error-message").textContent =
-          result.message || "An error occurred during farm registration.";
-      }
-    } catch (error) {
-      console.error("Form submission error:", error);
-      // Show error modal
-      document.getElementById("error-modal").classList.remove("hidden");
-      document.getElementById("error-message").textContent =
-        "An error occurred during form submission. Please try again.";
-    } finally {
-      // Restore submit button state
-      submitButton.innerHTML = originalBtnHTML;
-      submitButton.disabled = false;
     }
   }
 
@@ -1326,43 +1302,84 @@ class FarmRegistrationController {
   }
 }
 
-// Initialize the controller when the DOM is loaded
-document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    // Wait a bit to ensure all other scripts are loaded
-    setTimeout(() => {
-      // Create an instance of the controller only if required elements exist
-      const managerInfo = document.getElementById("manager-info");
-      const teamMembers = document.getElementById("team-members");
-      const farms = document.getElementById("farms");
+// Remove everything after the FarmRegistrationController class and replace with this:
 
-      if (managerInfo && teamMembers && farms) {
-        const controller = new FarmRegistrationController();
-        console.log("Farm registration controller initialized successfully");
-      } else {
-        console.warn(
-          "Some required elements are missing. Controller initialization skipped."
-        );
-      }
-    }, 100);
-  } catch (error) {
-    console.error("Error initializing farm registration controller:", error);
+// Initialize everything in a single DOMContentLoaded
+document.addEventListener("DOMContentLoaded", () => {
+  // Check if all required elements exist
+  const managerInfo = document.getElementById("manager-info");
+  const teamMembers = document.getElementById("team-members");
+  const farms = document.getElementById("farms");
+  const farmForm = document.getElementById("farm-form");
+
+  if (!managerInfo || !teamMembers || !farms || !farmForm) {
+    console.warn("Some required elements are missing. Initialization skipped.");
+    return;
   }
-});
 
-// Success modal close handler
-document.getElementById("close-success")?.addEventListener("click", () => {
-  document.getElementById("success-modal").classList.add("hidden");
-  window.location.href = "/farm/dashboard";
-});
+  // Initialize the main controller
+  const controller = new FarmRegistrationController();
+  console.log("Farm registration controller initialized successfully");
 
-// Error modal close handler
-document.getElementById("close-error")?.addEventListener("click", () => {
-  document.getElementById("error-modal").classList.add("hidden");
-});
+  // Initialize form state manager
+  const formManager = new FormStateManager();
+  window.formManager = formManager; // Make it available globally if needed
 
+  // Initialize section controllers (if not already done in FarmRegistrationController)
+  const sections = [
+    {
+      id: "manager-info",
+      editBtn: "toggle-manager-edit",
+      visibilityBtn: "toggle-manager-visibility",
+    },
+    { id: "farms", editBtn: null, visibilityBtn: "toggle-farm-visibility" },
+    {
+      id: "team-members",
+      editBtn: null,
+      visibilityBtn: "toggle-team-visibility",
+    },
+  ];
 
-// Ensure manager inputs have gray borders by default (readonly state)
-document.querySelectorAll("#manager-info input").forEach((input) => {
+  sections.forEach((section) => {
+    new SectionController(
+      section.id,
+      section.editBtn,
+      section.visibilityBtn,
+      true
+    );
+  });
+
+  // Ensure manager inputs have gray borders by default (readonly state)
+  document.querySelectorAll("#manager-info input").forEach((input) => {
     input.classList.add("border-gray-300");
+  });
+
+  // Remove the separate form submission handler since it's handled by the controller
+  // The controller's setupFormSubmission() method should handle this
 });
+
+// Export the SectionController class for use in other modules
+window.SectionController = SectionController;
+
+// Simple modal utility (only if not already in the controller)
+window.modalManager = {
+  closeModal: (modalId) => {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.add("hidden");
+    }
+  },
+
+  showModal: (modalId, message = "") => {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      if (message) {
+        const messageEl = modal.querySelector(`#${modalId}-message`);
+        if (messageEl) {
+          messageEl.textContent = message;
+        }
+      }
+      modal.classList.remove("hidden");
+    }
+  },
+};
