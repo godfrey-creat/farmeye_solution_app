@@ -145,9 +145,8 @@ def analytics():
 @login_required
 @require_farm_registration
 def irrigation():
-    """Display irrigation management view"""
-    # You would add your irrigation logic here
-    return render_template("dashboard/irrigation.html", active_page="irrigation")
+    """Redirect to the irrigation management dashboard"""
+    return redirect(url_for("irrigation.dashboard"))
 
 
 @farm.route("/weather")
@@ -220,7 +219,7 @@ def register_farm():
                         soil_notes="To be updated",
                         user_id=current_user.id,
                         created_at=datetime.utcnow(),
-                        updated_at=datetime.utcnow()
+                        updated_at=datetime.utcnow(),
                     )
                     db.session.add(farm)
                     db.session.flush()

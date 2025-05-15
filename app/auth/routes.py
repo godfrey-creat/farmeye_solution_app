@@ -92,15 +92,17 @@ def register():
 
     form = RegistrationForm()
     login_form = LoginForm()
-
     if form.validate_on_submit():
         user = User(
             email=form.email.data.lower(),
-            firstname=form.firstname.data,
-            lastname=form.lastname.data,
+            username=form.username.data,
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
+            phone_number=form.phone_number.data,
+            user_type=form.user_type.data,
             region=form.region.data,
         )
-        user.set_password(form.password.data)
+        user.password = form.password.data  # Use the password property setter
         db.session.add(user)
         db.session.commit()
 

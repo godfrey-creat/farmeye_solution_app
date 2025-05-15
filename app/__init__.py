@@ -60,6 +60,31 @@ def create_app(config_name=None):
         },
     )
 
+    def wind_direction(degrees):
+        directions = [
+            "N",
+            "NNE",
+            "NE",
+            "ENE",
+            "E",
+            "ESE",
+            "SE",
+            "SSE",
+            "S",
+            "SSW",
+            "SW",
+            "WSW",
+            "W",
+            "WNW",
+            "NW",
+            "NNW",
+        ]
+        index = round(degrees / 22.5) % 16
+        return directions[index]
+
+    # Register as a template filter
+    app.jinja_env.globals.update(wind_direction=wind_direction)
+
     # Register blueprints
     from .main import main as main_blueprint
 
@@ -88,5 +113,9 @@ def create_app(config_name=None):
     from .pest import pest as pest_blueprint
 
     app.register_blueprint(pest_blueprint, url_prefix="/pest")
+
+    from .irrigation import irrigation as irrigation_blueprint
+
+    app.register_blueprint(irrigation_blueprint, url_prefix="/irrigation")
 
     return app
