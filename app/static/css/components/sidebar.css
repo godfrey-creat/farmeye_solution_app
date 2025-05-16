@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .sidebar {
     background-color: #2C3E50;
     color: white;
@@ -28,4 +29,36 @@
     .sidebar.open {
         transform: translateX(0);
     }
+=======
+.sidebar {
+    background-color: #2C3E50;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.sidebar-item {
+    border-radius: 8px;
+    margin: 0 12px;
+    transition: all 0.2s;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-item.active {
+    background-color: #1D8348;
+}
+
+/* Mobile sidebar handling */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        z-index: 50;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+>>>>>>> origin/Dynamic-Parsing
 }

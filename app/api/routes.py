@@ -1,4 +1,5 @@
 # app/api/routes.py
+<<<<<<< HEAD
 import openai
 import os
 from flask import jsonify, current_app, request
@@ -7,12 +8,16 @@ from app import db
 from sqlalchemy import func
 from flask import abort
 from datetime import datetime, timedelta
+=======
+from flask import jsonify, current_app, request
+>>>>>>> origin/Dynamic-Parsing
 from flask_login import login_required, current_user
 import requests
 from datetime import datetime, timedelta
 from . import api
 from ..farm.models import (
     Farm,
+<<<<<<< HEAD
     Field,
     Sensor,
     SensorData,
@@ -25,6 +30,14 @@ from ..farm.models import (
     LaborTask,
 )
 
+=======
+    SensorData,
+    Alert,
+    FarmStage,
+    PestControl,
+    FarmTeamMember,
+)
+>>>>>>> origin/Dynamic-Parsing
 import os
 from dotenv import load_dotenv
 
@@ -41,12 +54,20 @@ def dashboard_data():
         time_range = int(time_range)
     except ValueError:
         time_range = 30  # Get the user's farms
+<<<<<<< HEAD
     farm = Farm.query.filter_by(user_id=current_user.id).all()
+=======
+    farms = Farm.query.filter_by(user_id=current_user.id).all()
+>>>>>>> origin/Dynamic-Parsing
     farm_team_memberships = FarmTeamMember.query.filter_by(
         user_id=current_user.id
     ).all()
     team_farms = [membership.farm for membership in farm_team_memberships]
+<<<<<<< HEAD
     all_farms = farm + team_farms
+=======
+    all_farms = farms + team_farms
+>>>>>>> origin/Dynamic-Parsing
 
     if not all_farms:
         return jsonify(
@@ -62,6 +83,7 @@ def dashboard_data():
     # Use the first farm as the primary farm
     farm = all_farms[0]
 
+<<<<<<< HEAD
 def get_field_by_name(field_name, farm_id=None):
     """
     Retrieve a Field object by its name and optional farm_id.
@@ -197,10 +219,87 @@ def get_latest_soil_moisture(farm_id):
             SensorData.status == "Valid",
             SensorData.sensor_type == "soil_moisture"
         )
+=======
+    # Get the selected field (for now, we'll use a mock field)
+    field = "Field A-12"  # This would come from the database in a real application
+
+    # 1. Farm & Field Information
+    farm_info = {
+        "name": farm.name,
+        "field": field,
+        "last_updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+    # 2. Weather & Forecast
+    # Try to extract latitude and longitude from the farm location
+    weather_data = {}
+    try:
+        # Check if location contains lat/long information
+        if "," in farm.location:
+            lat, lon = map(float, farm.location.split(","))
+
+            # Set up default weather data in case the API call fails
+            weather_data = {
+                "temperature": 24,
+                "condition": "Sunny",
+                "icon": "01d",
+                "forecast": "Weather forecast unavailable",
+            }
+
+            # Try to get API key from config
+            api_key = os.getenv("OPENWEATHER_API_KEY")
+            if api_key:
+                try:
+                    weather_url = f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely&units=metric&appid={api_key}"
+                    response = requests.get(weather_url)
+
+                    if response.status_code == 200:
+                        data = response.json()
+                        current = data["current"]
+
+                        weather_data = {
+                            "temperature": round(current["temp"]),
+                            "condition": current["weather"][0]["main"],
+                            "icon": current["weather"][0]["icon"],
+                            "forecast": (
+                                "Light rain expected in 36 hours"
+                                if "rain" in data.get("daily", [{}])[1]
+                                else "No precipitation expected"
+                            ),
+                        }
+                except Exception as e:
+                    current_app.logger.error(f"OpenWeather API error: {str(e)}")
+                    # Keep default weather data
+            else:
+                weather_data["forecast"] = (
+                    "Weather forecast unavailable (API key not configured)"
+                )
+        else:
+            weather_data = {
+                "temperature": 24,  # Fallback data
+                "condition": "Sunny",
+                "icon": "01d",
+                "forecast": "Set farm location for weather forecast",
+            }
+    except Exception as e:
+        current_app.logger.error(f"Weather data processing error: {str(e)}")
+        weather_data = {
+            "temperature": 24,  # Fallback data
+            "condition": "Sunny",
+            "icon": "01d",
+            "forecast": "Weather forecast unavailable",
+        }
+
+    # 3. Soil & Field Health
+    # Get the latest sensor data
+    soil_moisture = (
+        SensorData.query.filter_by(farm_id=farm.id, sensor_type="soil_moisture")
+>>>>>>> origin/Dynamic-Parsing
         .order_by(SensorData.timestamp.desc())
         .first()
     )
 
+<<<<<<< HEAD
     if not latest_data:
         abort(404, description="No valid soil moisture data found.")
 
@@ -468,6 +567,125 @@ for r in recommendations:
     print(r)    
 
     
+=======
+    # Soil Health Card Data
+    soil_health = {
+        "status": "Good",  # Could be derived from sensor data
+        "quality": 76,  # Overall soil health score
+        "nitrogen": 42,  # ppm
+        "phosphorus": 28,  # ppm
+        "ph_level": 6.8,
+        "organic_matter": 4.2,  # percentage
+    }
+
+    # Field Health Card Data
+    field_health = {
+        "status": "Excellent",
+        "overall_health": 82,  # percentage
+        "improvement": 2,  # percentage improvement
+        "improvement_direction": "up",  # 'up' or 'down'
+    }
+
+    # Moisture Level Card Data
+    moisture = {
+        "status": "Normal",
+        "current": soil_moisture.value if soil_moisture else 64,  # percentage
+        "last_irrigation": "2 days ago",
+        "next_irrigation": "Tomorrow",
+        "forecast": "Light rain expected in 36 hours",
+    }
+
+    # 4. Crop Growth & Harvest
+    # Get the current farm stage
+    farm_stage = FarmStage.query.filter_by(farm_id=farm.id, status="Active").first()
+
+    # Crop Growth Card Data
+    crop_growth = {
+        "status": "On Track",
+        "days": "28/62",
+        "progress": 45,  # percentage
+        "stage": farm_stage.stage_name if farm_stage else "Vegetative",
+        "next_stage": "Flowering (in 14 days)",
+        "harvest_date": "August 15",
+    }  # 5. Field Metrics Historical Data
+    # Generate dates for the selected time range
+    dates = [
+        (datetime.now() - timedelta(days=i)).strftime("%b %d")
+        for i in range(time_range)
+    ]
+    dates.reverse()
+
+    # Generate mock data for the selected time range
+    historical_data = {
+        "temperature": generate_mock_data(time_range, 20, 30),
+        "moisture": generate_mock_data(time_range, 50, 80),
+        "growth": generate_mock_data(time_range, 1.5, 3.5, 1),
+        "soil_health": generate_mock_data(time_range, 70, 85),
+        "dates": dates,
+    }
+
+    # 6. Alerts and Recommendations
+    # Get recent alerts
+    alerts = (
+        Alert.query.filter_by(farm_id=farm.id, is_read=False)
+        .order_by(Alert.created_at.desc())
+        .limit(3)
+        .all()
+    )
+
+    alerts_data = []
+    for alert in alerts:
+        alerts_data.append(
+            {
+                "id": alert.id,
+                "title": alert.alert_type,  # Using alert_type as the title
+                "message": alert.message,
+                "severity": alert.severity,
+                "created_at": alert.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+        )
+
+    # 7. Recommended Actions
+    # These would come from an AI recommendation system or predefined rules
+    # Using mock data for now
+    recommendations = [
+        {
+            "action": "Apply Fertilizer",
+            "description": "Nitrogen levels in sectors 2 and 3 are below optimal. Apply supplemental fertilizer within 48 hours.",
+            "priority": "High",
+            "due": "Tomorrow",
+        },
+        {
+            "action": "Pest Treatment",
+            "description": "Early signs of corn earworm detected in sector 4. Apply organic pesticide to prevent infestation.",
+            "priority": "Medium",
+            "due": "In 3 days",
+        },
+        {
+            "action": "Equipment Maintenance",
+            "description": "Irrigation system inspection recommended. Last maintenance was performed 45 days ago.",
+            "priority": "Info",
+            "due": "This week",
+        },
+    ]
+
+    # Combine all data into a single response
+    response_data = {
+        "farm_info": farm_info,
+        "weather": weather_data,
+        "soil_health": soil_health,
+        "field_health": field_health,
+        "moisture": moisture,
+        "crop_growth": crop_growth,
+        "historical_data": historical_data,
+        "alerts": alerts_data,
+        "recommendations": recommendations,
+    }
+
+    return jsonify(response_data)
+
+
+>>>>>>> origin/Dynamic-Parsing
 @api.route("/debug")
 @login_required
 def api_debug():
@@ -641,4 +859,8 @@ def generate_mock_data(count, min_val, max_val, decimals=0):
         value = max(min_val, min(max_val, value + change))
         data.append(round(value, decimals))
 
+<<<<<<< HEAD
     return data
+=======
+    return data
+>>>>>>> origin/Dynamic-Parsing

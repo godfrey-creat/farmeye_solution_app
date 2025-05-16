@@ -1,4 +1,5 @@
 // app/static/js/dashboard.js
+<<<<<<< HEAD
 
 document.addEventListener('DOMContentLoaded', function() {
     // Set up skeleton loading
@@ -347,3 +348,14 @@ function updateAdvisorySection(advisoryText) {
         advisoryContainer.textContent = advisoryText;
     }
 }
+=======
+import { DashboardManager } from './modules/dashboard-manager.js';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the dashboard manager
+    const dashboard = new DashboardManager();
+
+    // Initial data load with loading UI
+    dashboard.refreshData();
+});
+>>>>>>> origin/Dynamic-Parsing

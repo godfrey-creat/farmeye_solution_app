@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # FarmEye: Smart Farm Monitoring System
 # Core web framework
 Flask==2.3.3
@@ -92,3 +93,101 @@ sphinx-rtd-theme==1.3.0
 # Production
 gunicorn==21.2.0  # WSGI HTTP Server
 supervisor==4.2.5  # Process control
+=======
+# FarmEye: Smart Farm Monitoring System
+# Core web framework
+Flask~=3.1.0
+Werkzeug~=3.1.3
+click
+itsdangerous
+Jinja2
+MarkupSafe
+
+# Database
+Flask-SQLAlchemy
+SQLAlchemy~=2.0.40
+Flask-Migrate~=4.1.0
+alembic~=1.15.2
+pymysql  # For MySQL support in production
+# psycopg2-binary  # For PostgreSQL support in production - Commented out as PostgreSQL is not installed
+
+# Authentication and security
+Flask-Login~=0.6.3
+Flask-JWT-Extended
+Flask-Bcrypt
+Flask-WTF
+email-validator
+WTForms~=3.2.1
+PyJWT
+Flask-CORS==4.0.0
+
+# Form handling and validation
+WTForms-SQLAlchemy
+
+# Email
+Flask-Mail
+
+# Environment variables
+python-dotenv
+
+# File uploads and image processing
+Pillow
+Flask-Uploads
+
+# API and serialization
+Flask-RESTful
+marshmallow
+Flask-Marshmallow
+marshmallow-sqlalchemy
+
+# Machine Learning
+tensorflow  # For crop/disease detection models
+scikit-learn  # For various ML tasks
+opencv-python  # For image processing
+numpy  # Required by TensorFlow and scikit-learn
+scipy  # Scientific computing
+pandas  # Data manipulation
+matplotlib  # Plotting and visualization
+joblib  # Model serialization
+
+# GIS and satellite imagery
+earthengine-api  # Google Earth Engine API
+geojson  # GeoJSON support
+pyproj  # Cartographic projections
+rasterio  # Raster data processing
+geopandas  # Geospatial data operations
+
+# Async tasks and scheduling
+celery  # For background tasks like data processing
+redis  # For Celery broker
+APScheduler  # For scheduled tasks
+
+# Data visualization
+plotly  # Interactive charts
+dash  # Dashboard components
+
+# AWS integration (for cloud storage)
+boto3
+
+# Testing
+pytest
+pytest-flask
+coverage
+factory-boy
+faker  # For generating test data
+
+# Development tools
+Flask-DebugToolbar
+black  # Code formatting
+flake8  # Code linting
+isort  # Import sorting
+
+# Documentation
+Sphinx
+sphinx-rtd-theme
+
+# Production
+gunicorn  # WSGI HTTP Server
+supervisor  # Process control
+requests
+>>>>>>> origin/Dynamic-Parsing

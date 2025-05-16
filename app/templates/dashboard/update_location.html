@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}FarmEye - Update Farm Location{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+    #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 0.75rem;
+    }
+    .coordinate-input {
+        transition: all 0.3s ease;
+    }
+    .coordinate-input:focus {
+        border-color: #52BE80;
+        box-shadow: 0 0 0 3px rgba(82, 190, 128, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-3xl font-semibold text-dark">Update Farm Location</h1>
+        <p class="text-medium mt-1">Set your farm's coordinates for accurate weather data</p>
+    </div>
+    <div>
+        <a href="{{ url_for('weather.dashboard') }}" class="bg-medium hover:bg-dark text-white px-4 py-2 rounded-lg transition-colors shadow-md">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Weather
+        </a>
+    </div>
+</div>
+
+<!-- Location Form -->
+<div class="bg-white rounded-xl p-6 shadow-card mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Map Column -->
+        <div>
+            <h2 class="text-xl font-semibold mb-4">Select Location on Map</h2>
+            <p class="text-medium mb-4">Click on the map to set your farm's location or use the search box below.</p>
+            
+            <!-- Search Box -->
+            <div class="mb-4">
+                <div class="relative">
+                    <input type="text" id="location-search" placeholder="Search location..." class="w-full px-4 py-3 rounded-lg border border-light focus:outline-none focus:ring-2 focus:ring-primary-light pl-10">
+                    <i class="fas fa-search absolute left-3 top-3.5 text-medium"></i>
+                </div>
+            </div>
+            
+            <!-- Map Container -->
+            <div id="map" class="shadow-md"></div>
+            
+            <p class="text-sm text-medium mt-3"><i class="fas fa-info-circle mr-1"></i> The map displays your current or previously set farm location. Click anywhere on the map to update your coordinates.</p>
+        </div>
+        
+        <!-- Form Column -->
+        <div>
+            <h2 class="text-xl font-semibold mb-4">Farm Location Details</h2>
+            <p class="text-medium mb-6">Enter your farm's coordinates manually or use the map to set them automatically.</p>
+            
+            <form action="{{ url_for('weather.update_location') }}" method="POST">
+                {{ form.hidden_tag() }}
+                
+                <!-- Latitude -->
+                <div class="mb-4">
+                    {{ form.latitude.label(class="block text-dark font-medium mb-2") }}
+                    <div class="relative">
+                        {{ form.latitude(id="latitude", class="coordinate-input w-full px-4 py-3 rounded-lg border border-light focus:outline-none focus:border-primary-light pl-10", placeholder="e.g. 51.507351") }}
+                        <i class="fas fa-map-marker-alt absolute left-3 top-3.5 text-primary"></i>
+                    </div>
+                    <p class="text-sm text-medium mt-1">Decimal format (e.g. 51.507351)</p>
+                    {% if form.latitude.errors %}
+                    <div class="text-danger text-sm mt-1">
+                        {% for error in form.latitude.errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Longitude -->
+                <div class="mb-6">
+                    {{ form.longitude.label(class="block text-dark font-medium mb-2") }}
+                    <div class="relative">
+                        {{ form.longitude(id="longitude", class="coordinate-input w-full px-4 py-3 rounded-lg border border-light focus:outline-none focus:border-primary-light pl-10", placeholder="e.g. -0.127758") }}
+                        <i class="fas fa-map-marker-alt absolute left-3 top-3.5 text-primary"></i>
+                    </div>
+                    <p class="text-sm text-medium mt-1">Decimal format (e.g. -0.127758)</p>
+                    {% if form.longitude.errors %}
+                    <div class="text-danger text-sm mt-1">
+                        {% for error in form.longitude.errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Use My Location Button -->
+                <div class="mb-6">
+                    <button type="button" id="use-my-location" class="w-full bg-accent hover:bg-yellow-500 text-dark py-3 rounded-lg transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-accent">
+                        <i class="fas fa-crosshairs mr-2"></i>Use My Current Location
+                    </button>
+                    <p class="text-sm text-medium mt-1 text-center">This will detect your device's current location</p>
+                </div>
+                
+                <!-- Farm Name -->
+                <div class="mb-6">
+                    <label for="farm_name" class="block text-dark font-medium mb-2">Farm Name</label>
+                    <div class="relative">
+                        <input type="text" id="farm_name" placeholder="Your farm name" value="{% if farm %}{{ farm.name }}{% endif %}" class="w-full px-4 py-3 rounded-lg border border-light focus:outline-none focus:ring-2 focus:ring-primary-light pl-10" disabled>
+                        <i class="fas fa-home absolute left-3 top-3.5 text-primary"></i>
+                    </div>
+                    <p class="text-sm text-medium mt-1">To update farm name, go to farm settings</p>
+                </div>
+                
+                <!-- Submit Button -->
+                {{ form.submit(class="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-lg transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-primary-light") }}
+            </form>
+            
+            <!-- Help Text -->
+            <div class="mt-6 p-4 bg-lighter rounded-lg">
+                <h3 class="text-lg font-medium flex items-center"><i class="fas fa-lightbulb text-warning mr-2"></i> Finding Your Coordinates</h3>
+                <p class="text-medium mt-2">You can find your exact coordinates by:</p>
+                <ul class="mt-2 space-y-1 text-medium">
+                    <li>• Clicking directly on the map</li>
+                    <li>• Searching for your address in the search box</li>
+                    <li>• Using your device's location by clicking "Use My Location"</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Default coordinates (if none are set)
+        let defaultLat = 51.505;
+        let defaultLng = -0.09;
+        
+        // Get coordinates from form if they exist
+        const latInput = document.getElementById('latitude');
+        const lngInput = document.getElementById('longitude');
+        
+        if (latInput.value && lngInput.value) {
+            defaultLat = parseFloat(latInput.value);
+            defaultLng = parseFloat(lngInput.value);
+        }
+        
+        // Initialize map
+        const map = L.map('map').setView([defaultLat, defaultLng], 13);
+        
+        // Add tile layer (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Add a marker for the current position
+        let marker = L.marker([defaultLat, defaultLng], {
+            draggable: true
+        }).addTo(map);
+        
+        // Update coordinates when marker is dragged
+        marker.on('dragend', function(event) {
+            const position = marker.getLatLng();
+            latInput.value = position.lat.toFixed(6);
+            lngInput.value = position.lng.toFixed(6);
+        });
+        
+        // Click on map to set marker
+        map.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            latInput.value = e.latlng.lat.toFixed(6);
+            lngInput.value = e.latlng.lng.toFixed(6);
+        });
+        
+        // Use device location
+        document.getElementById('use-my-location').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Update map and marker
+                    map.setView([lat, lng], 13);
+                    marker.setLatLng([lat, lng]);
+                    
+                    // Update form fields
+                    latInput.value = lat.toFixed(6);
+                    lngInput.value = lng.toFixed(6);
+                }, function(error) {
+                    console.error("Error getting location: ", error);
+                    alert("Unable to get your current location. Please try again or enter coordinates manually.");
+                });
+            } else {
+                alert("Geolocation is not supported by your browser. Please enter coordinates manually.");
+            }
+        });
+        
+        // Simple geocoding with OpenStreetMap Nominatim (for educational purposes)
+        // Note: For production, you should use a proper geocoding service with appropriate usage limits
+        const searchInput = document.getElementById('location-search');
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = searchInput.value;
+                
+                if (query.length > 2) {
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data && data.length > 0) {
+                                const result = data[0];
+                                const lat = parseFloat(result.lat);
+                                const lng = parseFloat(result.lon);
+                                
+                                // Update map and marker
+                                map.setView([lat, lng], 13);
+                                marker.setLatLng([lat, lng]);
+                                
+                                // Update form fields
+                                latInput.value = lat.toFixed(6);
+                                lngInput.value = lng.toFixed(6);
+                            } else {
+                                alert("Location not found. Please try a different search term.");
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error searching for location:', error);
+                            alert("Error searching for location. Please try again later.");
+                        });
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

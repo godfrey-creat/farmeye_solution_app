@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Irrigation Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 mt-16">
+    <h1 class="text-2xl font-bold mb-6 text-primary-dark">Irrigation Management</h1>
+    
+    <!-- Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <!-- Water Usage Card -->
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-500">Water Usage Today</h3>
+                <i class="fas fa-tint text-blue-500"></i>
+            </div>
+            <div class="flex items-baseline">
+                <span class="text-2xl font-bold text-primary-dark" id="waterUsage">2,450</span>
+                <span class="ml-2 text-sm text-gray-500">gallons</span>
+            </div>
+            <div class="text-xs text-gray-400 mt-2">
+                <span class="text-green-500"><i class="fas fa-arrow-down"></i> 12%</span>
+                vs last week
+            </div>
+        </div>
+
+        <!-- Next Irrigation Card -->
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-500">Next Scheduled Irrigation</h3>
+                <i class="fas fa-calendar text-primary"></i>
+            </div>
+            <div class="text-xl font-semibold text-primary-dark" id="nextIrrigation">Tomorrow, 6:00 AM</div>
+            <div class="text-xs text-gray-400 mt-2">
+                Zone 3 - Corn Field
+            </div>
+        </div>
+
+        <!-- Soil Moisture Card -->
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-500">Average Soil Moisture</h3>
+                <i class="fas fa-water text-blue-400"></i>
+            </div>
+            <div class="flex items-baseline">
+                <span class="text-2xl font-bold text-primary-dark" id="soilMoisture">65</span>
+                <span class="ml-2 text-sm text-gray-500">%</span>
+            </div>
+            <div class="text-xs text-gray-400 mt-2">
+                Optimal range: 60-75%
+            </div>
+        </div>
+
+        <!-- System Status Card -->
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-500">System Status</h3>
+                <i class="fas fa-check-circle text-green-500"></i>
+            </div>
+            <div class="text-xl font-semibold text-green-500">Operational</div>
+            <div class="text-xs text-gray-400 mt-2">
+                All zones functioning normally
+            </div>
+        </div>
+    </div>
+
+    <!-- Water Usage Chart -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-lg font-semibold mb-4 text-primary-dark">Water Usage History</h2>
+        <canvas id="waterUsageChart" height="200"></canvas>
+    </div>
+
+    <!-- Irrigation Zones -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Zone Management -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-semibold mb-4 text-primary-dark">Zone Management</h2>
+                <div class="space-y-4">
+                    <!-- Zone 1 -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-medium">Zone 1 - Wheat Field</h3>
+                            <span class="px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">Active</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Moisture Level:</span>
+                                <span class="font-medium">68%</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Last Watered:</span>
+                                <span class="font-medium">2h ago</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="px-3 py-1 text-sm text-primary border border-primary rounded hover:bg-primary hover:text-white transition">
+                                Adjust Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Zone 2 -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-medium">Zone 2 - Vegetable Garden</h3>
+                            <span class="px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">Scheduled</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Moisture Level:</span>
+                                <span class="font-medium">52%</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Last Watered:</span>
+                                <span class="font-medium">1d ago</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="px-3 py-1 text-sm text-primary border border-primary rounded hover:bg-primary hover:text-white transition">
+                                Adjust Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Zone 3 -->
+                    <div class="border rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-medium">Zone 3 - Corn Field</h3>
+                            <span class="px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800">Inactive</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Moisture Level:</span>
+                                <span class="font-medium">70%</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Last Watered:</span>
+                                <span class="font-medium">6h ago</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="px-3 py-1 text-sm text-primary border border-primary rounded hover:bg-primary hover:text-white transition">
+                                Adjust Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scheduling -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-semibold mb-4 text-primary-dark">Irrigation Schedule</h2>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div>
+                            <div class="font-medium">Zone 3 Irrigation</div>
+                            <div class="text-sm text-gray-500">Tomorrow, 6:00 AM</div>
+                        </div>
+                        <button class="text-primary hover:text-primary-dark">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div>
+                            <div class="font-medium">Zone 2 Maintenance</div>
+                            <div class="text-sm text-gray-500">Tomorrow, 2:00 PM</div>
+                        </div>
+                        <button class="text-primary hover:text-primary-dark">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div>
+                            <div class="font-medium">Zone 1 Irrigation</div>
+                            <div class="text-sm text-gray-500">Wed, 7:00 AM</div>
+                        </div>
+                        <button class="text-primary hover:text-primary-dark">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <button class="w-full mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition">
+                        Add New Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Efficiency Metrics -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold mb-4 text-primary-dark">System Efficiency</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Water Efficiency</h3>
+                <div class="text-2xl font-bold text-primary-dark">92%</div>
+                <div class="text-xs text-gray-400">Based on soil moisture retention</div>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Cost per Gallon</h3>
+                <div class="text-2xl font-bold text-primary-dark">$0.015</div>
+                <div class="text-xs text-gray-400">Average this month</div>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Coverage Rating</h3>
+                <div class="text-2xl font-bold text-primary-dark">95%</div>
+                <div class="text-xs text-gray-400">Based on zone sensors</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('waterUsageChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Water Usage (Gallons)',
+                data: [2100, 1900, 2300, 2450, 2200, 1850, 2000],
+                borderColor: '#2563eb',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: true,
+                        color: '#f3f4f6'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

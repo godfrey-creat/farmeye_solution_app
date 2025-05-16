@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base.html" %}
 
 {% block title %}FarmEye - Your Profile{% endblock %}
@@ -107,4 +108,115 @@
         </div>
     </div>
 </div>
+=======
+{% extends "base.html" %}
+
+{% block title %}FarmEye - Your Profile{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-xl shadow-card overflow-hidden">
+        <div class="bg-primary p-6 text-white">
+            <h1 class="text-2xl font-bold">Your Profile</h1>
+            <p class="opacity-90">Manage your account details and preferences</p>
+        </div>
+        
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Profile Details -->
+                <div class="md:col-span-2">
+                    <h2 class="text-xl font-semibold mb-4">Profile Information</h2>
+                    
+                    <div class="bg-lighter p-6 rounded-lg mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <div class="text-sm text-medium">First Name</div>
+                                <div class="font-medium">{{ current_user.first_name }}</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-medium">Last Name</div>
+                                <div class="font-medium">{{ current_user.last_name }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <div class="text-sm text-medium">Username</div>
+                                <div class="font-medium">{{ current_user.username }}</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-medium">Email</div>
+                                <div class="font-medium">{{ current_user.email }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-sm text-medium">Phone Number</div>
+                                <div class="font-medium">{{ current_user.phone_number }}</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-medium">User Type</div>
+                                <div class="font-medium">{{ current_user.user_type }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex">
+                        <button class="btn btn-primary mr-3">
+                            <i class="fas fa-edit mr-2"></i> Edit Profile
+                        </button>
+                        <button class="btn btn-outline">
+                            <i class="fas fa-lock mr-2"></i> Change Password
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Account Stats -->
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">Account Summary</h2>
+                    
+                    <div class="bg-lighter p-6 rounded-lg mb-6">
+                        <div class="flex items-center mb-6">
+                            <div class="h-16 w-16 bg-primary-light rounded-full flex items-center justify-center text-white text-2xl font-bold mr-4">
+                                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                            </div>
+                            <div>
+                                <div class="font-semibold text-lg">{{ current_user.first_name }} {{ current_user.last_name }}</div>
+                                <div class="text-medium">{{ current_user.email }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-b border-gray-200 py-4 mb-4">
+                            <div class="flex justify-between mb-2">
+                                <div class="text-medium">Account Status</div>
+                                {% if current_user.is_approved %}
+                                <div class="bg-primary-light bg-opacity-10 px-2 py-1 rounded text-xs font-medium text-primary-dark">Approved</div>
+                                {% else %}
+                                <div class="bg-warning bg-opacity-10 px-2 py-1 rounded text-xs font-medium text-warning">Pending Approval</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex justify-between">
+                                <div class="text-medium">Last Login</div>
+                                <div>{{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else 'N/A' }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <a href="{{ url_for('auth.logout') }}" class="text-danger hover:underline">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Sign Out
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+>>>>>>> origin/Dynamic-Parsing
 {% endblock %}

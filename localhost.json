@@ -1,0 +1,89 @@
+(index):64  cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+(anonymous) @ (index):64
+farm_registration.js:1161 Farm registration controller initialized successfully
+:5000/favicon.ico:1 
+            
+            
+            Failed to load resource: the server responded with a status of 404 (NOT FOUND)
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+css-generic.js:1 uBOL: Generic cosmetic filtering stopped because no more DOM changes
+farm_registration.js:565 Form data entries: (12) [Array(2), Array(2), Array(2), Array(2), Array(2), Array(2), Array(2), Array(2), Array(2), Array(2), Array(2), Array(2)]
+farm_registration.js:567 Converted form data: {farmName: 'Kaberia', region: 'nairobi', fieldName: 'Wilson', cropType: 'Corn', latitude: '-1.092802', …}
+farm_registration.js:605 Farm Data from Modal: {farmName: 'Kaberia', region: 'nairobi', fieldName: 'Wilson', cropType: 'Corn', latitude: '-1.092802', …}
+farm_registration.js:606 Farm Name specifically: Kaberia
+farm_registration.js:611 Number of field entries found: 1
+farm_registration.js:619 Field 0 - Name: Wilson
+farm_registration.js:631 Field 0 - Number of markers: 4
+farm_registration.js:643 Field 0, Marker 0 - Lat: -1.094598, Lng: 36.944786
+farm_registration.js:643 Field 0, Marker 1 - Lat: -1.094598, Lng: 37.016127
+farm_registration.js:643 Field 0, Marker 2 - Lat: -1.092802, Lng: 37.016127
+farm_registration.js:643 Field 0, Marker 3 - Lat: -1.092802, Lng: 37.014779
+farm_registration.js:662 Field 0 added with 4 boundaries
+farm_registration.js:672 Total fields collected: 1
+farm_registration.js:691 Adding new farm: {id: '1747196858832', name: 'Kaberia', region: 'nairobi', fields: Array(1)}
+farm_registration.js:695 All farms after update: [{…}]
+farm_registration.js:565 Form data entries: (4) [Array(2), Array(2), Array(2), Array(2)]
+farm_registration.js:567 Converted form data: {firstName: 'Maxwell', lastName: 'Simiyu', email: 'simiyumaxwell490@gmail.com', role: 'Laborer'}
+farm_registration.js:957 === FORM SUBMISSION STARTED ===
+farm_registration.js:958 Current farms before validation: [{…}]0: {id: '1747196858832', name: 'Kaberia', region: 'nairobi', fields: Array(1)}length: 1[[Prototype]]: Array(0)
+farm_registration.js:869 Starting validation. Current farms: [{…}]0: {id: '1747196858832', name: 'Kaberia', region: 'nairobi', fields: Array(1)}length: 1[[Prototype]]: Array(0)at: ƒ at()concat: ƒ concat()constructor: ƒ Array()copyWithin: ƒ copyWithin()entries: ƒ entries()every: ƒ every()fill: ƒ fill()filter: ƒ filter()find: ƒ find()findIndex: ƒ findIndex()findLast: ƒ findLast()findLastIndex: ƒ findLastIndex()flat: ƒ flat()flatMap: ƒ flatMap()forEach: ƒ forEach()includes: ƒ includes()indexOf: ƒ indexOf()join: ƒ join()keys: ƒ keys()lastIndexOf: ƒ lastIndexOf()length: 0map: ƒ map()pop: ƒ pop()push: ƒ push()reduce: ƒ reduce()reduceRight: ƒ reduceRight()reverse: ƒ reverse()shift: ƒ shift()slice: ƒ slice()some: ƒ some()sort: ƒ sort()splice: ƒ splice()toLocaleString: ƒ toLocaleString()toReversed: ƒ toReversed()toSorted: ƒ toSorted()toSpliced: ƒ toSpliced()toString: ƒ toString()unshift: ƒ unshift()values: ƒ values()with: ƒ with()Symbol(Symbol.iterator): ƒ values()Symbol(Symbol.unscopables): {at: true, copyWithin: true, entries: true, fill: true, find: true, …}[[Prototype]]: Object
+farm_registration.js:966 CSRF Token: ImYzOGI5MDZiM2ZkNTg2NDNmNzI2NzJhNjJiYThlYWI3YzA2YTIyNzYi.aCQbMQ.kxwS4fRn9UVmZUFRCJfNx7UFXQY
+farm_registration.js:988 === FORM DATA BEING SUBMITTED ===
+farm_registration.js:989 {
+  "teamMembers": [
+    {
+      "firstName": "Maxwell",
+      "lastName": "Simiyu",
+      "email": "simiyumaxwell490@gmail.com",
+      "role": "Laborer"
+    }
+  ],
+  "farms": [
+    {
+      "name": "Kaberia",
+      "region": "nairobi",
+      "fields": [
+        {
+          "name": "Wilson",
+          "boundaries": [
+            {
+              "lat": -1.094598,
+              "lng": 36.944786
+            },
+            {
+              "lat": -1.094598,
+              "lng": 37.016127
+            },
+            {
+              "lat": -1.092802,
+              "lng": 37.016127
+            },
+            {
+              "lat": -1.092802,
+              "lng": 37.014779
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+farm_registration.js:992 Request URL: /farm/register
+farm_registration.js:993 Request Method: POST
+farm_registration.js:994 Request Headers: {Content-Type: 'application/json', X-CSRFToken: 'ImYzOGI5MDZiM2ZkNTg2NDNmNzI2NzJhNjJiYThlYWI3YzA2YTIyNzYi.aCQbMQ.kxwS4fRn9UVmZUFRCJfNx7UFXQY'}
+farm_registration.js:1007 Sending request to server...
+farm_registration.js:1008 
+            
+            
+            POST http://localhost:5000/farm/register 500 (INTERNAL SERVER ERROR)
+submitForm @ farm_registration.js:1008
+(anonymous) @ farm_registration.js:1067
+farm_registration.js:1018 === SERVER RESPONSE ===
+farm_registration.js:1019 Response Status: 500
+farm_registration.js:1020 Response OK: false
+farm_registration.js:1021 Response Headers: Headers {}
+farm_registration.js:1025 Error Response Data: {error: 'An error occurred during registration. Please try again.', success: false}

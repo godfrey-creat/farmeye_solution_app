@@ -132,6 +132,10 @@
               method="POST"
             >
               {{ form.csrf_token }}
+<<<<<<< HEAD
+=======
+              <input type="hidden" id="current-user-region" value="{{ current_user.region }}">
+>>>>>>> origin/Dynamic-Parsing
               <!-- Farmer Name Section -->
               <div class="mb-6 bg-gray-50 rounded-lg p-4">
                 <div class="flex justify-between items-center mb-4">
@@ -175,7 +179,11 @@
                       name="first_name"
                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
                       required
+<<<<<<< HEAD
                       value="{{ current_user.firstname }}"
+=======
+                      value="{{ current_user.first_name }}"
+>>>>>>> origin/Dynamic-Parsing
                       readonly
                       title="Your first name"
                       aria-label="First Name"
@@ -193,7 +201,11 @@
                       name="last_name"
                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
                       required
+<<<<<<< HEAD
                       value="{{ current_user.lastname }}"
+=======
+                      value="{{ current_user.last_name }}"
+>>>>>>> origin/Dynamic-Parsing
                       readonly
                       title="Your last name"
                       aria-label="Last Name"
@@ -221,7 +233,10 @@
               </div>
 
               <!-- Farms -->
+<<<<<<< HEAD
               <!-- Farms -->
+=======
+>>>>>>> origin/Dynamic-Parsing
               <div class="mb-6 bg-gray-50 rounded-lg p-4">
                 <div class="flex justify-between items-center mb-4">
                   <div class="flex items-center space-x-2">
@@ -231,9 +246,13 @@
                       class="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition-colors"
                       title="Toggle section visibility"
                     >
+<<<<<<< HEAD
                       <i
                         class="fas fa-chevron-down transition-transform duration-300"
                       ></i>
+=======
+                      <i class="fas fa-chevron-down transition-transform duration-300"></i>
+>>>>>>> origin/Dynamic-Parsing
                     </button>
                     <h3 class="text-lg font-medium text-gray-800">Farms</h3>
                   </div>
@@ -246,11 +265,48 @@
                     <i class="fas fa-plus mr-1"></i> Add
                   </button>
                 </div>
+<<<<<<< HEAD
                 <div
                   class="space-y-4 overflow-hidden transition-all duration-300"
                   id="farms"
                 >
                   <!-- Farms will be added here -->
+=======
+                <div class="space-y-4 overflow-hidden transition-all duration-300" id="farms">
+                  <!-- Empty state message -->
+                  <div id="empty-farms-message" class="text-center py-8 hidden">
+                    <div class="text-gray-400 mb-2">
+                      <i class="fas fa-tractor text-4xl"></i>
+                    </div>
+                    <p class="text-gray-500">No farms added yet. Click the Add button to register your first farm.</p>
+                  </div>
+                  
+                  <!-- Farm entries template -->
+                  <template id="farm-entry-template">
+                    <div class="farm-entry bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                      <div class="flex justify-between items-start">
+                        <div class="flex-grow">
+                          <div class="flex items-center mb-2">
+                            <i class="fas fa-farm text-green-600 mr-2"></i>
+                            <h4 class="font-medium text-gray-800 farm-name"></h4>
+                          </div>
+                          <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            <span class="farm-region"></span>
+                          </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <button class="edit-farm p-1 text-blue-600 hover:text-blue-800 transition-colors" title="Edit farm">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button class="remove-farm p-1 text-red-600 hover:text-red-800 transition-colors" title="Remove farm">
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+>>>>>>> origin/Dynamic-Parsing
                 </div>
               </div>
 
@@ -299,12 +355,63 @@
                   Complete Registration
                 </button>
               </div>
+<<<<<<< HEAD
             </form>
+=======
+            </form>          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modals Container -->
+    <div class="relative z-[9999]">
+      <!-- Success Modal -->
+      <div id="success-modal" class="fixed inset-0 hidden">
+        <div class="fixed inset-0 bg-black bg-opacity-50"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+          <div class="bg-white rounded-lg p-8 max-w-md w-full mx-auto relative">
+            <div class="text-center">
+              <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-green-600 text-2xl"></i>
+              </div>
+              <h3 class="text-2xl font-bold text-gray-800 mb-2">
+                Registration Complete!
+              </h3>
+              <p id="success-message" class="text-gray-600 mb-6">
+                Your farm has been successfully registered. Redirecting to dashboard in 5 seconds...
+              </p>
+              <button id="close-success" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Modal -->
+      <div id="error-modal" class="fixed inset-0 hidden">
+        <div class="fixed inset-0 bg-black bg-opacity-50"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+          <div class="bg-white rounded-lg p-8 max-w-md w-full mx-auto relative">
+            <div class="text-center">
+              <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+              </div>
+              <h3 id="error-title" class="text-2xl font-bold text-gray-800 mb-2">
+                Error
+              </h3>
+              <p id="error-message" class="text-gray-600 mb-6"></p>
+              <button id="close-error" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                Try Again
+              </button>
+            </div>
+>>>>>>> origin/Dynamic-Parsing
           </div>
         </div>
       </div>
     </div>
 
+<<<<<<< HEAD
     <!-- Success Modal -->
     <div
       id="success-modal"
@@ -359,6 +466,8 @@
         </div>
       </div>
     </div>
+=======
+>>>>>>> origin/Dynamic-Parsing
     <style>
       /* Add these styles to ensure smooth animations */
       #manager-info,
@@ -378,6 +487,7 @@
         transform: translateY(20px);
         transition: opacity 0.3s ease-out, transform 0.3s ease-out;
       }
+<<<<<<< HEAD
     </style>
     <script>
       class SectionController {
@@ -590,3 +700,10 @@
     <script src="{{ url_for('static', filename='js/farm_registration.js') }}"></script>
   </body>
 </html>
+=======
+    </style>    <!-- Load form manager first since farm_registration.js depends on it -->
+    <script src="{{ url_for('static', filename='js/formStateManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/farm_registration.js') }}"></script>
+  </body>
+</html>
+>>>>>>> origin/Dynamic-Parsing

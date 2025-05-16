@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}FarmEye - Error{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div class="auth-container bg-white rounded-xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-danger p-6 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <i class="fas fa-exclamation-triangle text-3xl text-white mr-2"></i>
+                <span class="text-2xl font-bold text-white">Error</span>
+            </div>
+        </div>
+        
+        <div class="p-6 text-center">
+            <div class="bg-danger text-white p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <i class="fas fa-times text-4xl"></i>
+            </div>
+            <h2 class="text-xl font-semibold mb-4">{{ error_title }}</h2>
+            <p class="text-medium mb-6">{{ error_message }}</p>
+            
+            <div class="flex justify-center">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+                    Return to Login
+                </a>
+                <a href="{{ url_for('main.index') }}" class="btn btn-outline ml-4">
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
