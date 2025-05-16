@@ -1,368 +1,290 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Weather Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .weather-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: white;
+        }
+        
+        .weather-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        .weather-icon {
+            font-size: 2.5rem;
+            margin-right: 1rem;
+        }
+        
+        .temperature {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .condition {
+            font-size: 1.2rem;
+            color: #555;
+        }
+        
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .detail-item {
+            text-align: center;
+            padding: 0.5rem;
+        }
+        
+        .detail-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #3498db;
+        }
+        
+        .detail-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .detail-label {
+            font-size: 0.9rem;
+            color: #777;
+        }
+        
+        .forecast-card {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
 
-{% block title %}FarmEye - Weather{% endblock %}
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+        
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+        
+        .alert-info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+        }
+        
+        .refresh-button {
+            padding: 0.375rem 0.75rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .refresh-button:hover {
+            background-color: #2980b9;
+        }
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
-<style>
-    .weather-card {
-        transition: transform 0.3s ease;
-    }
-    .weather-card:hover {
-        transform: translateY(-5px);
-    }
-    .forecast-item {
-        transition: all 0.3s ease;
-    }
-    .forecast-item:hover {
-        background-color: rgba(82, 190, 128, 0.1);
-    }
-</style>
-{% endblock %}
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
 
-{% block content %}
-<!-- Page Header -->
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-3xl font-semibold text-dark">Weather Dashboard</h1>
-        {% if has_location and current %}
-        <p class="text-medium mt-1">Last updated: <span id="last-updated">{{ current.time.strftime('%B %d, %Y at %I:%M %p') }}</span></p>
-        {% else %}
-        <p class="text-medium mt-1">Weather data not available</p>
-        {% endif %}
-    </div>
-    <div>
-        {% if has_location %}
-        <button class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg transition-colors shadow-md" onclick="window.location.reload()">
-            <i class="fas fa-sync-alt mr-2"></i>Refresh
-        </button>
-        {% else %}
-        <a href="{{ url_for('weather.update_location') }}" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg transition-colors shadow-md">
-            <i class="fas fa-map-marker-alt mr-2"></i>Update Location
-        </a>
-        {% endif %}
-    </div>
-</div>
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #3498db;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
 
-{% if not has_location %}
-<!-- No Location Message -->
-<div class="bg-white rounded-xl p-8 shadow-card mb-6 text-center">
-    <div class="mb-6">
-        <i class="fas fa-map-marker-alt text-6xl text-medium mb-4"></i>
-        <h2 class="text-2xl font-semibold mb-2">Farm Location Missing</h2>
-        <p class="text-medium mb-6">We need your farm's location to provide accurate weather information.</p>
-        <a href="{{ url_for('weather.update_location') }}" class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg transition-colors shadow-md inline-block">
-            <i class="fas fa-map-marker-alt mr-2"></i>Update Farm Location
-        </a>
-    </div>
-</div>
-{% elif error %}
-<!-- Error Message -->
-<div class="bg-white rounded-xl p-8 shadow-card mb-6 text-center">
-    <div class="mb-6">
-        <i class="fas fa-exclamation-circle text-6xl text-danger mb-4"></i>
-        <h2 class="text-2xl font-semibold mb-2">Weather Data Unavailable</h2>
-        <p class="text-medium mb-6">We're having trouble retrieving the weather data. Please try again later.</p>
-        <button class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg transition-colors shadow-md" onclick="window.location.reload()">
-            <i class="fas fa-sync-alt mr-2"></i>Try Again
-        </button>
-    </div>
-</div>
-{% else %}
-<!-- Location and Date Selection -->
-<div class="bg-white rounded-xl p-4 shadow-card mb-6">
-    <div class="flex flex-wrap items-center justify-between">
-        <div class="flex items-center">
-            <i class="fas fa-map-marker-alt text-primary text-xl mr-2"></i>
-            <h2 class="text-xl font-medium">{{ farm.name }}</h2>
-            <span class="mx-2 text-medium">|</span>
-            <a href="{{ url_for('weather.update_location') }}" class="text-primary hover:text-primary-dark">
-                <i class="fas fa-edit mr-1"></i>Update Location
-            </a>
-        </div>
-        <div class="flex items-center mt-3 md:mt-0">
-            <i class="fas fa-calendar-alt text-primary text-xl mr-2"></i>
-            <span>{{ current.time.strftime('%A, %B %d, %Y') }}</span>
-        </div>
-    </div>
-</div>
-
-<!-- Current Weather -->
-<div class="bg-white rounded-xl p-6 shadow-card mb-6">
-    <h2 class="text-2xl font-semibold mb-4">Current Weather</h2>
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <!-- Main Weather Card -->
-        <div class="weather-card bg-primary text-white rounded-xl p-5 shadow-lg col-span-1 lg:col-span-2">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-lg opacity-90">Today</p>
-                    <h3 class="text-4xl font-bold mt-1">{{ current.temp }}°C</h3>
-                    <p class="text-lg mt-1">{{ current.description|title }}</p>
-                    <div class="flex items-center mt-3">
-                        <i class="fas fa-wind mr-2"></i>
-                        <span>{{ current.wind_speed }} km/h</span>
-                    </div>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="weather-dashboard">
+            <div class="weather-card">
+                <div class="weather-header">
+                    <h2>Farm Weather</h2>
+                    <button class="refresh-button" id="refreshWeather">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
                 </div>
-                <div class="text-center">
-                    <img src="https://openweathermap.org/img/wn/{{ current.icon }}@4x.png" alt="{{ current.description }}" class="w-24 h-24">
-                    <p class="mt-2">Feels like {{ current.feels_like }}°C</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Weather Details Cards -->
-        <div class="weather-card bg-lighter rounded-xl p-5 shadow-md">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-lg font-semibold">Humidity</h4>
-                <i class="fas fa-tint text-water text-2xl"></i>
-            </div>
-            <p class="text-3xl font-bold">{{ current.humidity }}%</p>
-            <div class="w-full bg-light rounded-full h-2 mt-3">
-                <div class="bg-water h-2 rounded-full" style="width: {{ current.humidity }}%"></div>
-            </div>
-        </div>
-
-        <div class="weather-card bg-lighter rounded-xl p-5 shadow-md">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-lg font-semibold">Rainfall</h4>
-                <i class="fas fa-cloud-rain text-water text-2xl"></i>
-            </div>
-            <p class="text-3xl font-bold">{{ rainfall }} mm</p>
-            <p class="text-medium mt-3">Last hour</p>
-        </div>
-
-        <div class="weather-card bg-lighter rounded-xl p-5 shadow-md">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-lg font-semibold">UV Index</h4>
-                <i class="fas fa-sun text-warning text-2xl"></i>
-            </div>
-            {% set uvi_level = "low" if current.uvi < 3 else "moderate" if current.uvi < 6 else "high" if current.uvi < 8 else "very high" %}
-            <p class="text-3xl font-bold">{{ current.uvi }} <span class="text-lg font-normal">{{ uvi_level }}</span></p>
-            <div class="w-full bg-light rounded-full h-2 mt-3">
-                <div class="bg-warning h-2 rounded-full" style="width: {{ (current.uvi / 11) * 100 }}%"></div>
-            </div>
-        </div>
-
-        <div class="weather-card bg-lighter rounded-xl p-5 shadow-md">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-lg font-semibold">Wind</h4>
-                <i class="fas fa-wind text-medium text-2xl"></i>
-            </div>
-            <p class="text-3xl font-bold">{{ current.wind_speed }} km/h</p>
-            <p class="text-medium mt-3">
-                {% if current.wind_speed < 5 %}Light breeze
-                {% elif current.wind_speed < 10 %}Gentle breeze
-                {% elif current.wind_speed < 20 %}Moderate wind
-                {% else %}Strong wind
-                {% endif %}
-            </p>
-        </div>
-    </div>
-</div>
-
-<!-- Hourly Forecast -->
-<div class="bg-white rounded-xl p-6 shadow-card mb-6 overflow-x-auto">
-    <h2 class="text-2xl font-semibold mb-4">Today's Forecast</h2>
-    <div class="flex space-x-4 min-w-max pb-3">
-        {% for hour in hourly[:12] %}
-        <div class="forecast-item bg-lighter rounded-xl p-3 text-center shadow-md min-w-[90px]">
-            <p class="font-medium">{{ hour.time.strftime('%I %p') }}</p>
-            <img src="https://openweathermap.org/img/wn/{{ hour.icon }}.png" alt="{{ hour.condition }}" class="mx-auto my-2">
-            <p class="text-lg font-bold">{{ hour.temp }}°C</p>
-            <div class="flex items-center justify-center mt-2 text-sm">
-                <i class="fas fa-tint text-water mr-1"></i>
-                <span>{{ hour.pop }}%</span>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-
-<!-- 7-Day Forecast -->
-<div class="bg-white rounded-xl p-6 shadow-card mb-6">
-    <h2 class="text-2xl font-semibold mb-4">7-Day Forecast</h2>
-    <div class="grid grid-cols-1 md:grid-cols-7 gap-3">
-        {% for day in daily %}
-        <div class="forecast-item bg-lighter rounded-xl p-4 text-center shadow-md">
-            <p class="font-medium">{{ day.day.strftime('%a') }}</p>
-            <img src="https://openweathermap.org/img/wn/{{ day.icon }}.png" alt="{{ day.condition }}" class="mx-auto my-2">
-            <p class="text-lg font-bold">{{ day.temp_max }}°C</p>
-            <p class="text-sm text-medium">{{ day.temp_min }}°C</p>
-            <div class="flex items-center justify-center mt-2 text-sm">
-                <i class="fas fa-tint text-water mr-1"></i>
-                <span>{{ day.pop }}%</span>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-
-<!-- Weather Graphs -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <!-- Temperature Graph -->
-    <div class="bg-white rounded-xl p-6 shadow-card">
-        <h2 class="text-xl font-semibold mb-4">Temperature Trend</h2>
-        <div class="h-64">
-            <canvas id="temperatureChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Precipitation Graph -->
-    <div class="bg-white rounded-xl p-6 shadow-card">
-        <h2 class="text-xl font-semibold mb-4">Precipitation Forecast</h2>
-        <div class="h-64">
-            <canvas id="precipitationChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Additional Weather Insights -->
-<div class="bg-white rounded-xl p-6 shadow-card mb-6">
-    <h2 class="text-2xl font-semibold mb-4">Weather Alerts & Farming Insights</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Rain Alert - using loop.first to only show the first match -->
-        {% set has_rain = false %}
-        {% for day in daily[:3] %}
-            {% if day.pop > 70 and not has_rain %}
-                {% set has_rain = true %}
-                <div class="bg-lighter rounded-xl p-5 border-l-4 border-water">
-                    <div class="flex items-start">
-                        <i class="fas fa-cloud-rain text-water text-2xl mr-3 mt-1"></i>
+                
+                <div id="weatherContent">
+                    <div class="weather-main">
+                        <div id="weatherIcon" class="weather-icon">
+                            <i class="fas fa-cloud"></i>
+                        </div>
                         <div>
-                            <h4 class="text-lg font-semibold">Rain Expected</h4>
-                            <p class="text-medium">High chance of rain on {{ day.day.strftime('%A') }} ({{ day.pop }}%). Plan outdoor activities accordingly.</p>
+                            <div id="temperature" class="temperature">-- °C</div>
+                            <div id="condition" class="condition">--</div>
                         </div>
                     </div>
+                    
+                    <div class="weather-details">
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div id="humidity" class="detail-value">--%</div>
+                            <div class="detail-label">Humidity</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-cloud-rain"></i>
+                            </div>
+                            <div id="rainfall" class="detail-value">-- mm</div>
+                            <div class="detail-label">Rainfall</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-wind"></i>
+                            </div>
+                            <div id="windSpeed" class="detail-value">-- m/s</div>
+                            <div class="detail-label">Wind Speed</div>
+                        </div>
+                    </div>
+                    
+                    <div id="forecastContainer" class="forecast-card">
+                        <i class="fas fa-cloud-sun"></i>
+                        <span id="forecast">Loading forecast...</span>
+                    </div>
                 </div>
-            {% endif %}
-        {% endfor %}
 
-        {% if current.uvi > 7 %}
-        <div class="bg-lighter rounded-xl p-5 border-l-4 border-warning">
-            <div class="flex items-start">
-                <i class="fas fa-exclamation-triangle text-warning text-2xl mr-3 mt-1"></i>
-                <div>
-                    <h4 class="text-lg font-semibold">High UV Index</h4>
-                    <p class="text-medium">UV index is very high today. Consider providing shade for sensitive crops and farm workers.</p>
+                <div id="loadingIndicator" class="loading">
+                    <div class="spinner"></div>
+                    <p>Fetching weather data...</p>
                 </div>
+
+                <div id="errorContainer"></div>
             </div>
         </div>
-        {% endif %}
-
-        {% if not has_rain and daily[0].temp_max > 30 %}
-        <div class="bg-lighter rounded-xl p-5 border-l-4 border-primary">
-            <div class="flex items-start">
-                <i class="fas fa-lightbulb text-primary text-2xl mr-3 mt-1"></i>
-                <div>
-                    <h4 class="text-lg font-semibold">Irrigation Suggestion</h4>
-                    <p class="text-medium">With high temperatures and no significant rainfall expected, consider irrigation in the next 24-48 hours.</p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if daily[0].temp_min < 5 %}
-        <div class="bg-lighter rounded-xl p-5 border-l-4 border-warning">
-            <div class="flex items-start">
-                <i class="fas fa-snowflake text-warning text-2xl mr-3 mt-1"></i>
-                <div>
-                    <h4 class="text-lg font-semibold">Frost Alert</h4>
-                    <p class="text-medium">Low temperatures expected tonight. Consider protecting sensitive crops from potential frost.</p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
     </div>
-</div>
-{% endif %}
-{% endblock %}
 
-{% block extra_js %}
-{% if has_location and not error %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Temperature Chart - Next 24 hours
-        const tempCtx = document.getElementById('temperatureChart').getContext('2d');
-        const tempChart = new Chart(tempCtx, {
-            type: 'line',
-            data: {
-                labels: [{% for hour in hourly[:24] %}'{{ hour.time.strftime("%I %p") }}'{% if not loop.last %}, {% endif %}{% endfor %}],
-                datasets: [{
-                    label: 'Temperature (°C)',
-                    data: [{% for hour in hourly[:24] %}{{ hour.temp }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    borderColor: '#52BE80',
-                    backgroundColor: 'rgba(82, 190, 128, 0.1)',
-                    borderWidth: 3,
-                    pointBackgroundColor: '#1D8348',
-                    pointRadius: 4,
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        grid: {
-                            display: true,
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
+    <script>
+        // Get farm ID from URL or use a default value
+        const urlParams = new URLSearchParams(window.location.search);
+        const farmId = urlParams.get('farm_id') || '{{ farm_id }}';
+        
+        // Weather condition icons mapping
+        const weatherIcons = {
+            'Clear': '<i class="fas fa-sun" style="color: #f39c12;"></i>',
+            'Clouds': '<i class="fas fa-cloud" style="color: #95a5a6;"></i>',
+            'Rain': '<i class="fas fa-cloud-rain" style="color: #3498db;"></i>',
+            'Drizzle': '<i class="fas fa-cloud-rain" style="color: #3498db;"></i>',
+            'Thunderstorm': '<i class="fas fa-bolt" style="color: #f39c12;"></i>',
+            'Snow': '<i class="fas fa-snowflake" style="color: #bdc3c7;"></i>',
+            'Mist': '<i class="fas fa-smog" style="color: #95a5a6;"></i>',
+            'Smoke': '<i class="fas fa-smog" style="color: #95a5a6;"></i>',
+            'Haze': '<i class="fas fa-smog" style="color: #95a5a6;"></i>',
+            'Dust': '<i class="fas fa-smog" style="color: #d35400;"></i>',
+            'Fog': '<i class="fas fa-smog" style="color: #95a5a6;"></i>',
+            'Sand': '<i class="fas fa-wind" style="color: #d35400;"></i>',
+            'Ash': '<i class="fas fa-smog" style="color: #7f8c8d;"></i>',
+            'Squall': '<i class="fas fa-wind" style="color: #7f8c8d;"></i>',
+            'Tornado': '<i class="fas fa-wind" style="color: #c0392b;"></i>',
+            'Unknown': '<i class="fas fa-question-circle" style="color: #95a5a6;"></i>'
+        };
 
-        // Precipitation Chart - 7 days
-        const precipCtx = document.getElementById('precipitationChart').getContext('2d');
-        const precipChart = new Chart(precipCtx, {
-            type: 'bar',
-            data: {
-                labels: [{% for day in daily %}'{{ day.day.strftime("%a") }}'{% if not loop.last %}, {% endif %}{% endfor %}],
-                datasets: [{
-                    label: 'Chance of Rain (%)',
-                    data: [{% for day in daily %}{{ day.pop }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: '#3498DB',
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
+        // Function to fetch weather data
+        function fetchWeatherData() {
+            // Show loading indicator
+            document.getElementById('weatherContent').style.display = 'none';
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('errorContainer').innerHTML = '';
+            
+            // API endpoint
+            const apiUrl = `/weather-data/${farmId}`;
+            
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        grid: {
-                            display: true,
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
+                    return response.json();
+                })
+                .then(data => {
+                    // Update the UI with the received data
+                    updateWeatherUI(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching weather data:', error);
+                    document.getElementById('errorContainer').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Unable to fetch weather data. Please try again later.
+                        </div>
+                    `;
+                })
+                .finally(() => {
+                    // Hide loading indicator
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                    document.getElementById('weatherContent').style.display = 'block';
+                });
+        }
+
+        // Function to update UI with weather data
+        function updateWeatherUI(data) {
+            // Basic weather info
+            document.getElementById('temperature').textContent = `${data.temperature} °C`;
+            document.getElementById('condition').textContent = data.condition;
+            
+            // Set weather icon based on condition
+            const iconHtml = weatherIcons[data.condition] || weatherIcons['Unknown'];
+            document.getElementById('weatherIcon').innerHTML = iconHtml;
+            
+            // Weather details
+            document.getElementById('humidity').textContent = `${data.humidity}%`;
+            document.getElementById('rainfall').textContent = `${data.rainfall} mm`;
+            document.getElementById('windSpeed').textContent = `${data.wind_speed} m/s`;
+            
+            // Forecast
+            const forecastContainer = document.getElementById('forecastContainer');
+            const forecast = document.getElementById('forecast');
+            forecast.textContent = data.forecast;
+            
+            // Style forecast based on content
+            if (data.forecast.includes('unavailable') || data.forecast.includes('Set farm location')) {
+                forecastContainer.classList.add('alert', 'alert-warning');
+            } else if (data.forecast.includes('Rain expected')) {
+                forecastContainer.classList.add('alert', 'alert-info');
+            } else {
+                forecastContainer.classList.remove('alert', 'alert-warning', 'alert-info');
             }
-        });
-    });
-</script>
-{% endif %}
-{% endblock %}
+        }
+
+        // Add event listener for refresh button
+        document.getElementById('refreshWeather').addEventListener('click', fetchWeatherData);
+        
+        // Fetch weather data when the page loads
+        document.addEventListener('DOMContentLoaded', fetchWeatherData);
+    </script>
+</body>
+</html>

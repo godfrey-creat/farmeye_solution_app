@@ -1,6 +1,6 @@
 # app/farm/forms.py
 from flask_wtf import FlaskForm
-from wtforms.validators import NumberRange, Optional
+from wtforms.validators import NumberRange, Optional, Email
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import FloatField, SelectMultipleField, BooleanField, RadioField
 from wtforms import FloatField, SelectMultipleField, BooleanField, RadioField, TextAreaField
@@ -86,3 +86,36 @@ class SensorDataForm(FlaskForm):
     longitude = FloatField('Longitude (optional)', validators=[Optional()])
     notes = TextAreaField('Notes', validators=[Optional()])
     submit = SubmitField('Add Sensor Data')
+class FarmRegistrationForm(FlaskForm):
+    """Form for standalone farm registration page - used for CSRF protection only.
+    All form data is handled via JavaScript and submitted as JSON."""
+
+    def __init__(self, *args, **kwargs):
+        super(FarmRegistrationForm, self).__init__(*args, **kwargs)
+        # No fields needed as this is just for CSRF protection
+        # The actual form data is handled via JavaScript in farm_registration.js
+
+
+class TeamMemberForm(FlaskForm):
+    """Form for adding team members to a farm"""
+
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    first_name = StringField("First Name", validators=[DataRequired()])
+    last_name = StringField("Last Name", validators=[DataRequired()])
+    role = SelectField(
+        "Role",
+        choices=[
+            ("owner", "Owner"),
+            ("manager", "Manager"),
+            ("worker", "Worker"),
+            ("consultant", "Consultant"),
+        ],
+        validators=[DataRequired()],
+    )
+
+
+class BoundaryMarkerForm(FlaskForm):
+    """Form for field boundary markers"""
+
+    latitude = FloatField("Latitude", validators=[DataRequired()])
+    longitude = FloatField("Longitude", validators=[DataRequired()])

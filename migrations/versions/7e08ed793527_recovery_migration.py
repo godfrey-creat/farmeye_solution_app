@@ -1,8 +1,8 @@
-"""Add revision 7e08ed793527
+"""Recovery migration
 
-Revision ID: 701c88d627c1
+Revision ID: 7e08ed793527
 Revises: 
-Create Date: 2025-05-13 14:33:07.520770
+Create Date: 2025-05-14 13:04:42.298259
 
 """
 from alembic import op

@@ -85,51 +85,68 @@ def get_field_by_name(field_name, farm_id=None):
 
     return field    
 
-# 2. Weather & Forecast
-def fetch_and_store_weather_data(farm):
+# Enhanced version of your weather data API route
+# Weather Data API Route - Provides the weather data for the dashboard
+@api.route("/weather-data/<int:farm_id>", methods=["GET"])
+def fetch_and_store_weather_data(farm_id):
+    """
+    Fetch and return the latest weather data for a given farm.
+    If the farm's location is not set or an error occurs,
+    return an appropriate error message.
+    """
     weather_data = {
         "temperature": 24,
         "humidity": 50,
         "rainfall": 0.0,
         "wind_speed": 1.0,
-        "condition": "Unknown",
+        "condition": "Clear",  # Changed from "Unknown" to have a default icon
         "forecast": "Weather forecast unavailable"
     }
-
+    
     try:
+        # Retrieve the farm from the database
+        farm = Farm.query.get(farm_id)
+        if not farm:
+            return jsonify({"error": "Farm not found"}), 404
+        
         # Check if location has "lat,lon"
-        if "," in farm.location:
+        if farm.location and "," in farm.location:
             lat, lon = map(float, farm.location.split(","))
-
+            
             api_key = os.getenv("OPENWEATHER_API_KEY")
             if not api_key:
                 current_app.logger.warning("OPENWEATHER_API_KEY is not configured.")
                 weather_data["forecast"] = "Weather forecast unavailable (API key missing)"
-                return weather_data
-
+                return jsonify(weather_data)
+            
             # OpenWeather One Call API
             weather_url = (
                 f"https://api.openweathermap.org/data/2.5/onecall"
                 f"?lat={lat}&lon={lon}&exclude=minutely,hourly,alerts&units=metric&appid={api_key}"
             )
-            response = requests.get(weather_url)
+            response = requests.get(weather_url, timeout=10)  # Added timeout
             response.raise_for_status()
             data = response.json()
-
+            
             current = data.get("current", {})
-            daily = data.get("daily", [{}])[1]
-
+            daily = data.get("daily", [{}])[1] if len(data.get("daily", [])) > 1 else {}
+            
+            # Get the main weather condition
+            weather_condition = "Unknown"
+            if current.get("weather") and len(current["weather"]) > 0:
+                weather_condition = current["weather"][0].get("main", "Unknown")
+            
             weather_data.update({
                 "temperature": round(current.get("temp", 24)),
                 "humidity": current.get("humidity", 50),
-                "rainfall": daily.get("rain", 0.0),
+                "rainfall": daily.get("rain", 0.0) if isinstance(daily.get("rain"), (int, float)) else 0.0,
                 "wind_speed": current.get("wind_speed", 1.0),
-                "condition": current.get("weather", [{}])[0].get("main", "Unknown"),
+                "condition": weather_condition,
                 "forecast": (
-                    "Rain expected in 36 hours" if "rain" in daily else "No rain expected"
+                    "Rain expected in 36 hours" if daily.get("rain") else "No rain expected"
                 )
             })
-
+            
             # Save to database
             weather_entry = WeatherData(
                 farm_id=farm.id,
@@ -140,18 +157,22 @@ def fetch_and_store_weather_data(farm):
                 wind_speed=weather_data["wind_speed"],
                 condition=weather_data["condition"]
             )
-
+            
             db.session.add(weather_entry)
             db.session.commit()
-
+        
         else:
             weather_data["forecast"] = "Set farm location for weather forecast"
-
+    
+    except requests.exceptions.RequestException as re:
+        current_app.logger.error(f"Weather API request error: {str(re)}")
+        weather_data["forecast"] = "Weather service unavailable"
+    
     except Exception as e:
         current_app.logger.error(f"Weather data error: {str(e)}")
         weather_data["forecast"] = "Weather forecast unavailable"
-
-    return weather_data
+    
+    return jsonify(weather_data)
 
 # 3. Soil & Field Health
 def get_latest_soil_moisture(farm_id):
