@@ -1,4 +1,5 @@
 # app/farm/routes.py
+from app.utils.advisory import generate_ten_day_advisory
 import os
 import uuid
 from datetime import datetime
@@ -39,7 +40,8 @@ from ..farm.models import Farm, SensorData, Alert, FarmStage, PestControl
 @login_required
 @require_farm_registration
 def dashboard():
-    """Display farmer's dashboard with overview of farms"""
+    """Display farmer's dashboard with overview of farms and AI advisory"""
+
     # Get user's farms and alerts even if not approved
     farms = Farm.query.filter_by(user_id=current_user.id).all()
     alerts = (
@@ -49,13 +51,10 @@ def dashboard():
         .all()
     )
 
-    # Display warning message but don't redirect
     if not current_user.is_approved:
-        flash(
-            "Your account is pending approval. Some features may be limited.", "warning"
-        )
+        flash("Your account is pending approval. Some features may be limited.", "warning")
 
-    # Get the latest soil moisture data
+    # Latest sensor data and farm stage
     soil_moisture = None
     farm_stage = None
     if farms:
@@ -68,7 +67,7 @@ def dashboard():
             farm_id=farms[0].id, status="Active"
         ).first()
 
-    # Calculate moisture metrics
+    # Moisture
     moisture = {
         "status": "Normal",
         "current_level": soil_moisture.value if soil_moisture else 64,
@@ -78,7 +77,7 @@ def dashboard():
         "next_irrigation": "Tomorrow",
     }
 
-    # Calculate field health metrics
+    # Field health
     field_health = {
         "status": "Excellent",
         "overall_health": "82",
@@ -86,31 +85,68 @@ def dashboard():
         "improvement_direction": "up",
     }
 
-    # Calculate soil health metrics
+    # Soil health
     soil_health = {
         "status": "Good",
         "overall_health": 76,
         "quality": 76,
-        "nitrogen": 42,  # ppm
-        "phosphorus": 28,  # ppm
+        "nitrogen": 42,
+        "phosphorus": 28,
         "ph_level": 6.8,
-        "organic_matter": 4.2,  # percentage
-        "moisture": moisture["current_level"],  # percentage
+        "organic_matter": 4.2,
+        "moisture": moisture["current_level"],
         "last_irrigation": moisture["last_irrigation"],
         "next_irrigation": moisture["next_irrigation"],
     }
 
-    # Calculate growth metrics
+    # Growth
     growth = {
         "status": "On Track",
         "stage": farm_stage.stage_name if farm_stage else "Vegetative",
-        "progress": 45,  # percentage completion of current stage
-        "days": "28/62",  # days in current growth cycle
+        "progress": 45,
+        "days": "28/62",
         "next_stage": "Flowering (in 14 days)",
         "harvest_date": "August 15",
     }
 
-    # Always render the template directly, don't redirect
+    # === 🧠 Advisory System Integration ===
+
+    # Mock or load real historical and weather data
+    historical_data = {
+        "moisture": [62, 64, 63, 65, 66, 64, 63, 62, 61, 60]
+    }
+
+    weather_data = {
+        "summary": "Rain expected in 3 days, average temperature 27°C"
+    }
+
+    soil_moisture_data = {
+        "recent_readings": historical_data["moisture"][-10:],
+        "current": soil_health["moisture"],
+        "last_irrigation": soil_health["last_irrigation"],
+        "next_irrigation": soil_health["next_irrigation"],
+    }
+
+    satellite_data = {
+        "ndvi": [0.62, 0.65, 0.60, 0.66, 0.64],
+        "analysis": "Vegetation vigor moderate to high"
+    }
+
+    model_prediction_data = {
+        "yield_forecast": "Expected yield is 85% of maximum.",
+        "pest_risk": "Medium risk of corn earworm in next 10 days"
+    }
+
+    recommendations = []
+    advisory = generate_ten_day_advisory(
+        soil_moisture=soil_moisture_data,
+        weather=weather_data,
+        satellite=satellite_data,
+        model_prediction=model_prediction_data
+    )
+    recommendations.append(advisory)
+
+    # === 🧑‍🌾 Render Dashboard ===
     return render_template(
         "dashboard/index.html",
         farms=farms,
@@ -119,8 +155,10 @@ def dashboard():
         soil_health=soil_health,
         moisture=moisture,
         growth=growth,
+        recommendations=recommendations,
         active_page="dashboard",
     )
+
 
 
 @farm.route("/field_map")

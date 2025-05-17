@@ -3,6 +3,7 @@ from flask import jsonify, current_app, request
 from flask_login import login_required, current_user
 import requests
 from datetime import datetime, timedelta
+from app.utils.advisory import generate_ten_day_advisory
 from . import api
 from ..farm.models import (
     Farm,
@@ -227,6 +228,41 @@ def dashboard_data():
             "due": "This week",
         },
     ]
+    # --- BEGIN: 10-day advisory integration ---
+
+    # Prepare summarized data for the advisory
+    soil_moisture_data = {
+        "recent_readings": historical_data["moisture"][-10:] if "moisture" in historical_data else [],
+        "current": moisture["current"] if "current" in moisture else None,
+        "last_irrigation": moisture.get("last_irrigation", ""),
+        "next_irrigation": moisture.get("next_irrigation", ""),
+    }
+
+    weather_summary = weather_data  # Weather is already a summary dict
+
+    # Mock satellite and model prediction data (replace with real data if you have it)
+    satellite_data = {
+        "ndvi": [0.62, 0.65, 0.60, 0.66, 0.64],
+        "analysis": "Vegetation vigor is moderate to high",
+    }
+    model_prediction_data = {
+        "yield_forecast": "Expected yield is 85% of maximum.",
+        "pest_risk": "Medium risk of corn earworm in next 10 days",
+    }
+
+    # Generate the advisory using your advisory code (from app/farm/advisory.py)
+    advisory = generate_ten_day_advisory(
+        soil_moisture=soil_moisture_data,
+        weather=weather_summary,
+        satellite=satellite_data,
+        model_prediction=model_prediction_data,
+    )
+
+    # Ensure recommendations is a list and append advisory
+    if isinstance(recommendations, list) and advisory:
+        recommendations.append(advisory)
+
+    # --- END: 10-day advisory integration ---
 
     # Combine all data into a single response
     response_data = {
