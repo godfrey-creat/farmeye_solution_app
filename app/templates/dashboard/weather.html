@@ -66,11 +66,7 @@ endblock %} {% block extra_css %}
         <h1 class="text-2xl font-bold text-gray-800">{{ farm.name }}</h1>
         <p class="text-gray-600">
           <i class="fas fa-location-dot text-primary mr-1"></i>
-          {{ farm.location }}, {{ farm.region|title }}
-        </p>
-        <p class="text-sm text-gray-500">
-          Coordinates: {{ "%.4f"|format(farm.latitude) }}, {{
-          "%.4f"|format(farm.longitude) }}
+          Location: {{ location_name|default(farm.location) }}{% if farm.region %}, {{ farm.region|title }}{% endif %}
         </p>
       </div>
     </div>
@@ -100,11 +96,38 @@ endblock %} {% block extra_css %}
           setInterval(updateCurrentTime, 60000);
         </script>
       </p>
-      <button
-        onclick="refreshWeather()"
-        class="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-      >
-        <i class="fas fa-sync-alt mr-2"></i>Refresh
+      <div class="flex space-x-2">
+        <button
+          onclick="refreshWeather()"
+          class="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+        >
+          <i class="fas fa-sync-alt mr-2"></i>Refresh
+        </button>
+        <button
+          onclick="showSearchModal()"
+          class="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+        >
+          <i class="fas fa-search mr-2"></i>Search
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search Location Modal -->
+<div id="searchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md">
+    <h3 class="text-xl font-bold mb-4">Search Location</h3>
+    <div class="mb-4">
+      <input type="text" id="locationSearch" placeholder="Enter city or location name" 
+             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+    </div>
+    <div class="flex justify-end space-x-2">
+      <button onclick="closeSearchModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+        Cancel
+      </button>
+      <button onclick="searchLocation()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark">
+        Search
       </button>
     </div>
   </div>
@@ -264,7 +287,7 @@ endblock %} {% block extra_css %}
         class="weather-card bg-gray-50 rounded-lg p-4 min-w-[120px] text-center"
       >
         <p class="font-semibold text-gray-700">
-          {{ hour.dt.strftime('%I %p') }}
+          {{ format_hour(hour.dt) }}
         </p>
         <img
           src="https://openweathermap.org/img/wn/{{ hour.icon }}.png"
@@ -348,7 +371,9 @@ endblock %} {% block extra_css %}
         </div>
       </div>
     </div>
-    {% endif %} {% if daily[0].temp_min < 5 %}
+    {% endif %} 
+    
+    {% if daily[0].temp_min < 5 %}
     <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
       <div class="flex items-start">
         <i class="fas fa-snowflake text-blue-500 text-xl mr-3"></i>
@@ -360,19 +385,25 @@ endblock %} {% block extra_css %}
         </div>
       </div>
     </div>
-    {% endif %} {% for day in daily[:3] if day.pop > 70 %}
-    <div class="bg-green-50 border-l-4 border-green-500 rounded-lg p-4">
-      <div class="flex items-start">
-        <i class="fas fa-cloud-rain text-green-500 text-xl mr-3"></i>
-        <div>
-          <h4 class="font-semibold text-green-800">Rain Expected</h4>
-          <p class="text-green-700">
-            {{ day.pop }}% chance of rain on {{ day.dt.strftime('%A') }}.
-          </p>
+    {% endif %} 
+    
+    {% for day in daily[:3] %}
+      {% if day.pop > 70 %}
+      <div class="bg-green-50 border-l-4 border-green-500 rounded-lg p-4">
+        <div class="flex items-start">
+          <i class="fas fa-cloud-rain text-green-500 text-xl mr-3"></i>
+          <div>
+            <h4 class="font-semibold text-green-800">Rain Expected</h4>
+            <p class="text-green-700">
+              {{ day.pop }}% chance of rain on {{ day.dt.strftime('%A') }}.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
-    {% endfor %} {% if current.wind_speed > 25 %}
+      {% endif %}
+    {% endfor %} 
+    
+    {% if current.wind_speed > 25 %}
     <div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-4">
       <div class="flex items-start">
         <i class="fas fa-wind text-orange-500 text-xl mr-3"></i>
@@ -397,15 +428,54 @@ endblock %} {% block extra_css %}
       return directions[index];
   }
 
+  // Search location functions
+  function showSearchModal() {
+    document.getElementById('searchModal').classList.remove('hidden');
+  }
+
+  function closeSearchModal() {
+    document.getElementById('searchModal').classList.add('hidden');
+  }
+
+  function searchLocation() {
+    const location = document.getElementById('locationSearch').value.trim();
+    if (location) {
+      window.location.href = '/weather/' + encodeURIComponent(location);
+    }
+  }
+
+  // Add event listener for Enter key in search box
+  document.getElementById('locationSearch')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      searchLocation();
+    }
+  });
+
   // Refresh weather data
   async function refreshWeather() {
+      const refreshButton = document.querySelector('button[onclick="refreshWeather()"]');
+      if (refreshButton) {
+          refreshButton.disabled = true;
+          refreshButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Refreshing...';
+      }
+      
       try {
-          const response = await fetch('/weather/api/current');
-          const data = await response.json();
-          // Update UI with new data
+          // Get current location from URL
+          const pathParts = window.location.pathname.split('/');
+          const location = pathParts[pathParts.length - 1];
+          
+          const response = await fetch('/weather/api/current/' + location);
+          if (!response.ok) {
+              throw new Error('Failed to refresh weather data');
+          }
           location.reload(); // Simple reload for now
       } catch (error) {
           console.error('Error refreshing weather:', error);
+          if (refreshButton) {
+              refreshButton.disabled = false;
+              refreshButton.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Refresh';
+          }
+          alert('Error refreshing weather data. Please try again.');
       }
   }
 
@@ -414,65 +484,79 @@ endblock %} {% block extra_css %}
 
   // Initialize charts
   document.addEventListener('DOMContentLoaded', function() {
-      // Temperature Chart
-      const tempCtx = document.getElementById('temperatureChart').getContext('2d');
-      new Chart(tempCtx, {
-          type: 'line',
-          data: {
-              labels: [{% for hour in hourly[:24] %}'{{ hour.dt.strftime("%-I %p") }}'{% if not loop.last %},{% endif %}{% endfor %}],
-              datasets: [{
-                  label: 'Temperature (°C)',
-                  data: [{% for hour in hourly[:24] %}{{ hour.temp }}{% if not loop.last %},{% endif %}{% endfor %}],
-                  borderColor: '#667eea',
-                  backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                  borderWidth: 3,
-                  tension: 0.4,
-                  fill: true
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                  legend: { display: false }
-              },
-              scales: {
-                  y: {
-                      beginAtZero: false,
-                      grid: { color: 'rgba(0, 0, 0, 0.05)' }
+      // Only initialize charts if the elements exist and we have weather data
+      const tempCanvas = document.getElementById('temperatureChart');
+      const precipCanvas = document.getElementById('precipitationChart');
+      const hasData = document.querySelector('.weather-gradient');
+      
+      if (tempCanvas && precipCanvas && hasData) {
+          try {
+              // Get chart data from server-side JSON 
+              const chartData = {{ chart_data_json|safe }};
+              
+              // Temperature Chart
+              const tempCtx = tempCanvas.getContext('2d');
+              new Chart(tempCtx, {
+                  type: 'line',
+                  data: {
+                      labels: chartData.hour_labels,
+                      datasets: [{
+                          label: 'Temperature (°C)',
+                          data: chartData.hour_temps,
+                          borderColor: '#667eea',
+                          backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                          borderWidth: 3,
+                          tension: 0.4,
+                          fill: true
+                      }]
+                  },
+                  options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                          legend: { display: false }
+                      },
+                      scales: {
+                          y: {
+                              beginAtZero: false,
+                              grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                          }
+                      }
                   }
-              }
-          }
-      });
+              });
 
-      // Precipitation Chart
-      const precipCtx = document.getElementById('precipitationChart').getContext('2d');
-      new Chart(precipCtx, {
-          type: 'bar',
-          data: {
-              labels: [{% for day in daily %}'{{ day.dt.strftime("%a") }}'{% if not loop.last %},{% endif %}{% endfor %}],
-              datasets: [{
-                  label: 'Rain Probability (%)',
-                  data: [{% for day in daily %}{{ day.pop }}{% if not loop.last %},{% endif %}{% endfor %}],
-                  backgroundColor: '#3b82f6',
-                  borderRadius: 6
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                  legend: { display: false }
-              },
-              scales: {
-                  y: {
-                      beginAtZero: true,
-                      max: 100,
-                      grid: { color: 'rgba(0, 0, 0, 0.05)' }
+              // Precipitation Chart
+              const precipCtx = precipCanvas.getContext('2d');
+              new Chart(precipCtx, {
+                  type: 'bar',
+                  data: {
+                      labels: chartData.day_labels,
+                      datasets: [{
+                          label: 'Rain Probability (%)',
+                          data: chartData.day_pops,
+                          backgroundColor: '#3b82f6',
+                          borderRadius: 6
+                      }]
+                  },
+                  options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                          legend: { display: false }
+                      },
+                      scales: {
+                          y: {
+                              beginAtZero: true,
+                              max: 100,
+                              grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                          }
+                      }
                   }
-              }
+              });
+          } catch (error) {
+              console.error('Error initializing charts:', error);
           }
-      });
+      }
   });
 
   // Jinja2 filter function

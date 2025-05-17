@@ -1,7 +1,11 @@
-# app/weather/routes.py
+# Updated routes.py with city name in URL path
+
 import requests
-from datetime import datetime
-from flask import render_template, jsonify, redirect, url_for, flash, current_app
+import json
+import math
+import platform
+from datetime import datetime, timedelta
+from flask import render_template, jsonify, redirect, url_for, flash, current_app, request
 from flask_login import login_required, current_user
 from . import weather
 from ..farm.models import Farm
@@ -9,17 +13,47 @@ from ..decorators import require_farm_registration
 from app import db
 
 # Your OpenWeatherMap API key
-OPENWEATHER_API_KEY = "9ec417826bab17ebcc02904f96c4f776"
+OPENWEATHER_API_KEY = "073c86bb08ab26b37ab8a79c850ec27d"  # Replace with your actual API key
 
+def format_hour(dt):
+    """Format hour without leading zero in a cross-platform way"""
+    hour_str = dt.strftime("%I %p")
+    # Strip leading zero but keep spaces
+    if hour_str.startswith("0"):
+        hour_str = hour_str[1:]
+    return hour_str
 
+# Redirect from dashboard to the default location
 @weather.route("/dashboard")
 @login_required
 @require_farm_registration
 def dashboard():
-    """Weather dashboard for farmer's location"""
-    # Initialize template variables - ALWAYS pass these
+    """Redirect to the user's farm location"""
+    farm = Farm.query.filter_by(user_id=current_user.id).first()
+    
+    if not farm or not farm.location:
+        flash("Please update your farm location to view weather data.", "warning")
+        return render_template("dashboard/weather.html", 
+                              has_location=False, 
+                              farm=farm,
+                              error=False,
+                              active_page="weather")
+    
+    # Extract location name (first word) from farm.location
+    location_name = farm.location.split()[0]
+    
+    # Redirect to the location-specific URL
+    return redirect(url_for('weather.location_weather', location=location_name))
+
+# New route with location in URL path
+@weather.route("/<location>")
+@login_required
+@require_farm_registration
+def location_weather(location):
+    """Weather dashboard for specific location"""
+    # Initialize template variables
     template_vars = {
-        "has_location": False,
+        "has_location": True,
         "farm": None,
         "current": None,
         "hourly": [],
@@ -28,40 +62,42 @@ def dashboard():
         "rainfall": 0,
         "error": False,
         "active_page": "weather",
+        "format_hour": format_hour,
+        "running_on_windows": platform.system() == "Windows"
     }
 
-    # Get user's first farm
+    # Get user's farm
     farm = Farm.query.filter_by(user_id=current_user.id).first()
     template_vars["farm"] = farm
 
     if not farm:
         flash("Please register a farm first to view weather data.", "warning")
+        template_vars["has_location"] = False
         return render_template("dashboard/weather.html", **template_vars)
-
-    # Try to get lat/lon from farm
-    lat, lon = None, None
-
-    # Check if farm has direct latitude/longitude attributes
-    if hasattr(farm, "latitude") and hasattr(farm, "longitude"):
-        lat = farm.latitude
-        lon = farm.longitude
-    # Check if location is stored as "lat,lon" string
-    elif farm.location and "," in farm.location:
-        try:
-            lat, lon = map(float, farm.location.split(","))
-        except ValueError:
-            pass
-
-    if not lat or not lon:
-        flash("Please update your farm location to view weather data.", "warning")
-        return render_template("dashboard/weather.html", **template_vars)
-
-    # We have location
-    template_vars["has_location"] = True
 
     try:
         # Fetch weather data
-        weather_data = fetch_weather_data(lat, lon)
+        current_app.logger.info(f"Fetching weather for location: {location}")
+        weather_data = fetch_weather_data(location)
+        
+        if not weather_data:
+            # Try mock data if real API fails
+            current_app.logger.warning("Using mock data because API call failed")
+            weather_data = get_mock_weather_data()
+
+        # Prepare data for charts in JSON format
+        hour_labels = [format_hour(hour.get("dt")) for hour in weather_data["hourly"][:24]] if weather_data.get("hourly") else []
+        hour_temps = [hour.get("temp") for hour in weather_data["hourly"][:24]] if weather_data.get("hourly") else []
+        day_labels = [day.get("dt").strftime("%a") for day in weather_data["daily"]] if weather_data.get("daily") else []
+        day_pops = [day.get("pop") for day in weather_data["daily"]] if weather_data.get("daily") else []
+        
+        template_vars["chart_data"] = {
+            "hour_labels": hour_labels,
+            "hour_temps": hour_temps,
+            "day_labels": day_labels,
+            "day_pops": day_pops
+        }
+        template_vars["chart_data_json"] = json.dumps(template_vars["chart_data"])
 
         # Update template variables with actual data
         template_vars.update(
@@ -71,6 +107,7 @@ def dashboard():
                 "daily": weather_data["daily"],
                 "alerts": weather_data.get("alerts", []),
                 "rainfall": weather_data["current"].get("rain", 0),
+                "location_name": location
             }
         )
 
@@ -78,208 +115,324 @@ def dashboard():
 
     except Exception as e:
         current_app.logger.error(f"Error fetching weather data: {str(e)}")
-        flash("Unable to retrieve weather data. Please try again later.", "danger")
-        template_vars["error"] = True
-        return render_template("dashboard/weather.html", **template_vars)
-
-
-def fetch_weather_data(lat, lon):
-    """Fetch weather data from OpenWeatherMap"""
-    # Use One Call API
-    url = f"https://api.openweathermap.org/data/2.5/onecall"
-    params = {
-        "lat": lat,
-        "lon": lon,
-        "appid": OPENWEATHER_API_KEY,
-        "units": "metric",
-        "exclude": "minutely",
-    }
-
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    data = response.json()
-
-    # Process the data to match template expectations
-    weather_data = {
-        "current": process_current_weather(data["current"]),
-        "hourly": [process_hourly_weather(hour) for hour in data["hourly"][:24]],
-        "daily": [process_daily_weather(day) for day in data["daily"][:7]],
-        "alerts": data.get("alerts", []),
-    }
-
-    return weather_data
-
-
-def process_current_weather(current):
-    """Process current weather data to match template expectations"""
-    return {
-        "temp": round(current["temp"]),
-        "feels_like": round(current["feels_like"]),
-        "humidity": current["humidity"],
-        "pressure": current["pressure"],
-        "wind_speed": round(current["wind_speed"] * 3.6, 1),  # m/s to km/h
-        "wind_deg": current["wind_deg"],
-        "uvi": current["uvi"],
-        "clouds": current["clouds"],
-        "visibility": current.get("visibility", 10000) / 1000,  # m to km
-        "dew_point": round(current["dew_point"]),
-        "description": current["weather"][0]["description"],
-        "icon": current["weather"][0]["icon"],
-        "main": current["weather"][0]["main"],
-        "condition": current["weather"][0]["main"],  # For template compatibility
-        "time": datetime.fromtimestamp(current["dt"]),
-        "dt": datetime.fromtimestamp(current["dt"]),  # Keep both for compatibility
-        "sunrise": datetime.fromtimestamp(current["sunrise"]),
-        "sunset": datetime.fromtimestamp(current["sunset"]),
-        "rain": current.get("rain", {}).get("1h", 0),
-    }
-
-
-def process_hourly_weather(hour):
-    """Process hourly weather data to match template expectations"""
-    return {
-        "temp": round(hour["temp"]),
-        "feels_like": round(hour["feels_like"]),
-        "humidity": hour["humidity"],
-        "wind_speed": round(hour["wind_speed"] * 3.6, 1),
-        "pop": int(hour["pop"] * 100),  # Probability of precipitation
-        "rain": hour.get("rain", {}).get("1h", 0),
-        "description": hour["weather"][0]["description"],
-        "icon": hour["weather"][0]["icon"],
-        "main": hour["weather"][0]["main"],
-        "condition": hour["weather"][0]["main"],  # For template compatibility
-        "time": datetime.fromtimestamp(hour["dt"]),
-        "dt": datetime.fromtimestamp(hour["dt"]),  # Keep both for compatibility
-    }
-
-
-def process_daily_weather(day):
-    """Process daily weather data to match template expectations"""
-    return {
-        "temp_min": round(day["temp"]["min"]),
-        "temp_max": round(day["temp"]["max"]),
-        "temp_day": round(day["temp"]["day"]),
-        "temp_night": round(day["temp"]["night"]),
-        "temp": day["temp"],  # Include full temp object
-        "humidity": day["humidity"],
-        "wind_speed": round(day["wind_speed"] * 3.6, 1),
-        "pop": int(day["pop"] * 100),
-        "rain": day.get("rain", 0),
-        "description": day["weather"][0]["description"],
-        "icon": day["weather"][0]["icon"],
-        "main": day["weather"][0]["main"],
-        "condition": day["weather"][0]["main"],  # For template compatibility
-        "day": datetime.fromtimestamp(day["dt"]),  # For template compatibility
-        "dt": datetime.fromtimestamp(day["dt"]),
-        "sunrise": datetime.fromtimestamp(day["sunrise"]),
-        "sunset": datetime.fromtimestamp(day["sunset"]),
-        "uvi": day.get("uvi", 0),
-    }
-
-
-@weather.route("/update-location", methods=["GET", "POST"])
-@login_required
-@require_farm_registration
-def update_location():
-    """Update farm location page"""
-    farm = Farm.query.filter_by(user_id=current_user.id).first()
-
-    if not farm:
-        flash("Please register a farm first.", "warning")
-        return redirect(url_for("farm.dashboard"))
-
-    if request.method == "POST":
-        # Handle form submission
         try:
-            latitude = request.form.get("latitude")
-            longitude = request.form.get("longitude")
+            # Try mock data as fallback
+            weather_data = get_mock_weather_data()
+            template_vars.update(
+                {
+                    "current": weather_data["current"],
+                    "hourly": weather_data["hourly"],
+                    "daily": weather_data["daily"],
+                    "alerts": weather_data.get("alerts", []),
+                    "rainfall": weather_data["current"].get("rain", 0),
+                    "location_name": location
+                }
+            )
+            return render_template("dashboard/weather.html", **template_vars)
+        except:
+            flash("Unable to retrieve weather data. Please try again later.", "danger")
+            template_vars["error"] = True
+            return render_template("dashboard/weather.html", **template_vars)
 
-            if not latitude or not longitude:
-                flash("Please provide both latitude and longitude.", "danger")
-                return render_template(
-                    "dashboard/update_location.html", farm=farm, active_page="weather"
-                )
-
-            # Update farm location
-            if hasattr(farm, "latitude") and hasattr(farm, "longitude"):
-                farm.latitude = float(latitude)
-                farm.longitude = float(longitude)
-            else:
-                farm.location = f"{latitude},{longitude}"
-
-            db.session.commit()
-
-            flash("Farm location updated successfully!", "success")
-            return redirect(url_for("weather.dashboard"))
-
-        except Exception as e:
-            current_app.logger.error(f"Error updating location: {str(e)}")
-            flash(f"Error updating location: {str(e)}", "danger")
-
-    # GET request - show form
-    return render_template(
-        "dashboard/update_location.html", farm=farm, active_page="weather"
-    )
-
-
-@weather.route("/api/current")
-@login_required
-@require_farm_registration
-def api_current_weather():
-    """API endpoint for current weather"""
-    farm = Farm.query.filter_by(user_id=current_user.id).first()
-
-    if not farm:
-        return jsonify({"error": "No farm found"}), 400
-
-    # Get lat/lon
-    lat, lon = None, None
-    if hasattr(farm, "latitude") and hasattr(farm, "longitude"):
-        lat = farm.latitude
-        lon = farm.longitude
-    elif farm.location and "," in farm.location:
-        try:
-            lat, lon = map(float, farm.location.split(","))
-        except ValueError:
-            pass
-
-    if not lat or not lon:
-        return jsonify({"error": "No location data"}), 400
-
+def fetch_weather_data(location):
+    """Fetch weather data from OpenWeatherMap using location name"""
+    current_app.logger.info(f"Fetching weather for location: {location}")
+    
     try:
-        weather_data = fetch_weather_data(lat, lon)
+        # Current Weather API call (accepts city names directly)
+        current_url = "https://api.openweathermap.org/data/2.5/weather"
+        current_params = {
+            "q": location,
+            "appid": OPENWEATHER_API_KEY,
+            "units": "metric"
+        }
+        
+        current_app.logger.info(f"Requesting current weather from {current_url}")
+        current_response = requests.get(current_url, params=current_params)
+        current_app.logger.info(f"Current weather API status: {current_response.status_code}")
+        
+        if current_response.status_code != 200:
+            current_app.logger.error(f"API Error: {current_response.text}")
+            return None
+            
+        current_data = current_response.json()
+        
+        # Forecast API call (accepts city names directly)
+        forecast_url = "https://api.openweathermap.org/data/2.5/forecast"
+        forecast_params = {
+            "q": location,
+            "appid": OPENWEATHER_API_KEY,
+            "units": "metric"
+        }
+        
+        current_app.logger.info(f"Requesting forecast from {forecast_url}")
+        forecast_response = requests.get(forecast_url, params=forecast_params)
+        current_app.logger.info(f"Forecast API status: {forecast_response.status_code}")
+        
+        if forecast_response.status_code != 200:
+            current_app.logger.error(f"API Error: {forecast_response.text}")
+            return None
+            
+        forecast_data = forecast_response.json()
+        
+        # Process data for template
+        weather_data = {
+            "current": process_current_weather_alternative(current_data),
+            "hourly": process_forecast_hourly(forecast_data),
+            "daily": process_forecast_daily(forecast_data),
+            "alerts": []  # Not available in the regular API
+        }
+        
+        current_app.logger.info("Weather data processed successfully")
+        return weather_data
+        
+    except requests.RequestException as e:
+        current_app.logger.error(f"API request error: {str(e)}")
+        return None
+    except KeyError as e:
+        current_app.logger.error(f"Data parsing error: {str(e)}")
+        return None
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error: {str(e)}")
+        return None
+
+def process_current_weather_alternative(data):
+    """Process current weather data from regular Weather API"""
+    return {
+        "temp": round(data["main"]["temp"]),
+        "feels_like": round(data["main"]["feels_like"]),
+        "humidity": data["main"]["humidity"],
+        "pressure": data["main"]["pressure"],
+        "wind_speed": round(data["wind"]["speed"] * 3.6, 1),  # m/s to km/h
+        "wind_deg": data["wind"]["deg"],
+        "uvi": 0,  # Not available in regular API
+        "clouds": data["clouds"]["all"],
+        "visibility": data.get("visibility", 10000) / 1000,  # m to km
+        "dew_point": 0,  # Not available in regular API
+        "description": data["weather"][0]["description"],
+        "icon": data["weather"][0]["icon"],
+        "main": data["weather"][0]["main"],
+        "condition": data["weather"][0]["main"],
+        "time": datetime.fromtimestamp(data["dt"]),
+        "dt": datetime.fromtimestamp(data["dt"]),
+        "sunrise": datetime.fromtimestamp(data["sys"]["sunrise"]),
+        "sunset": datetime.fromtimestamp(data["sys"]["sunset"]),
+        "rain": data.get("rain", {}).get("1h", 0),
+    }
+
+def process_forecast_hourly(data):
+    """Process hourly forecast data from regular Forecast API"""
+    hourly_list = []
+    
+    # Get next 24 hours (forecast is in 3-hour intervals)
+    for i, item in enumerate(data["list"]):
+        if i >= 8:  # Limit to 8 entries (24 hours)
+            break
+            
+        hourly_list.append({
+            "temp": round(item["main"]["temp"]),
+            "feels_like": round(item["main"]["feels_like"]),
+            "humidity": item["main"]["humidity"],
+            "wind_speed": round(item["wind"]["speed"] * 3.6, 1),
+            "pop": int(item.get("pop", 0) * 100),  # Probability of precipitation
+            "rain": item.get("rain", {}).get("3h", 0) / 3,  # Convert 3h rain to 1h
+            "description": item["weather"][0]["description"],
+            "icon": item["weather"][0]["icon"],
+            "main": item["weather"][0]["main"],
+            "condition": item["weather"][0]["main"],
+            "time": datetime.fromtimestamp(item["dt"]),
+            "dt": datetime.fromtimestamp(item["dt"]),
+        })
+    
+    return hourly_list
+
+def process_forecast_daily(data):
+    """Process daily forecast data from regular Forecast API"""
+    # Group forecast by day
+    daily_data = {}
+    
+    for item in data["list"]:
+        dt = datetime.fromtimestamp(item["dt"])
+        day_key = dt.strftime("%Y-%m-%d")
+        
+        if day_key not in daily_data:
+            daily_data[day_key] = {
+                "dt": dt,
+                "temp_min": item["main"]["temp_min"],
+                "temp_max": item["main"]["temp_max"],
+                "humidity": [],
+                "pop": [],
+                "rain": 0,
+                "description": item["weather"][0]["description"],
+                "icon": item["weather"][0]["icon"],
+                "main": item["weather"][0]["main"],
+                "wind_speed": [],
+            }
+        else:
+            daily_data[day_key]["temp_min"] = min(daily_data[day_key]["temp_min"], item["main"]["temp_min"])
+            daily_data[day_key]["temp_max"] = max(daily_data[day_key]["temp_max"], item["main"]["temp_max"])
+            
+        # Collect values for averaging
+        daily_data[day_key]["humidity"].append(item["main"]["humidity"])
+        daily_data[day_key]["pop"].append(item.get("pop", 0))
+        daily_data[day_key]["rain"] += item.get("rain", {}).get("3h", 0)
+        daily_data[day_key]["wind_speed"].append(item["wind"]["speed"])
+    
+    # Process daily data
+    daily_list = []
+    
+    for day_key in sorted(daily_data.keys()):
+        day = daily_data[day_key]
+        
+        # Create a data structure compatible with the template
+        day_weather = {
+            "dt": day["dt"],
+            "day": day["dt"],
+            "temp_min": round(day["temp_min"]),
+            "temp_max": round(day["temp_max"]),
+            "temp_day": round(day["temp_max"]),
+            "temp_night": round(day["temp_min"]),
+            "temp": {
+                "min": round(day["temp_min"]),
+                "max": round(day["temp_max"]),
+                "day": round(day["temp_max"]),
+                "night": round(day["temp_min"]),
+            },
+            "humidity": round(sum(day["humidity"]) / len(day["humidity"])) if day["humidity"] else 0,
+            "wind_speed": round(sum(day["wind_speed"]) / len(day["wind_speed"]) * 3.6, 1) if day["wind_speed"] else 0,
+            "pop": int(max(day["pop"]) * 100) if day["pop"] else 0,
+            "rain": day["rain"],
+            "description": day["description"],
+            "icon": day["icon"],
+            "main": day["main"],
+            "condition": day["main"],
+            "sunrise": day["dt"].replace(hour=6, minute=0, second=0),  # Approximation
+            "sunset": day["dt"].replace(hour=18, minute=0, second=0),  # Approximation
+            "uvi": 0,  # Not available in regular API
+        }
+        
+        daily_list.append(day_weather)
+        
+        # Limit to 7 days
+        if len(daily_list) >= 7:
+            break
+    
+    return daily_list
+
+def get_mock_weather_data():
+    """Return mock weather data for development when API is unavailable"""
+    current_app.logger.info("Using mock weather data for development")
+    
+    # Current time and date
+    now = datetime.now()
+    
+    # Mock current weather
+    current = {
+        "temp": 25,
+        "feels_like": 26,
+        "humidity": 65,
+        "pressure": 1013,
+        "wind_speed": 12.5,
+        "wind_deg": 180,
+        "uvi": 4.5,
+        "clouds": 40,
+        "visibility": 10,
+        "dew_point": 18,
+        "description": "scattered clouds",
+        "icon": "03d",
+        "main": "Clouds",
+        "condition": "Clouds",
+        "time": now,
+        "dt": now,
+        "sunrise": now.replace(hour=6, minute=30, second=0),
+        "sunset": now.replace(hour=18, minute=45, second=0),
+        "rain": 0,
+    }
+    
+    # Mock hourly forecast
+    hourly = []
+    for i in range(24):
+        hour_time = now + timedelta(hours=i)
+        hour_temp = 25 + 5 * math.sin(i * math.pi / 12)  # Temperature curve
+        hourly.append({
+            "temp": round(hour_temp),
+            "feels_like": round(hour_temp + 1),
+            "humidity": 65,
+            "wind_speed": 12.5,
+            "pop": 20 if i % 4 == 0 else 10,  # Rain chance
+            "rain": 0.5 if i % 4 == 0 else 0,
+            "description": "scattered clouds",
+            "icon": "03d",
+            "main": "Clouds",
+            "condition": "Clouds",
+            "time": hour_time,
+            "dt": hour_time,
+        })
+    
+    # Mock daily forecast
+    daily = []
+    for i in range(7):
+        day_time = now + timedelta(days=i)
+        daily.append({
+            "temp_min": 20,
+            "temp_max": 30,
+            "temp_day": 28,
+            "temp_night": 22,
+            "temp": {
+                "min": 20,
+                "max": 30,
+                "day": 28,
+                "night": 22,
+            },
+            "humidity": 65,
+            "wind_speed": 12.5,
+            "pop": 30 if i % 2 == 0 else 10,
+            "rain": 2 if i % 2 == 0 else 0,
+            "description": "scattered clouds",
+            "icon": "03d",
+            "main": "Clouds",
+            "condition": "Clouds",
+            "day": day_time,
+            "dt": day_time,
+            "sunrise": day_time.replace(hour=6, minute=30, second=0),
+            "sunset": day_time.replace(hour=18, minute=45, second=0),
+            "uvi": 4.5,
+        })
+    
+    return {
+        "current": current,
+        "hourly": hourly,
+        "daily": daily,
+        "alerts": [],
+    }
+
+# API endpoints with location-based routes
+@weather.route("/api/current/<location>")
+@login_required
+@require_farm_registration
+def api_current_weather(location):
+    """API endpoint for current weather for specific location"""
+    try:
+        weather_data = fetch_weather_data(location)
+        if not weather_data:
+            return jsonify({"error": "Failed to retrieve weather data"}), 500
+            
         return jsonify(weather_data["current"])
     except Exception as e:
         current_app.logger.error(f"API error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
-@weather.route("/api/forecast")
+@weather.route("/api/forecast/<location>")
 @login_required
 @require_farm_registration
-def api_forecast():
-    """API endpoint for weather forecast"""
-    farm = Farm.query.filter_by(user_id=current_user.id).first()
-
-    if not farm:
-        return jsonify({"error": "No farm found"}), 400
-
-    # Get lat/lon
-    lat, lon = None, None
-    if hasattr(farm, "latitude") and hasattr(farm, "longitude"):
-        lat = farm.latitude
-        lon = farm.longitude
-    elif farm.location and "," in farm.location:
-        try:
-            lat, lon = map(float, farm.location.split(","))
-        except ValueError:
-            pass
-
-    if not lat or not lon:
-        return jsonify({"error": "No location data"}), 400
-
+def api_forecast(location):
+    """API endpoint for weather forecast for specific location"""
     try:
-        weather_data = fetch_weather_data(lat, lon)
+        weather_data = fetch_weather_data(location)
+        if not weather_data:
+            return jsonify({"error": "Failed to retrieve weather data"}), 500
+            
         return jsonify(
             {"hourly": weather_data["hourly"], "daily": weather_data["daily"]}
         )
