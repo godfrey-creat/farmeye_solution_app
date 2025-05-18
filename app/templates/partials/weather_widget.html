@@ -1,7 +1,7 @@
 <div class="weather-widget px-4 py-2 mr-5 flex items-center">
     <i class="fas fa-sun text-accent text-2xl mr-3"></i>
     <div>
-        <div class="font-bold text-lg text-dark">24°C</div>
-        <div class="text-xs text-medium">Sunny</div>
+        <div class="font-bold text-lg text-white">{{ current.temp }}°C</div>
+        <div class="text-xs text-medium">{{ current.description|title }}</div>
     </div>
 </div>
