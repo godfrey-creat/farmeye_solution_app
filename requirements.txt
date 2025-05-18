@@ -94,3 +94,7 @@ sphinx-rtd-theme
 gunicorn  # WSGI HTTP Server
 supervisor  # Process control
 requests
+
+# YOLOv8 requirements
+ultralytics>=8.0.0
+torch

@@ -16,6 +16,7 @@
     <div class="aspect-w-16 aspect-h-9 bg-dark relative h-64">
         <div class="video-container" id="videoContainer">
             <video id="videoFeed" class="video-feed" playsinline muted loop>
+                <source src="https://www.shutterstock.com/shutterstock/videos/3703540751/preview/stock-footage-vegetative-stage-of-maize-maize-farming.webm" type="video/webm">
                 <source src="{{ url_for('static', filename='Constants/corn.mp4') }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
@@ -34,12 +35,12 @@
         </div>
         <div class="absolute bottom-0 left-0 right-0 bg-dark bg-opacity-70 backdrop-blur-sm text-white p-3">
             <div class="flex justify-between items-center">
-                <span class="font-medium" id="cameraLabel">Sector 3 - Camera 2</span>
+                <span class="font-medium" id="cameraLabel">Maize Field - Vegetative Stage</span>
                 <div class="flex space-x-3">
                     <button class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20" id="expandButton">
                         <i class="fas fa-expand-alt"></i>
                     </button>
-                    <button class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20">
+                    <button class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20" id="snapshotBtn">
                         <i class="fas fa-camera"></i>
                     </button>
                     <button class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20">
@@ -81,7 +82,7 @@
     <div class="camera-grid">
         <div class="camera-item" data-camera="Camera 1">
             <div class="camera-header">
-                <span>Camera 1 - Sector 3</span>
+                <span>Camera 1 - Vegetative Stage</span>
                 <div class="active-indicator" style="display: none;">
                     <span class="sensor-status sensor-active"></span>
                     <span class="text-xs">Active</span>
@@ -89,7 +90,8 @@
             </div>
             <div class="video-container">
                 <video class="video-feed" playsinline muted loop>
-                    <source src="{{ url_for('static', filename='../Constants/corn.mp4') }}" type="video/mp4">
+                    <source src="https://www.shutterstock.com/shutterstock/videos/3703540751/preview/stock-footage-vegetative-stage-of-maize-maize-farming.webm" type="video/webm">
+                    <source src="{{ url_for('static', filename='Constants/corn.mp4') }}" type="video/mp4">
                 </video>
                 <canvas class="detection-canvas"></canvas>
             </div>
@@ -97,7 +99,7 @@
         
         <div class="camera-item" data-camera="Camera 2">
             <div class="camera-header">
-                <span>Camera 2 - Sector 3</span>
+                <span>Camera 2 - Field View</span>
                 <div class="active-indicator">
                     <span class="sensor-status sensor-active"></span>
                     <span class="text-xs">Active</span>
@@ -105,7 +107,8 @@
             </div>
             <div class="video-container">
                 <video class="video-feed" playsinline muted loop>
-                    <source src="{{ url_for('static', filename='../Constants/corn.mp4') }}" type="video/mp4">
+                    <source src="https://www.shutterstock.com/shutterstock/videos/3719558213/preview/stock-footage-zea-mays-maize-corn-field-farming-natural.webm" type="video/webm">
+                    <source src="{{ url_for('static', filename='Constants/corn.mp4') }}" type="video/mp4">
                 </video>
                 <canvas class="detection-canvas"></canvas>
             </div>
@@ -113,7 +116,7 @@
         
         <div class="camera-item" data-camera="Camera 3">
             <div class="camera-header">
-                <span>Camera 3 - Sector 4</span>
+                <span>Camera 3 - Top Down View</span>
                 <div class="active-indicator" style="display: none;">
                     <span class="sensor-status sensor-active"></span>
                     <span class="text-xs">Active</span>
@@ -121,7 +124,8 @@
             </div>
             <div class="video-container">
                 <video class="video-feed" playsinline muted loop>
-                    <source src="{{ url_for('static', filename='../Constants/corn.mp4') }}" type="video/mp4">
+                    <source src="https://www.shutterstock.com/shutterstock/videos/3774732253/preview/stock-footage-top-down-view-neatly-planted-maize-crops-fertile.webm" type="video/webm">
+                    <source src="{{ url_for('static', filename='Constants/corn.mp4') }}" type="video/mp4">
                 </video>
                 <canvas class="detection-canvas"></canvas>
             </div>
@@ -129,7 +133,7 @@
         
         <div class="camera-item" data-camera="Camera 4">
             <div class="camera-header">
-                <span>Camera 4 - Sector 2</span>
+                <span>Camera 4 - Aerial View</span>
                 <div class="active-indicator" style="display: none;">
                     <span class="sensor-status sensor-active"></span>
                     <span class="text-xs">Active</span>
@@ -137,7 +141,8 @@
             </div>
             <div class="video-container">
                 <video class="video-feed" playsinline muted loop>
-                    <source src="{{ url_for('static', filename='../Constants/corn.mp4') }}" type="video/mp4">
+                    <source src="https://www.shutterstock.com/shutterstock/videos/3750960769/preview/stock-footage-aerial-view-rows-maize-corn-field-landscape.webm" type="video/webm">
+                    <source src="{{ url_for('static', filename='Constants/corn.mp4') }}" type="video/mp4">
                 </video>
                 <canvas class="detection-canvas"></canvas>
             </div>

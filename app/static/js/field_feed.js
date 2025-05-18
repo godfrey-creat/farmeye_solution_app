@@ -1,8 +1,5 @@
 /**
- * Field Video Feed with YOLO Detection
- * 
- * This script handles the video feed display and YOLO object detection
- * functionality for the field view component.
+ * Field Video Feed with YOLO Detection and Multiple Camera Views
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -22,37 +19,152 @@ document.addEventListener('DOMContentLoaded', function() {
     const expandButton = document.getElementById('expandButton');
     const expandedView = document.getElementById('expandedView');
     const collapseButton = document.getElementById('collapseButton');
-    const cameraSelect = document.getElementById('cameraSelect');
     const cameraLabel = document.getElementById('cameraLabel');
+    const cameraSelect = document.getElementById('cameraSelect');
     const prevCameraBtn = document.getElementById('prevCameraBtn');
     const nextCameraBtn = document.getElementById('nextCameraBtn');
+    const snapshotBtn = document.getElementById('snapshotBtn');
     
-    // Camera data - map camera names to sectors
+    // Camera data with video sources
     const cameras = [
-        { name: 'Camera 1', sector: 'Sector 3' },
-        { name: 'Camera 2', sector: 'Sector 3' },
-        { name: 'Camera 3', sector: 'Sector 4' },
-        { name: 'Camera 4', sector: 'Sector 2' }
+        {
+            name: 'Camera 1',
+            label: 'Vegetative Stage',
+            sources: [
+                {
+                    src: 'https://www.shutterstock.com/shutterstock/videos/3703540751/preview/stock-footage-vegetative-stage-of-maize-maize-farming.webm',
+                    type: 'video/webm'
+                }
+            ]
+        },
+        {
+            name: 'Camera 2',
+            label: 'Field View',
+            sources: [
+                {
+                    src: 'https://www.shutterstock.com/shutterstock/videos/3719558213/preview/stock-footage-zea-mays-maize-corn-field-farming-natural.webm',
+                    type: 'video/webm'
+                }
+            ]
+        },
+        {
+            name: 'Camera 3',
+            label: 'Top Down View',
+            sources: [
+                {
+                    src: 'https://www.shutterstock.com/shutterstock/videos/3774732253/preview/stock-footage-top-down-view-neatly-planted-maize-crops-fertile.webm',
+                    type: 'video/webm'
+                }
+            ]
+        },
+        {
+            name: 'Camera 4',
+            label: 'Aerial View',
+            sources: [
+                {
+                    src: 'https://www.shutterstock.com/shutterstock/videos/3750960769/preview/stock-footage-aerial-view-rows-maize-corn-field-landscape.webm',
+                    type: 'video/webm'
+                }
+            ]
+        }
     ];
+    
+    // Fallback source to use if Shutterstock videos fail
+    const fallbackSource = {
+        src: '/static/Constants/corn.mp4',
+        type: 'video/mp4'
+    };
     
     // Animation frame reference and state
     let animationFrame = null;
     let isYoloActive = false;
     let lastDetectionTime = 0;
+    let lastDetections = [];
+    let processingImage = false;
+    let currentCameraIndex = 1; // Start with Camera 2
     
-    // Initialize the video
-    function initVideo() {
-        // Try to play the video
+    // Initialize the video element with a camera source
+    function loadCamera(cameraIndex) {
+        if (cameraIndex < 0 || cameraIndex >= cameras.length) {
+            console.error('Invalid camera index:', cameraIndex);
+            return;
+        }
+        
+        currentCameraIndex = cameraIndex;
+        const camera = cameras[cameraIndex];
+        
+        // Update camera label
+        if (cameraLabel) {
+            cameraLabel.textContent = `${camera.label} - ${camera.name}`;
+        }
+        
+        // Update camera selector
+        if (cameraSelect) {
+            cameraSelect.value = camera.name;
+        }
+        
+        // Update active indicators in expanded view
+        if (expandedView) {
+            const cameraItems = expandedView.querySelectorAll('.camera-item');
+            cameraItems.forEach((item, index) => {
+                const indicator = item.querySelector('.active-indicator');
+                if (indicator) {
+                    indicator.style.display = (index === cameraIndex) ? 'flex' : 'none';
+                }
+            });
+        }
+        
+        // Load video sources
+        if (videoFeed) {
+            // Remove existing sources
+            while (videoFeed.firstChild) {
+                videoFeed.removeChild(videoFeed.firstChild);
+            }
+            
+            // Add new sources
+            camera.sources.forEach(source => {
+                const sourceElement = document.createElement('source');
+                sourceElement.src = source.src;
+                sourceElement.type = source.type;
+                videoFeed.appendChild(sourceElement);
+            });
+            
+            // Add fallback source
+            const fallbackElement = document.createElement('source');
+            fallbackElement.src = fallbackSource.src;
+            fallbackElement.type = fallbackSource.type;
+            videoFeed.appendChild(fallbackElement);
+            
+            // Add text for browsers that don't support video
+            const textNode = document.createTextNode('Your browser does not support the video tag.');
+            videoFeed.appendChild(textNode);
+            
+            // Load the video
+            videoFeed.load();
+            playVideo();
+        }
+    }
+    
+    // Play video function
+    function playVideo() {
         videoFeed.play().then(() => {
             // Hide the play overlay if successful
-            videoOverlay.style.display = 'none';
+            if (videoOverlay) {
+                videoOverlay.style.display = 'none';
+            }
         }).catch(error => {
             console.error('Video autoplay failed:', error);
             // Keep the play overlay visible if autoplay fails
         });
-        
+    }
+    
+    // Initialize the video
+    function initVideo() {
         // Set up canvas dimensions
         updateCanvasDimensions();
+        
+        // Load the initial camera
+        loadCamera(currentCameraIndex);
     }
     
     function updateCanvasDimensions() {
@@ -68,19 +180,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Manual play button click handler
     if (videoOverlay) {
         videoOverlay.addEventListener('click', function() {
-            videoFeed.play().then(() => {
-                videoOverlay.style.display = 'none';
-            }).catch(error => {
-                console.error('Manual play failed:', error);
-                alert('Unable to play video. Please try again or check browser permissions.');
-            });
+            playVideo();
         });
     }
     
     // Wait for video to load
     if (videoFeed) {
-        videoFeed.addEventListener('loadeddata', initVideo);
+        videoFeed.addEventListener('loadeddata', function() {
+            updateCanvasDimensions();
+            playVideo();
+        });
         videoFeed.addEventListener('loadedmetadata', updateCanvasDimensions);
+        
+        // Handle video errors
+        videoFeed.addEventListener('error', function(e) {
+            console.error('Video error:', e);
+            alert('There was an error loading the video. The videos are preview files from Shutterstock and may have restricted access. The local fallback video should load instead.');
+        });
     }
     
     // YOLO toggle handler
@@ -111,11 +227,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 expandedView.style.display = 'flex';
                 
                 // Start playing all videos in expanded view
-                const videos = expandedView.querySelectorAll('video');
-                videos.forEach(video => {
+                const expandedVideos = expandedView.querySelectorAll('video');
+                expandedVideos.forEach(video => {
+                    video.load(); // Make sure sources are loaded
                     video.play().catch(error => {
                         console.error('Expanded view video play failed:', error);
                     });
+                });
+                
+                // Update active camera in expanded view
+                const cameraItems = expandedView.querySelectorAll('.camera-item');
+                cameraItems.forEach((item, index) => {
+                    const indicator = item.querySelector('.active-indicator');
+                    if (indicator) {
+                        indicator.style.display = (index === currentCameraIndex) ? 'flex' : 'none';
+                    }
                 });
             }
         });
@@ -138,58 +264,63 @@ document.addEventListener('DOMContentLoaded', function() {
     // Camera selection
     if (cameraSelect) {
         cameraSelect.addEventListener('change', function() {
-            const selectedCamera = cameras.find(camera => camera.name === this.value) || cameras[1];
-            updateCameraLabel(selectedCamera);
+            const selectedCameraName = this.value;
+            const cameraIndex = cameras.findIndex(camera => camera.name === selectedCameraName);
             
-            // Update active camera in expanded view
-            if (expandedView) {
-                const cameraItems = expandedView.querySelectorAll('.camera-item');
-                cameraItems.forEach(item => {
-                    const cameraName = item.getAttribute('data-camera');
-                    const indicator = item.querySelector('.active-indicator');
-                    
-                    if (indicator) {
-                        if (cameraName === selectedCamera.name) {
-                            indicator.style.display = 'flex';
-                        } else {
-                            indicator.style.display = 'none';
-                        }
-                    }
-                });
+            if (cameraIndex >= 0) {
+                loadCamera(cameraIndex);
             }
         });
     }
     
     // Previous/Next camera buttons
-    if (prevCameraBtn && cameraSelect) {
+    if (prevCameraBtn) {
         prevCameraBtn.addEventListener('click', function() {
-            const currentIndex = cameras.findIndex(camera => camera.name === cameraSelect.value);
-            const prevIndex = (currentIndex - 1 + cameras.length) % cameras.length;
-            cameraSelect.value = cameras[prevIndex].name;
-            
-            // Trigger change event
-            const event = new Event('change');
-            cameraSelect.dispatchEvent(event);
+            const prevIndex = (currentCameraIndex - 1 + cameras.length) % cameras.length;
+            loadCamera(prevIndex);
         });
     }
     
-    if (nextCameraBtn && cameraSelect) {
+    if (nextCameraBtn) {
         nextCameraBtn.addEventListener('click', function() {
-            const currentIndex = cameras.findIndex(camera => camera.name === cameraSelect.value);
-            const nextIndex = (currentIndex + 1) % cameras.length;
-            cameraSelect.value = cameras[nextIndex].name;
-            
-            // Trigger change event
-            const event = new Event('change');
-            cameraSelect.dispatchEvent(event);
+            const nextIndex = (currentCameraIndex + 1) % cameras.length;
+            loadCamera(nextIndex);
         });
     }
     
-    // Update camera label function
-    function updateCameraLabel(camera) {
-        if (cameraLabel) {
-            cameraLabel.textContent = `${camera.sector} - ${camera.name}`;
-        }
+    // Take snapshot button
+    if (snapshotBtn) {
+        snapshotBtn.addEventListener('click', function() {
+            if (!videoFeed || videoFeed.paused || videoFeed.ended) {
+                console.warn('Cannot take snapshot: video not playing');
+                return;
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = videoFeed.videoWidth;
+            canvas.height = videoFeed.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(videoFeed, 0, 0, canvas.width, canvas.height);
+            
+            // If YOLO is active, also draw detections
+            if (isYoloActive && lastDetections.length > 0) {
+                drawDetections(ctx, lastDetections);
+            }
+            
+            // Convert to image and download
+            try {
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                
+                link.href = image;
+                link.download = `farm-snapshot-${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.png`;
+                link.click();
+            } catch (error) {
+                console.error('Error creating snapshot:', error);
+                alert('Could not create snapshot. This might be due to CORS restrictions with the video source.');
+            }
+        });
     }
     
     // YOLO Detection functions
@@ -222,9 +353,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const now = Date.now();
             const timeSinceLastDetection = now - lastDetectionTime;
             
-            // Only perform detection every 100ms to avoid excessive processing
-            if (timeSinceLastDetection > 100) {
+            // Only perform detection every 500ms to avoid excessive processing and API calls
+            if (timeSinceLastDetection > 500 && !processingImage) {
                 lastDetectionTime = now;
+                processingImage = true;
                 
                 // Get canvas context
                 const ctx = detectionCanvas.getContext('2d');
@@ -232,18 +364,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Draw video frame to canvas
                 ctx.drawImage(videoFeed, 0, 0, detectionCanvas.width, detectionCanvas.height);
                 
-                // Process frame (simulate YOLO detection for now)
+                // Process frame with YOLO API
                 processFrameForDetection(detectionCanvas)
                     .then(detections => {
-                        // Update stats
-                        updateDetectionStats(detections);
-                        
-                        // Draw detections on canvas
-                        drawDetections(ctx, detections);
+                        if (detections && detections.length > 0) {
+                            lastDetections = detections;
+                            // Update stats
+                            updateDetectionStats(detections);
+                            
+                            // Draw detections on canvas
+                            drawDetections(ctx, detections);
+                        }
+                        processingImage = false;
                     })
                     .catch(error => {
                         console.error('Detection error:', error);
+                        processingImage = false;
+                        
+                        // If API fails, still try to display last known detections
+                        if (lastDetections.length > 0) {
+                            const ctx = detectionCanvas.getContext('2d');
+                            ctx.drawImage(videoFeed, 0, 0, detectionCanvas.width, detectionCanvas.height);
+                            drawDetections(ctx, lastDetections);
+                        }
                     });
+            } else {
+                // Just redraw last detections without calling API
+                if (lastDetections.length > 0) {
+                    const ctx = detectionCanvas.getContext('2d');
+                    ctx.drawImage(videoFeed, 0, 0, detectionCanvas.width, detectionCanvas.height);
+                    drawDetections(ctx, lastDetections);
+                }
             }
         }
         
@@ -251,16 +402,8 @@ document.addEventListener('DOMContentLoaded', function() {
         animationFrame = requestAnimationFrame(detectFrame);
     }
     
-    // Process frame for detection (can be replaced with actual API call)
+    // Process frame for detection using real YOLO API
     async function processFrameForDetection(canvas) {
-        // In a real implementation, this could send the canvas data to a backend API
-        // For now, we'll simulate detection with random data
-        
-        // For mock implementation
-        return await mockDetection(canvas);
-        
-        // For real implementation (commented out)
-        /*
         try {
             // Convert canvas to blob
             const blob = await new Promise(resolve => {
@@ -272,22 +415,28 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('image', blob, 'frame.jpg');
             
             // Send to detection API
-            const response = await fetch('/api/detect', {
+            const response = await fetch('/feed/detect', {
                 method: 'POST',
                 body: formData
             });
             
             if (!response.ok) {
-                throw new Error('Detection API error');
+                const errorData = await response.json();
+                throw new Error(`Detection API error: ${errorData.error || response.statusText}`);
             }
             
             const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Unknown API error');
+            }
+            
             return result.detections;
         } catch (error) {
             console.error('Error calling detection API:', error);
+            // Return empty array on error
             return [];
         }
-        */
     }
     
     // Update detection stats display
@@ -301,58 +450,8 @@ document.addEventListener('DOMContentLoaded', function() {
         weedCount.textContent = `${weedDetections.length} Weeds`;
     }
     
-    // Mock YOLO detection (simulates actual model)
-    async function mockDetection(canvas) {
-        // Simulate processing time
-        await new Promise(resolve => setTimeout(resolve, 30));
-        
-        const width = canvas.width;
-        const height = canvas.height;
-        
-        // Generate random detections
-        const detections = [];
-        
-        // Add some maize detections
-        const maizeCount = 3 + Math.floor(Math.random() * 3);
-        for (let i = 0; i < maizeCount; i++) {
-            const x = Math.floor(Math.random() * (width - 100));
-            const y = Math.floor(Math.random() * (height - 150));
-            const w = 80 + Math.floor(Math.random() * 40);
-            const h = 120 + Math.floor(Math.random() * 60);
-            
-            detections.push({
-                class: 'maize',
-                confidence: 0.75 + Math.random() * 0.2,
-                bbox: [x, y, w, h]
-            });
-        }
-        
-        // Add some weed detections
-        const weedCount = 4 + Math.floor(Math.random() * 4);
-        for (let i = 0; i < weedCount; i++) {
-            const x = Math.floor(Math.random() * (width - 60));
-            const y = Math.floor(Math.random() * (height - 40));
-            const w = 30 + Math.floor(Math.random() * 40);
-            const h = 20 + Math.floor(Math.random() * 30);
-            
-            detections.push({
-                class: 'weed',
-                confidence: 0.65 + Math.random() * 0.3,
-                bbox: [x, y, w, h]
-            });
-        }
-        
-        return detections;
-    }
-    
     // Draw detection boxes on canvas
     function drawDetections(ctx, detections) {
-        // Clear the canvas first (optional if we redraw the video frame each time)
-        ctx.clearRect(0, 0, detectionCanvas.width, detectionCanvas.height);
-        
-        // Redraw the video frame
-        ctx.drawImage(videoFeed, 0, 0, detectionCanvas.width, detectionCanvas.height);
-        
         // Draw each detection
         detections.forEach(detection => {
             const [x, y, width, height] = detection.bbox;
@@ -389,9 +488,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Initialize with default camera
-    if (cameraSelect) {
-        const defaultCamera = cameras.find(camera => camera.name === cameraSelect.value) || cameras[1];
-        updateCameraLabel(defaultCamera);
-    }
+    // Initialize video when DOM is ready
+    initVideo();
 });
