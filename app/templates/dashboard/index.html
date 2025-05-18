@@ -4,6 +4,7 @@ block extra_css %}
   rel="stylesheet"
   href="{{ url_for('static', filename='css/components/cards.css') }}"
 />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/feed.css') }}" />
 {% endblock %} {% block content %}
 <!-- Page Header -->
 <div class="flex justify-between items-center mb-8">
@@ -201,4 +202,5 @@ block extra_css %}
 </div>
 {% endblock %} {% block extra_js %}
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/field_feed.js') }}"></script>
 {% endblock %}

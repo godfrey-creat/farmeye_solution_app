@@ -118,4 +118,26 @@ def create_app(config_name=None):
 
     app.register_blueprint(irrigation_blueprint, url_prefix="/irrigation")
 
+    # Context processor to make weather data available to all templates
+
+    @app.context_processor
+    def inject_weather():
+        from flask_login import current_user
+        from .farm.models import Farm
+        from .weather.routes import get_mock_weather_data
+
+        if current_user.is_authenticated:
+            try:
+                # Get user's farm
+                farm = Farm.query.filter_by(user_id=current_user.id).first()
+                if farm and farm.location:
+                    # Use mock data for simplicity - replace with real API call if needed
+                    weather_data = get_mock_weather_data()
+                    return {"current": weather_data["current"]}
+            except Exception as e:
+                app.logger.error(f"Error loading weather data: {str(e)}")
+
+        # Return empty data if user not authenticated or if there was an error
+        return {"current": None}
+
     return app

@@ -6,7 +6,7 @@ import os
 
 def run_inference_on_video(
     video_path,
-    model_path=r"C:\Users\snmax\OneDrive\Desktop\farmeye_solution_app\app\utils\farmeye_final.pt",
+    model_path=r"C:\Users\snmax\OneDrive\Desktop\farmeye_solution_app\app\utils\maize_weed_detection.pt",
     show_predictions=True,
     save_predictions=False,
     save_path="predictions.mp4",
@@ -17,7 +17,7 @@ def run_inference_on_video(
     Args:
         video_path (str): Path to the video file.
         model_path (str, optional): Path to the YOLO model file (.pt).
-            Defaults to 'C:\\Users\\snmax\\OneDrive\\Desktop\\farmeye_solution_app\\app\\utils\\farmeye_final.pt'.
+            Defaults to 'C:\\Users\\snmax\\OneDrive\\Desktop\\farmeye_solution_app\\app\\utils\\maize_weed_detection.pt'.
         show_predictions (bool, optional): Whether to display the video with
             predictions in real-time. Defaults to True.
         save_predictions (bool, optional): Whether to save the video with
