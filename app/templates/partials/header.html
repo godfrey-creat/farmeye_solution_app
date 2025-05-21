@@ -1,140 +1,310 @@
-<header class="bg-primary-dark text-white h-16 flex items-center px-6 fixed top-0 left-0 right-0 z-50 shadow-md">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
-    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
-    <div class="flex items-center">
-        <!-- Logo -->
-        <div class="flex items-center mr-8">
-            <i class="fas fa-leaf text-2xl mr-2 text-accent"></i>
-            <span class="text-xl font-bold tracking-tight">FarmEye</span>
-        </div>
+<header
+  class="bg-primary-dark text-white h-16 flex items-center px-6 fixed top-0 left-0 right-0 z-50 shadow-md"
+>
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/components/notifications.css') }}"
+  />
 
+  <!-- Main Container -->
+  <div class="flex items-center justify-between w-full">
+    <!-- Left Side: Logo and Selectors -->
+    <div class="flex items-center">
+      <!-- Logo -->
+      <div class="flex items-center mr-8">
+        <i class="fas fa-leaf text-2xl mr-2 text-accent"></i>
+        <span class="text-xl font-bold tracking-tight">FarmEye</span>
+      </div>
+
+      <!-- Farm & Field Selectors (hidden on mobile) -->
+      <div class="hidden md:flex items-center space-x-4">
         <!-- Farm Selector -->
-        <div class="relative mr-4">
-            <button
-                class="flex items-center px-4 py-2 bg-white bg-opacity-10 rounded-lg hover:bg-opacity-20 transition"
-                id="farmSelector">
-                <i class="fas fa-farm text-accent mr-2 text-sm"></i>
-                <span class="font-medium">Green Valley Farm</span>
-                <i class="fas fa-chevron-down ml-3 text-xs opacity-70"></i>
-            </button>
-            <div
-                class="hidden absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg text-dark py-1 z-50 dropdown"
-                id="farmDropdown">
-                <a href="#" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">Sunny
-                    Acres</a>
-                <a href="#"
-                    class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">Riverbend
-                    Farm</a>
-                <a href="#" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">Mountain
-                    View Ranch</a>
-            </div>
+        <div class="relative">
+          <button
+            class="flex items-center px-4 py-2 bg-white bg-opacity-10 rounded-lg hover:bg-opacity-20 transition"
+            id="farmSelector"
+          >
+            <i class="fas fa-farm text-accent mr-2 text-sm"></i>
+            <span class="font-medium" id="selectedFarmName">
+              {% if current_user.farms %} {{ current_user.farms[0].name }} {%
+              else %} No Farm Selected {% endif %}
+            </span>
+            <i class="fas fa-chevron-down ml-3 text-xs opacity-70"></i>
+          </button>
+          <div
+            class="hidden absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg text-dark py-1 z-50 dropdown"
+            id="farmDropdown"
+          >
+            {% for farm in current_user.farms %}
+            <a
+              href="#"
+              class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary farm-option"
+              data-farm-id="{{ farm.id }}"
+              data-farm-name="{{ farm.name }}"
+            >
+              {{ farm.name }}
+            </a>
+            {% else %}
+            <a href="#" class="block px-4 py-2 text-gray-500"
+              >No farms available</a
+            >
+            {% endfor %}
+          </div>
         </div>
 
         <!-- Field Selector -->
-        <div class="relative mr-4">
-            <button
-                class="flex items-center px-4 py-2 bg-white bg-opacity-10 rounded-lg hover:bg-opacity-20 transition"
-                id="fieldSelector">
-                <i class="fas fa-map-marker-alt text-accent mr-2 text-sm"></i>
-                <span class="font-medium">Field A-12</span>
-                <i class="fas fa-chevron-down ml-3 text-xs opacity-70"></i>
-            </button>
-            <div
-                class="hidden absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg text-dark py-1 z-50 dropdown"
-                id="fieldDropdown">
-                <a href="#" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">Field
-                    A-11</a>
-                <a href="#" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">Field
-                    A-12</a>
-                <a href="#" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">Field
-                    B-05</a>
-                <a href="#" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">Field
-                    B-08</a>
-            </div>
+        <div class="relative">
+          <button
+            class="flex items-center px-4 py-2 bg-white bg-opacity-10 rounded-lg hover:bg-opacity-20 transition"
+            id="fieldSelector"
+          >
+            <i class="fas fa-map-marker-alt text-accent mr-2 text-sm"></i>
+            <span class="font-medium" id="selectedFieldName">
+              {% if current_user.farms and current_user.farms[0].fields %} {{
+              current_user.farms[0].fields[0].name }} {% else %} No Field
+              Selected {% endif %}
+            </span>
+            <i class="fas fa-chevron-down ml-3 text-xs opacity-70"></i>
+          </button>
+          <div
+            class="hidden absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg text-dark py-1 z-50 dropdown"
+            id="fieldDropdown"
+          >
+            {% if current_user.farms and current_user.farms[0].fields %} {% for
+            field in current_user.farms[0].fields %}
+            <a
+              href="#"
+              class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary field-option"
+              data-field-id="{{ field.id }}"
+              data-field-name="{{ field.name }}"
+              data-farm-id="{{ current_user.farms[0].id }}"
+            >
+              {{ field.name }}
+            </a>
+            {% endfor %} {% else %}
+            <a href="#" class="block px-4 py-2 text-gray-500"
+              >No fields available</a
+            >
+            {% endif %}
+          </div>
         </div>
+      </div>
     </div>
 
-    <div class="ml-auto flex items-center">
-        <!-- Weather Widget -->
+    <!-- Right Side: Weather, Notifications, User -->
+    <div class="flex items-center space-x-4">
+      <!-- Weather Widget (hidden on mobile) -->
+      <div class="hidden md:block">
         {% include 'partials/weather_widget.html' %}
+      </div>
 
-        <!-- Notifications -->
-        {% include 'partials/notifications.html' %}
+      <!-- Notifications -->
+      {% include 'partials/notifications.html' %}
 
-        <!-- User Profile -->
-        <button class="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition flex items-center" id="userProfileBtn">
-            <div class="h-8 w-8 bg-primary-light rounded-full flex items-center justify-center text-white font-medium mr-2">
-                {% if current_user.first_name and current_user.last_name %}
-                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
-                {% else %}
-                {{ current_user.username[0:2] if current_user.username else "?" }}
-                {% endif %}
+      <!-- User Profile -->
+      <div class="relative">
+        <button
+          class="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition flex items-center"
+          id="userProfileBtn"
+        >
+          <div
+            class="h-8 w-8 bg-primary-light rounded-full flex items-center justify-center text-white font-medium mr-2"
+          >
+            {% if current_user.first_name and current_user.last_name %} {{
+            current_user.first_name[0] }}{{ current_user.last_name[0] }} {% else
+            %} {{ current_user.username[0:2] if current_user.username else "?"
+            }} {% endif %}
+          </div>
+          <span class="font-medium mr-1 hidden lg:inline">
+            {% if current_user.first_name and current_user.last_name %} {{
+            current_user.first_name }} {{ current_user.last_name }} {% else %}
+            {{ current_user.username }} {% endif %}
+          </span>
+          <i class="fas fa-chevron-down text-xs"></i>
+        </button>
+
+        <!-- User Profile Dropdown -->
+        <div
+          id="userProfileDropdown"
+          class="hidden absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg text-dark w-48 z-[100] dropdown"
+        >
+          <div class="px-4 py-3 border-b border-light">
+            <div class="font-medium">
+              {{ current_user.first_name }} {{ current_user.last_name }}
             </div>
-            <span class="font-medium mr-1 hidden md:inline">
-        {% if current_user.first_name and current_user.last_name %}
-            {{ current_user.first_name }} {{ current_user.last_name }}
-        {% else %}
-            {{ current_user.username }}
-        {% endif %}
-    </span>
-            <i class="fas fa-chevron-down text-xs"></i>
-        </button>
+            <div class="text-xs text-medium truncate">
+              {{ current_user.email }}
+            </div>
+          </div>
+          <div class="py-1">
+            <a
+              href="{{ url_for('auth.profile') }}"
+              class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary"
+            >
+              <i class="fas fa-user mr-2"></i> Your Profile
+            </a>
+            <a
+              href="#"
+              class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary"
+            >
+              <i class="fas fa-cog mr-2"></i> Settings
+            </a>
+          </div>
+          <div class="py-1 border-t border-light">
+            <a
+              href="{{ url_for('auth.logout') }}"
+              class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary"
+            >
+              <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
+            </a>
+          </div>
+        </div>
+      </div>
 
-        <!-- Mobile Menu Button -->
-        <button id="mobileMenuButton"
-            class="p-2 ml-4 rounded-lg hover:bg-white hover:bg-opacity-20 transition md:hidden">
-            <i class="fas fa-bars text-xl"></i>
-        </button>
+      <!-- Mobile Menu Button -->
+      <button
+        id="mobileMenuButton"
+        class="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition md:hidden"
+      >
+        <i class="fas fa-bars text-xl"></i>
+      </button>
     </div>
-    <!-- Add this after the user profile button in header.html -->
-
-    <div id="userProfileDropdown" class="hidden absolute right-4 top-16 bg-white rounded-lg shadow-lg text-dark w-48 z-50">
-        <div class="px-4 py-3 border-b border-light">
-            <div class="font-medium">{{ current_user.first_name }} {{ current_user.last_name }}</div>
-            <div class="text-xs text-medium truncate">{{ current_user.email }}</div>
-        </div>
-        <div class="py-1">
-            <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">
-                <i class="fas fa-user mr-2"></i> Your Profile
-            </a>
-            <a href="#" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">
-                <i class="fas fa-cog mr-2"></i> Settings
-            </a>
-        </div>
-        <div class="py-1 border-t border-light">
-            <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 hover:bg-primary hover:bg-opacity-10 hover:text-primary">
-                <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
-            </a>
-        </div>
-    </div>
-
-    <!-- Don't forget to update the JavaScript to toggle this dropdown -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const userProfileBtn = document.getElementById('userProfileBtn');
-            const userProfileDropdown = document.getElementById('userProfileDropdown');
-
-            if (userProfileBtn && userProfileDropdown) {
-                userProfileBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    userProfileDropdown.classList.toggle('hidden');
-
-                    // Close other dropdowns
-                    document.querySelectorAll('.dropdown').forEach(d => {
-                        if (d !== userProfileDropdown) d.classList.add('hidden');
-                    });
-                });
-
-                // Close dropdown when clicking outside
-                document.addEventListener('click', function() {
-                    userProfileDropdown.classList.add('hidden');
-                });
-
-                // Prevent closing when clicking inside dropdown
-                userProfileDropdown.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-            }
-        });
-    </script>
+  </div>
 </header>
+
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+
+<!-- JavaScript for dropdowns -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Farm selector
+    const farmSelector = document.getElementById("farmSelector");
+    const farmDropdown = document.getElementById("farmDropdown");
+
+    if (farmSelector && farmDropdown) {
+      farmSelector.addEventListener("click", function (e) {
+        e.stopPropagation();
+        farmDropdown.classList.toggle("hidden");
+        // Close other dropdowns
+        document.getElementById("fieldDropdown")?.classList.add("hidden");
+        document.getElementById("userProfileDropdown")?.classList.add("hidden");
+      });
+
+      // Handle farm selection
+      const farmOptions = farmDropdown.querySelectorAll(".farm-option");
+      farmOptions.forEach((option) => {
+        option.addEventListener("click", function (e) {
+          e.preventDefault();
+          const farmName = this.dataset.farmName;
+          const farmId = this.dataset.farmId;
+          document.getElementById("selectedFarmName").textContent = farmName;
+          farmDropdown.classList.add("hidden");
+          // You can add logic here to reload fields based on selected farm
+        });
+      });
+    }
+
+    // Field selector
+    const fieldSelector = document.getElementById("fieldSelector");
+    const fieldDropdown = document.getElementById("fieldDropdown");
+
+    if (fieldSelector && fieldDropdown) {
+      fieldSelector.addEventListener("click", function (e) {
+        e.stopPropagation();
+        fieldDropdown.classList.toggle("hidden");
+        // Close other dropdowns
+        document.getElementById("farmDropdown")?.classList.add("hidden");
+        document.getElementById("userProfileDropdown")?.classList.add("hidden");
+      });
+
+      // Handle field selection
+      const fieldOptions = fieldDropdown.querySelectorAll(".field-option");
+      fieldOptions.forEach((option) => {
+        option.addEventListener("click", function (e) {
+          e.preventDefault();
+          const fieldName = this.dataset.fieldName;
+          const fieldId = this.dataset.fieldId;
+          document.getElementById("selectedFieldName").textContent = fieldName;
+          fieldDropdown.classList.add("hidden");
+        });
+      });
+    }
+
+    // User profile dropdown - FIXED
+    const userProfileBtn = document.getElementById("userProfileBtn");
+    const userProfileDropdown = document.getElementById("userProfileDropdown");
+
+    if (userProfileBtn && userProfileDropdown) {
+      userProfileBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Force display block instead of just toggling the hidden class
+        if (userProfileDropdown.classList.contains("hidden")) {
+          userProfileDropdown.classList.remove("hidden");
+          userProfileDropdown.style.display = "block";
+          console.log("Dropdown shown");
+        } else {
+          userProfileDropdown.classList.add("hidden");
+          userProfileDropdown.style.display = "none";
+          console.log("Dropdown hidden");
+        }
+
+        // Close other dropdowns
+        const otherDropdowns = document.querySelectorAll(
+          ".dropdown:not(#userProfileDropdown)"
+        );
+        otherDropdowns.forEach((dropdown) => {
+          dropdown.classList.add("hidden");
+        });
+      });
+    }
+
+    // Close all dropdowns when clicking outside
+    document.addEventListener("click", function (e) {
+      if (
+        !e.target.closest("#userProfileBtn") &&
+        !e.target.closest("#userProfileDropdown")
+      ) {
+        if (userProfileDropdown) {
+          userProfileDropdown.classList.add("hidden");
+          userProfileDropdown.style.display = "none";
+        }
+      }
+
+      if (
+        !e.target.closest("#farmSelector") &&
+        !e.target.closest("#farmDropdown")
+      ) {
+        farmDropdown?.classList.add("hidden");
+      }
+
+      if (
+        !e.target.closest("#fieldSelector") &&
+        !e.target.closest("#fieldDropdown")
+      ) {
+        fieldDropdown?.classList.add("hidden");
+      }
+    });
+
+    // Stop propagation on dropdown clicks to prevent immediate closing
+    document.querySelectorAll(".dropdown").forEach((dropdown) => {
+      dropdown.addEventListener("click", function (e) {
+        e.stopPropagation();
+        console.log("Click inside dropdown, propagation stopped");
+      });
+    });
+
+    // Mobile menu button
+    const mobileMenuButton = document.getElementById("mobileMenuButton");
+    if (mobileMenuButton) {
+      mobileMenuButton.addEventListener("click", function () {
+        // Add your mobile menu toggle logic here
+        console.log("Mobile menu clicked");
+      });
+    }
+    console.log("Profile button exists:", !!userProfileBtn);
+    console.log("Profile dropdown exists:", !!userProfileDropdown);
+    console.log("Dropdown initialization complete");
+  });
+</script>

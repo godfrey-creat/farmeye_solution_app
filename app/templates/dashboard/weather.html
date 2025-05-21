@@ -1,368 +1,1089 @@
-{% extends "base.html" %}
-
-{% block title %}FarmEye - Weather{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
+{% extends "base.html" %} {% block title %}FarmEye - Weather Dashboard{%
+endblock %} {% block extra_css %}
 <style>
-    .weather-card {
-        transition: transform 0.3s ease;
-    }
-    .weather-card:hover {
-        transform: translateY(-5px);
-    }
-    .forecast-item {
-        transition: all 0.3s ease;
-    }
-    .forecast-item:hover {
-        background-color: rgba(82, 190, 128, 0.1);
-    }
-</style>
-{% endblock %}
 
-{% block content %}
-<!-- Page Header -->
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-3xl font-semibold text-dark">Weather Dashboard</h1>
-        {% if has_location and current %}
-        <p class="text-medium mt-1">Last updated: <span id="last-updated">{{ current.time.strftime('%B %d, %Y at %I:%M %p') }}</span></p>
-        {% else %}
-        <p class="text-medium mt-1">Weather data not available</p>
-        {% endif %}
+ #hourly-forecast-container {
+  display: flex !important;
+  grid-template-columns: none !important;
+}
+
+#daily-forecast-container {
+  grid-template-rows: auto;
+}
+
+.weather-card.daily-card {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.weather-card.daily-card > div {
+  min-height: 200px; /* Adjust as needed */
+}
+  .weather-gradient {
+    background: linear-gradient(135deg, #196F3D 0%, #16A34A 100%);
+  }
+
+  .weather-card.daily-card > div::after {
+  content: "";
+  display: block;
+  height: 4px; /* Small height for consistency */
+  visibility: hidden;
+}
+
+/* On large screens, make cards more compact */
+@media (min-width: 1024px) {
+  .weather-card.daily-card {
+    padding: 0.75rem;
+  }
+  
+  /* Override the grid to ensure exact 7 columns of equal width */
+  #daily-forecast-container {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    width: 100%;
+  }
+
+  .weather-card {
+  height: 100%;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.weather-card img {
+  margin: 0.5rem auto;
+}
+
+  .weather-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .weather-icon {
+    filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.1));
+  }
+
+  .forecast-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #196F3D, #16A34A;
+    position: relative;
+  }
+
+  .forecast-scroll::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .forecast-scroll::-webkit-scrollbar-track {
+    background: #16A34A;
+    border-radius: 4px;
+  }
+
+  .forecast-scroll::-webkit-scrollbar-thumb {
+    background: #196F3D;
+    border-radius: 4px;
+  }
+  
+  /* Show scroll hint */
+  .forecast-scroll::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 30px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8));
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Make the hourly items more compact to show more at once */
+  .weather-card.hourly {
+  /* Remove min-width to let them fill their containers */
+  min-height: 140px;
+  padding: 0.75rem;
+  /* height: 100%; */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+  .wind-direction {
+    animation: sway 3s ease-in-out infinite;
+  }
+
+  @keyframes sway {
+    0%,
+    100% {
+      transform: rotate(-5deg);
+    }
+    50% {
+      transform: rotate(5deg);
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<!-- Location Header -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <div
+        class="w-16 h-16 bg-primary rounded-full flex items-center justify-center"
+      >
+        <i class="fas fa-map-marked-alt text-white text-2xl"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">{{ farm.name }}</h1>
+        <p class="text-gray-600">
+          <i class="fas fa-location-dot text-primary mr-1"></i>
+          Location: {{ location_name|default(farm.location) }}{% if farm.region %}, {{ farm.region|title }}{% endif %}
+        </p>
+      </div>
     </div>
-    <div>
-        {% if has_location %}
-        <button class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg transition-colors shadow-md" onclick="window.location.reload()">
-            <i class="fas fa-sync-alt mr-2"></i>Refresh
+    <div class="text-right">
+      <p class="text-sm text-gray-500">Last updated</p>
+      <p class="text-lg font-semibold text-gray-800" id="last-update">
+        <span id="current-time"></span>
+
+        <script>
+          function updateCurrentTime() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const ampm = hours >= 12 ? "PM" : "AM";
+            const displayHours = hours % 12 || 12;
+            const displayMinutes = minutes < 10 ? "0" + minutes : minutes;
+
+            document.getElementById(
+              "current-time"
+            ).textContent = `${displayHours}:${displayMinutes} ${ampm}`;
+          }
+
+          // Update immediately
+          updateCurrentTime();
+
+          // Update every minute
+          setInterval(updateCurrentTime, 60000);
+        </script>
+      </p>
+      <div class="flex space-x-2">
+        <button
+          id="refresh-weather-btn"
+          class="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+        >
+          <i class="fas fa-sync-alt mr-2"></i>Refresh
         </button>
-        {% else %}
-        <a href="{{ url_for('weather.update_location') }}" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg transition-colors shadow-md">
-            <i class="fas fa-map-marker-alt mr-2"></i>Update Location
-        </a>
-        {% endif %}
+        <button
+          onclick="showSearchModal()"
+          class="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+        >
+          <i class="fas fa-search mr-2"></i>Search
+        </button>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Search Location Modal -->
+<div id="searchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md">
+    <h3 class="text-xl font-bold mb-4">Search Location</h3>
+    <div class="mb-4">
+      <input type="text" id="locationSearch" placeholder="Enter city or location name" 
+             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+    </div>
+    <div class="flex justify-end space-x-2">
+      <button onclick="closeSearchModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+        Cancel
+      </button>
+      <button onclick="searchLocation()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark">
+        Search
+      </button>
+    </div>
+  </div>
 </div>
 
 {% if not has_location %}
 <!-- No Location Message -->
-<div class="bg-white rounded-xl p-8 shadow-card mb-6 text-center">
-    <div class="mb-6">
-        <i class="fas fa-map-marker-alt text-6xl text-medium mb-4"></i>
-        <h2 class="text-2xl font-semibold mb-2">Farm Location Missing</h2>
-        <p class="text-medium mb-6">We need your farm's location to provide accurate weather information.</p>
-        <a href="{{ url_for('weather.update_location') }}" class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg transition-colors shadow-md inline-block">
-            <i class="fas fa-map-marker-alt mr-2"></i>Update Farm Location
-        </a>
-    </div>
+<div class="bg-white rounded-xl p-8 shadow-lg text-center">
+  <i class="fas fa-map-marker-alt text-6xl text-gray-400 mb-4"></i>
+  <h2 class="text-2xl font-semibold mb-2">Location Required</h2>
+  <p class="text-gray-600 mb-6">
+    Please update your farm location to view weather data.
+  </p>
+  
+    href="{{ url_for('farm.edit_farm', farm_id=farm.id) }}"
+    class="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+  >
+    <i class="fas fa-edit mr-2"></i>Update Farm Location
+  </a>
 </div>
+
 {% elif error %}
-<!-- Error Message -->
-<div class="bg-white rounded-xl p-8 shadow-card mb-6 text-center">
-    <div class="mb-6">
-        <i class="fas fa-exclamation-circle text-6xl text-danger mb-4"></i>
-        <h2 class="text-2xl font-semibold mb-2">Weather Data Unavailable</h2>
-        <p class="text-medium mb-6">We're having trouble retrieving the weather data. Please try again later.</p>
-        <button class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg transition-colors shadow-md" onclick="window.location.reload()">
-            <i class="fas fa-sync-alt mr-2"></i>Try Again
-        </button>
-    </div>
+<!-- Error State -->
+<div class="bg-white rounded-xl p-8 shadow-lg text-center">
+  <i class="fas fa-exclamation-circle text-6xl text-red-500 mb-4"></i>
+  <h2 class="text-2xl font-semibold mb-2">Weather Data Unavailable</h2>
+  <p class="text-gray-600 mb-6">
+    Unable to fetch weather data. Please try again.
+  </p>
+  <button
+    onclick="location.reload()"
+    class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+  >
+    <i class="fas fa-redo mr-2"></i>Try Again
+  </button>
 </div>
+
 {% else %}
-<!-- Location and Date Selection -->
-<div class="bg-white rounded-xl p-4 shadow-card mb-6">
-    <div class="flex flex-wrap items-center justify-between">
-        <div class="flex items-center">
-            <i class="fas fa-map-marker-alt text-primary text-xl mr-2"></i>
-            <h2 class="text-xl font-medium">{{ farm.name }}</h2>
-            <span class="mx-2 text-medium">|</span>
-            <a href="{{ url_for('weather.update_location') }}" class="text-primary hover:text-primary-dark">
-                <i class="fas fa-edit mr-1"></i>Update Location
-            </a>
+<!-- Current Weather -->
+<div class="weather-gradient rounded-xl p-6 mb-6 text-white">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Main Weather Display -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-3xl font-bold mb-2">Current Weather</h2>
+        <p class="text-5xl font-bold mb-2" id="current-temp">{{ current.temp }}°C</p>
+        <p class="text-xl mb-1" id="current-description">{{ current.description|title }}</p>
+        <p class="text-lg opacity-90" id="current-feels-like">Feels like {{ current.feels_like }}°C</p>
+        <div class="flex items-center mt-4 space-x-4">
+          <div>
+            <i class="fas fa-wind mr-1"></i>
+            <span id="current-wind-speed">{{ current.wind_speed }}</span> km/h
+          </div>
+          <div>
+            <i class="fas fa-tint mr-1"></i>
+            <span id="current-humidity">{{ current.humidity }}</span>%
+          </div>
+          <div>
+            <i class="fas fa-eye mr-1"></i>
+            <span id="current-visibility">{{ current.visibility }}</span> km
+          </div>
         </div>
-        <div class="flex items-center mt-3 md:mt-0">
-            <i class="fas fa-calendar-alt text-primary text-xl mr-2"></i>
-            <span>{{ current.time.strftime('%A, %B %d, %Y') }}</span>
+      </div>
+      <div class="text-center">
+        <img
+          id="current-icon"
+          src="https://openweathermap.org/img/wn/{{ current.icon }}@4x.png"
+          alt="{{ current.description }}"
+          class="weather-icon w-40 h-40 mx-auto"
+        />
+        <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <i class="fas fa-sunrise text-yellow-300"></i>
+            <span id="current-sunrise">{{ current.sunrise.strftime('%I:%M %p') }}</span>
+          </div>
+          <div>
+            <i class="fas fa-sunset text-orange-400"></i>
+            <span id="current-sunset">{{ current.sunset.strftime('%I:%M %p') }}</span>
+          </div>
         </div>
+      </div>
     </div>
+
+    <!-- Weather Stats Grid -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-white bg-opacity-20 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm opacity-90">UV Index</span>
+          <i class="fas fa-sun text-yellow-300"></i>
+        </div>
+        <p class="text-2xl font-bold" id="current-uvi">{{ current.uvi }}</p>
+        <p class="text-sm opacity-90" id="current-uvi-level">
+          {% if current.uvi < 3 %}Low {% elif current.uvi < 6 %}Moderate {% elif
+          current.uvi < 8 %}High {% elif current.uvi < 11 %}Very High {% else
+          %}Extreme {% endif %}
+        </p>
+      </div>
+
+      <div class="bg-white bg-opacity-20 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm opacity-90">Pressure</span>
+          <i class="fas fa-compress-arrows-alt"></i>
+        </div>
+        <p class="text-2xl font-bold" id="current-pressure">{{ current.pressure }}</p>
+        <p class="text-sm opacity-90">hPa</p>
+      </div>
+
+      <div class="bg-white bg-opacity-20 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm opacity-90">Dew Point</span>
+          <i class="fas fa-temperature-low"></i>
+        </div>
+        <p class="text-2xl font-bold" id="current-dew-point">{{ current.dew_point }}°C</p>
+        <p class="text-sm opacity-90">Comfort level</p>
+      </div>
+
+      <div class="bg-white bg-opacity-20 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm opacity-90">Wind</span>
+          <i
+            class="fas fa-compass wind-direction"
+            id="wind-direction-icon"
+            style="transform: rotate({{ current.wind_deg }}deg)"
+          ></i>
+        </div>
+        <p class="text-2xl font-bold" id="current-wind">{{ current.wind_speed }}</p>
+        <p class="text-sm opacity-90">
+          km/h <span id="wind-direction-text">{{ wind_direction(current.wind_deg) }}</span>
+        </p>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Current Weather -->
-<div class="bg-white rounded-xl p-6 shadow-card mb-6">
-    <h2 class="text-2xl font-semibold mb-4">Current Weather</h2>
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <!-- Main Weather Card -->
-        <div class="weather-card bg-primary text-white rounded-xl p-5 shadow-lg col-span-1 lg:col-span-2">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-lg opacity-90">Today</p>
-                    <h3 class="text-4xl font-bold mt-1">{{ current.temp }}°C</h3>
-                    <p class="text-lg mt-1">{{ current.description|title }}</p>
-                    <div class="flex items-center mt-3">
-                        <i class="fas fa-wind mr-2"></i>
-                        <span>{{ current.wind_speed }} km/h</span>
-                    </div>
-                </div>
-                <div class="text-center">
-                    <img src="https://openweathermap.org/img/wn/{{ current.icon }}@4x.png" alt="{{ current.description }}" class="w-24 h-24">
-                    <p class="mt-2">Feels like {{ current.feels_like }}°C</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Weather Details Cards -->
-        <div class="weather-card bg-lighter rounded-xl p-5 shadow-md">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-lg font-semibold">Humidity</h4>
-                <i class="fas fa-tint text-water text-2xl"></i>
-            </div>
-            <p class="text-3xl font-bold">{{ current.humidity }}%</p>
-            <div class="w-full bg-light rounded-full h-2 mt-3">
-                <div class="bg-water h-2 rounded-full" style="width: {{ current.humidity }}%"></div>
-            </div>
-        </div>
-
-        <div class="weather-card bg-lighter rounded-xl p-5 shadow-md">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-lg font-semibold">Rainfall</h4>
-                <i class="fas fa-cloud-rain text-water text-2xl"></i>
-            </div>
-            <p class="text-3xl font-bold">{{ rainfall }} mm</p>
-            <p class="text-medium mt-3">Last hour</p>
-        </div>
-
-        <div class="weather-card bg-lighter rounded-xl p-5 shadow-md">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-lg font-semibold">UV Index</h4>
-                <i class="fas fa-sun text-warning text-2xl"></i>
-            </div>
-            {% set uvi_level = "low" if current.uvi < 3 else "moderate" if current.uvi < 6 else "high" if current.uvi < 8 else "very high" %}
-            <p class="text-3xl font-bold">{{ current.uvi }} <span class="text-lg font-normal">{{ uvi_level }}</span></p>
-            <div class="w-full bg-light rounded-full h-2 mt-3">
-                <div class="bg-warning h-2 rounded-full" style="width: {{ (current.uvi / 11) * 100 }}%"></div>
-            </div>
-        </div>
-
-        <div class="weather-card bg-lighter rounded-xl p-5 shadow-md">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-lg font-semibold">Wind</h4>
-                <i class="fas fa-wind text-medium text-2xl"></i>
-            </div>
-            <p class="text-3xl font-bold">{{ current.wind_speed }} km/h</p>
-            <p class="text-medium mt-3">
-                {% if current.wind_speed < 5 %}Light breeze
-                {% elif current.wind_speed < 10 %}Gentle breeze
-                {% elif current.wind_speed < 20 %}Moderate wind
-                {% else %}Strong wind
-                {% endif %}
-            </p>
-        </div>
+<!-- Weather Alerts -->
+<div id="alerts-container" class="{% if not alerts %}hidden{% endif %}">
+{% if alerts %}
+<div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-6">
+  <div class="flex items-start">
+    <i class="fas fa-exclamation-triangle text-red-500 text-xl mr-3 mt-1"></i>
+    <div>
+      <h3 class="text-lg font-semibold text-red-800">Weather Alert</h3>
+      {% for alert in alerts %}
+      <p class="text-red-700 mt-1">
+        {{ alert.event }}: {{ alert.description }}
+      </p>
+      {% endfor %}
     </div>
+  </div>
+</div>
+{% endif %}
 </div>
 
 <!-- Hourly Forecast -->
-<div class="bg-white rounded-xl p-6 shadow-card mb-6 overflow-x-auto">
-    <h2 class="text-2xl font-semibold mb-4">Today's Forecast</h2>
-    <div class="flex space-x-4 min-w-max pb-3">
-        {% for hour in hourly[:12] %}
-        <div class="forecast-item bg-lighter rounded-xl p-3 text-center shadow-md min-w-[90px]">
-            <p class="font-medium">{{ hour.time.strftime('%I %p') }}</p>
-            <img src="https://openweathermap.org/img/wn/{{ hour.icon }}.png" alt="{{ hour.condition }}" class="mx-auto my-2">
-            <p class="text-lg font-bold">{{ hour.temp }}°C</p>
-            <div class="flex items-center justify-center mt-2 text-sm">
-                <i class="fas fa-tint text-water mr-1"></i>
-                <span>{{ hour.pop }}%</span>
-            </div>
+<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+  <h2 class="text-2xl font-bold text-gray-800 mb-4">24-Hour Forecast</h2>
+  <div class="overflow-x-auto forecast-scroll">
+    <div class="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-3 pb-4" id="hourly-forecast-container">
+      {% for hour in hourly[:24] %}
+      <div
+        class="weather-card hourly bg-gray-50 rounded-lg p-3 text-center w-full" data-hour-index="{{ loop.index0 }}"
+      >
+        <p class="font-semibold text-gray-700 text-sm">
+          {{ format_hour(hour.dt) }}
+        </p>
+        <img
+          src="https://openweathermap.org/img/wn/{{ hour.icon }}.png"
+          alt="{{ hour.description }}"
+          class="w-12 h-12 mx-auto my-1"
+        />
+        <p class="text-md font-bold">{{ hour.temp }}°C</p>
+        <div
+          class="flex items-center justify-center mt-1 text-xs text-gray-600"
+        >
+          <i class="fas fa-tint text-green-500 mr-1"></i>
+          {{ hour.probability if hour.probability is defined else hour.pop if hour.pop is not callable else 0 }}%
         </div>
-        {% endfor %}
+        {% if hour.rain > 0 %}
+        <p class="text-xs text-green-600 mt-1">{{ hour.rain }}mm</p>
+        {% endif %}
+      </div>
+      {% endfor %}
     </div>
+  </div>
 </div>
 
 <!-- 7-Day Forecast -->
-<div class="bg-white rounded-xl p-6 shadow-card mb-6">
-    <h2 class="text-2xl font-semibold mb-4">7-Day Forecast</h2>
-    <div class="grid grid-cols-1 md:grid-cols-7 gap-3">
-        {% for day in daily %}
-        <div class="forecast-item bg-lighter rounded-xl p-4 text-center shadow-md">
-            <p class="font-medium">{{ day.day.strftime('%a') }}</p>
-            <img src="https://openweathermap.org/img/wn/{{ day.icon }}.png" alt="{{ day.condition }}" class="mx-auto my-2">
-            <p class="text-lg font-bold">{{ day.temp_max }}°C</p>
-            <p class="text-sm text-medium">{{ day.temp_min }}°C</p>
-            <div class="flex items-center justify-center mt-2 text-sm">
-                <i class="fas fa-tint text-water mr-1"></i>
-                <span>{{ day.pop }}%</span>
-            </div>
+<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+  <h2 class="text-2xl font-bold text-gray-800 mb-4">7-Day Forecast</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4" id="daily-forecast-container">
+    {% for day in daily %}
+    <div class="weather-card daily-card bg-gray-50 rounded-lg p-4 text-center" data-day-index="{{ loop.index0 }}">
+      <div class="flex flex-col h-full justify-between">
+        <div>
+          <p class="font-semibold text-gray-700">{{ day.dt.strftime('%a') }}</p>
+          <p class="text-sm text-gray-600">{{ day.dt.strftime('%b %d') }}</p>
+          <img
+            src="https://openweathermap.org/img/wn/{{ day.icon }}.png"
+            alt="{{ day.description }}"
+            class="w-16 h-16 mx-auto my-2"
+          />
         </div>
-        {% endfor %}
+        <div>
+          <p class="text-lg font-bold">{{ day.temp_max }}°</p>
+          <p class="text-sm text-gray-600">{{ day.temp_min }}°</p>
+          <div class="flex items-center justify-center mt-2 text-sm">
+            <i class="fas fa-tint text-green-500 mr-1"></i>
+            {{ day.probability if day.probability is defined else day.pop if day.pop is not callable else 0 }}%
+          </div>
+          {% if day.rain > 0 %}
+          <p class="text-xs text-green-600 mt-1">{{ day.rain }}mm</p>
+          {% endif %}
+        </div>
+      </div>
     </div>
+    {% endfor %}
+  </div>
 </div>
 
-<!-- Weather Graphs -->
+<!-- Charts Section -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <!-- Temperature Graph -->
-    <div class="bg-white rounded-xl p-6 shadow-card">
-        <h2 class="text-xl font-semibold mb-4">Temperature Trend</h2>
-        <div class="h-64">
-            <canvas id="temperatureChart"></canvas>
-        </div>
+  <!-- Temperature Chart -->
+  <div class="bg-white rounded-xl shadow-lg p-6">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">Temperature Trend</h3>
+    <div class="h-64"> <!-- Fixed height container -->
+      <canvas id="temperatureChart" class="w-full h-full"></canvas>
     </div>
+  </div>
 
-    <!-- Precipitation Graph -->
-    <div class="bg-white rounded-xl p-6 shadow-card">
-        <h2 class="text-xl font-semibold mb-4">Precipitation Forecast</h2>
-        <div class="h-64">
-            <canvas id="precipitationChart"></canvas>
-        </div>
+  <!-- Precipitation Chart -->
+  <div class="bg-white rounded-xl shadow-lg p-6">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+      Precipitation Forecast
+    </h3>
+    <div class="h-64"> <!-- Fixed height container -->
+      <canvas id="precipitationChart" class="w-full h-full"></canvas>
     </div>
+  </div>
 </div>
 
-<!-- Additional Weather Insights -->
-<div class="bg-white rounded-xl p-6 shadow-card mb-6">
-    <h2 class="text-2xl font-semibold mb-4">Weather Alerts & Farming Insights</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Rain Alert - using loop.first to only show the first match -->
-        {% set has_rain = false %}
-        {% for day in daily[:3] %}
-            {% if day.pop > 70 and not has_rain %}
-                {% set has_rain = true %}
-                <div class="bg-lighter rounded-xl p-5 border-l-4 border-water">
-                    <div class="flex items-start">
-                        <i class="fas fa-cloud-rain text-water text-2xl mr-3 mt-1"></i>
-                        <div>
-                            <h4 class="text-lg font-semibold">Rain Expected</h4>
-                            <p class="text-medium">High chance of rain on {{ day.day.strftime('%A') }} ({{ day.pop }}%). Plan outdoor activities accordingly.</p>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-        {% endfor %}
-
-        {% if current.uvi > 7 %}
-        <div class="bg-lighter rounded-xl p-5 border-l-4 border-warning">
-            <div class="flex items-start">
-                <i class="fas fa-exclamation-triangle text-warning text-2xl mr-3 mt-1"></i>
-                <div>
-                    <h4 class="text-lg font-semibold">High UV Index</h4>
-                    <p class="text-medium">UV index is very high today. Consider providing shade for sensitive crops and farm workers.</p>
-                </div>
-            </div>
+<!-- Farming Insights -->
+<div class="bg-white rounded-xl shadow-lg p-6">
+  <h2 class="text-2xl font-bold text-gray-800 mb-4">Farming Insights</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="insights-container">
+    <!-- Dynamic insights based on conditions -->
+    {% if current.temp > 30 and current.humidity < 40 %}
+    <div class="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-4" id="high-temp-insight">
+      <div class="flex items-start">
+        <i class="fas fa-exclamation-triangle text-yellow-500 text-xl mr-3"></i>
+        <div>
+          <h4 class="font-semibold text-yellow-800">Irrigation Recommended</h4>
+          <p class="text-yellow-700">
+            High temperature and low humidity. Consider irrigating your crops.
+          </p>
         </div>
-        {% endif %}
-
-        {% if not has_rain and daily[0].temp_max > 30 %}
-        <div class="bg-lighter rounded-xl p-5 border-l-4 border-primary">
-            <div class="flex items-start">
-                <i class="fas fa-lightbulb text-primary text-2xl mr-3 mt-1"></i>
-                <div>
-                    <h4 class="text-lg font-semibold">Irrigation Suggestion</h4>
-                    <p class="text-medium">With high temperatures and no significant rainfall expected, consider irrigation in the next 24-48 hours.</p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if daily[0].temp_min < 5 %}
-        <div class="bg-lighter rounded-xl p-5 border-l-4 border-warning">
-            <div class="flex items-start">
-                <i class="fas fa-snowflake text-warning text-2xl mr-3 mt-1"></i>
-                <div>
-                    <h4 class="text-lg font-semibold">Frost Alert</h4>
-                    <p class="text-medium">Low temperatures expected tonight. Consider protecting sensitive crops from potential frost.</p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
+      </div>
     </div>
+    {% endif %} 
+    
+    {% if daily[0].temp_min < 5 %}
+    <div class="bg-green-50 border-l-4 border-green-500 rounded-lg p-4" id="frost-warning-insight">
+      <div class="flex items-start">
+        <i class="fas fa-snowflake text-green-500 text-xl mr-3"></i>
+        <div>
+          <h4 class="font-semibold text-green-800">Frost Warning</h4>
+          <p class="text-green-700">
+            Low temperatures expected. Protect sensitive crops from frost.
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endif %} 
+    
+    {% for day in daily[:3] %}
+  {% if (day.probability if day.probability is defined else day.pop if day.pop is not callable else 0) > 70 %}
+      <div class="bg-green-50 border-l-4 border-green-500 rounded-lg p-4" id="rain-expected-insight-{{ loop.index0 }}">
+        <div class="flex items-start">
+          <i class="fas fa-cloud-rain text-green-500 text-xl mr-3"></i>
+          <div>
+            <h4 class="font-semibold text-green-800">Rain Expected</h4>
+            <p class="text-green-700">
+              {{ day.probability if day.probability is defined else day.pop if day.pop is not callable else 0 }}% chance of rain on {{ day.dt.strftime('%A') }}.
+            </p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    {% endfor %} 
+    
+    {% if current.wind_speed > 25 %}
+    <div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-4" id="strong-winds-insight">
+      <div class="flex items-start">
+        <i class="fas fa-wind text-orange-500 text-xl mr-3"></i>
+        <div>
+          <h4 class="font-semibold text-orange-800">Strong Winds</h4>
+          <p class="text-orange-700">
+            Secure greenhouse covers and support tall crops.
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
 </div>
-{% endif %}
-{% endblock %}
-
-{% block extra_js %}
-{% if has_location and not error %}
+{% endif %} {% endblock %} {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Temperature Chart - Next 24 hours
-        const tempCtx = document.getElementById('temperatureChart').getContext('2d');
-        const tempChart = new Chart(tempCtx, {
+  // Store references to charts so we can update them later
+  let temperatureChart = null;
+  let precipitationChart = null;
+  // Store our refresh timer
+  let refreshTimer = null;
+  
+  // Wind direction helper
+  function getWindDirection(degrees) {
+      const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+      const index = Math.round(degrees / 22.5) % 16;
+      return directions[index];
+  }
+
+  // Format time helper
+  function formatTime(date) {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const displayHours = hours % 12 || 12;
+    const displayMinutes = minutes < 10 ? "0" + minutes : minutes;
+    return `${displayHours}:${displayMinutes} ${ampm}`;
+  }
+
+  // Format date helper
+  function formatDate(date) {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${days[date.getDay()]} ${months[date.getMonth()]} ${date.getDate()}`;
+  }
+
+  // Search location functions
+  function showSearchModal() {
+    document.getElementById('searchModal').classList.remove('hidden');
+  }
+
+  function closeSearchModal() {
+    document.getElementById('searchModal').classList.add('hidden');
+  }
+
+  function searchLocation() {
+    const location = document.getElementById('locationSearch').value.trim();
+    if (location) {
+      window.location.href = '/weather/' + encodeURIComponent(location);
+    }
+  }
+
+  // Add event listener for Enter key in search box
+  document.getElementById('locationSearch')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      searchLocation();
+    }
+  });
+
+  // Setup refresh timer
+  function setupRefreshTimer() {
+    // Clear any existing timer
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+    }
+    
+    // Check if we're on the test page
+    const pathParts = window.location.pathname.split('/');
+    const location = pathParts[pathParts.length - 1];
+    if (location === 'test') {
+      console.log('Test page - auto-refresh disabled');
+      return;
+    }
+    
+    // Set new timer - refresh every 10 minutes
+    refreshTimer = setInterval(() => refreshWeather(false), 600000);
+    console.log('Refresh timer set for 10 minutes');
+  }
+
+  // Update UI with weather data
+  function updateWeatherDisplay(data) {
+    if (!data || !data.current) {
+      console.error('Invalid weather data received');
+      return false;
+    }
+    
+    try {
+      // Update current weather
+      document.getElementById('current-temp').textContent = `${data.current.temp}°C`;
+      document.getElementById('current-description').textContent = data.current.description.charAt(0).toUpperCase() + data.current.description.slice(1);
+      document.getElementById('current-feels-like').textContent = `Feels like ${data.current.feels_like}°C`;
+      document.getElementById('current-wind-speed').textContent = data.current.wind_speed;
+      document.getElementById('current-humidity').textContent = data.current.humidity;
+      document.getElementById('current-visibility').textContent = data.current.visibility;
+      document.getElementById('current-icon').src = `https://openweathermap.org/img/wn/${data.current.icon}@4x.png`;
+      document.getElementById('current-icon').alt = data.current.description;
+      
+      // Update weather stats
+      document.getElementById('current-uvi').textContent = data.current.uvi;
+      document.getElementById('current-pressure').textContent = data.current.pressure;
+      document.getElementById('current-dew-point').textContent = `${data.current.dew_point}°C`;
+      document.getElementById('current-wind').textContent = data.current.wind_speed;
+      
+      // Update wind direction
+      const windDirText = getWindDirection(data.current.wind_deg);
+      document.getElementById('wind-direction-text').textContent = windDirText;
+      document.getElementById('wind-direction-icon').style.transform = `rotate(${data.current.wind_deg}deg)`;
+      
+      // Update sunrise/sunset
+      const sunrise = new Date(data.current.sunrise);
+      const sunset = new Date(data.current.sunset);
+      document.getElementById('current-sunrise').textContent = formatTime(sunrise);
+      document.getElementById('current-sunset').textContent = formatTime(sunset);
+      
+      // Update UVI level text
+      let uviLevel = 'Low';
+      if (data.current.uvi < 3) uviLevel = 'Low';
+      else if (data.current.uvi < 6) uviLevel = 'Moderate';
+      else if (data.current.uvi < 8) uviLevel = 'High';
+      else if (data.current.uvi < 11) uviLevel = 'Very High';
+      else uviLevel = 'Extreme';
+      document.getElementById('current-uvi-level').textContent = uviLevel;
+      
+      // Update hourly forecast
+      if (data.hourly && data.hourly.length > 0) {
+        const hourlyContainer = document.getElementById('hourly-forecast-container');
+        data.hourly.slice(0, 24).forEach((hour, index) => {
+          const hourCard = hourlyContainer.querySelector(`[data-hour-index="${index}"]`);
+          if (hourCard) {
+            const hourTime = new Date(hour.dt);
+            const tempElement = hourCard.querySelector('.text-md.font-bold');
+            const iconElement = hourCard.querySelector('img');
+            const popElement = hourCard.querySelector('.flex.items-center.justify-center.mt-1');
+            
+            hourCard.querySelector('.font-semibold.text-gray-700.text-sm').textContent = formatTime(hourTime);
+            if (tempElement) tempElement.textContent = `${hour.temp}°C`;
+            if (iconElement) {
+              iconElement.src = `https://openweathermap.org/img/wn/${hour.icon}.png`;
+              iconElement.alt = hour.description;
+            }
+            
+            // Update precipitation chance
+            if (popElement) {
+              const popValue = hour.probability !== undefined ? hour.probability : 
+                             (hour.pop !== undefined && typeof hour.pop !== 'function' ? hour.pop : 0);
+              popElement.innerHTML = `<i class="fas fa-tint text-green-500 mr-1"></i> ${popValue}%`;
+            }
+            
+            // Update rain amount if available
+            const existingRainElement = hourCard.querySelector('.text-xs.text-green-600.mt-1');
+            if (hour.rain > 0) {
+              if (existingRainElement) {
+                existingRainElement.textContent = `${hour.rain}mm`;
+              } else {
+                const rainElement = document.createElement('p');
+                rainElement.className = 'text-xs text-green-600 mt-1';
+                rainElement.textContent = `${hour.rain}mm`;
+                hourCard.appendChild(rainElement);
+              }
+            } else if (existingRainElement) {
+              existingRainElement.remove();
+            }
+          }
+        });
+      }
+      
+      // Update daily forecast
+      if (data.daily && data.daily.length > 0) {
+        const dailyContainer = document.getElementById('daily-forecast-container');
+        data.daily.forEach((day, index) => {
+          const dayCard = dailyContainer.querySelector(`[data-day-index="${index}"]`);
+          if (dayCard) {
+            const dayDate = new Date(day.dt);
+            const dateElements = dayCard.querySelectorAll('p');
+            const iconElement = dayCard.querySelector('img');
+            const tempElements = dayCard.querySelectorAll('.text-lg.font-bold, .text-sm.text-gray-600');
+            const popElement = dayCard.querySelector('.flex.items-center.justify-center.mt-2');
+            
+            // Update date
+            if (dateElements.length >= 2) {
+              dateElements[0].textContent = dayDate.toLocaleDateString('en-US', {weekday: 'short'});
+              dateElements[1].textContent = dayDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+            }
+            
+            // Update icon
+            if (iconElement) {
+              iconElement.src = `https://openweathermap.org/img/wn/${day.icon}.png`;
+              iconElement.alt = day.description;
+            }
+            
+            // Update temperatures
+            if (tempElements.length >= 2) {
+              tempElements[0].textContent = `${day.temp_max}°`;
+              tempElements[1].textContent = `${day.temp_min}°`;
+            }
+            
+            // Update precipitation chance
+            if (popElement) {
+              const popValue = day.probability !== undefined ? day.probability : 
+                             (day.pop !== undefined && typeof day.pop !== 'function' ? day.pop : 0);
+              popElement.innerHTML = `<i class="fas fa-tint text-green-500 mr-1"></i> ${popValue}%`;
+            }
+            
+            // Update rain amount if available
+            const existingRainElement = dayCard.querySelector('.text-xs.text-green-600.mt-1');
+            if (day.rain > 0) {
+              if (existingRainElement) {
+                existingRainElement.textContent = `${day.rain}mm`;
+              } else {
+                const rainElement = document.createElement('p');
+                rainElement.className = 'text-xs text-green-600 mt-1';
+                rainElement.textContent = `${day.rain}mm`;
+                dayCard.appendChild(rainElement);
+              }
+            } else if (existingRainElement) {
+              existingRainElement.remove();
+            }
+          }
+        });
+      }
+      
+      // Update charts
+      updateCharts(data);
+      
+      // Update insights
+      updateInsights(data);
+      
+      // Update last update time
+      document.getElementById('current-time').textContent = formatTime(new Date());
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating weather display:', error);
+      return false;
+    }
+  }
+
+  // Update charts with new data
+  function updateCharts(data) {
+    try {
+      // Prepare chart data
+      const chartData = {
+        hour_labels: [],
+        hour_temps: [],
+        day_labels: [],
+        day_pops: []
+      };
+      
+      // Hourly data
+      if (data.hourly && data.hourly.length > 0) {
+        data.hourly.slice(0, 24).forEach(hour => {
+          const hourTime = new Date(hour.dt);
+          chartData.hour_labels.push(formatTime(hourTime));
+          chartData.hour_temps.push(hour.temp);
+        });
+      }
+      
+      // Daily data
+      if (data.daily && data.daily.length > 0) {
+        data.daily.forEach(day => {
+          const dayDate = new Date(day.dt);
+          chartData.day_labels.push(dayDate.toLocaleDateString('en-US', {weekday: 'short'}));
+          const popValue = day.probability !== undefined ? day.probability : 
+                         (day.pop !== undefined && typeof day.pop !== 'function' ? day.pop : 0);
+          chartData.day_pops.push(popValue);
+        });
+      }
+      
+      // Reinitialize charts with new data instead of updating
+      initializeCharts(chartData);
+    } catch (error) {
+      console.error('Error updating charts:', error);
+    }
+  }
+
+  // Initialize or reinitialize charts
+  function initializeCharts(chartData) {
+    // Destroy existing charts first to avoid duplicates
+    if (temperatureChart) {
+        temperatureChart.destroy();
+        temperatureChart = null;
+    }
+    
+    if (precipitationChart) {
+        precipitationChart.destroy();
+        precipitationChart = null;
+    }
+    
+    const tempCanvas = document.getElementById('temperatureChart');
+    const precipCanvas = document.getElementById('precipitationChart');
+    
+    if (!tempCanvas || !precipCanvas) return;
+    
+    try {
+        // Common chart options for consistent sizing
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        };
+        
+        // Create gradient for temperature chart
+        const tempCtx = tempCanvas.getContext('2d');
+        const tempGradient = tempCtx.createLinearGradient(0, 0, 0, 250);
+        tempGradient.addColorStop(0, 'rgba(25, 111, 61, 0.8)');    // #667eea with opacity
+        tempGradient.addColorStop(1, 'rgba(22, 163, 74, 0.6)');     // #764ba2 with opacity
+        
+        // Temperature Chart
+        temperatureChart = new Chart(tempCtx, {
             type: 'line',
             data: {
-                labels: [{% for hour in hourly[:24] %}'{{ hour.time.strftime("%I %p") }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                labels: chartData.hour_labels,
                 datasets: [{
                     label: 'Temperature (°C)',
-                    data: [{% for hour in hourly[:24] %}{{ hour.temp }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    borderColor: '#52BE80',
-                    backgroundColor: 'rgba(82, 190, 128, 0.1)',
+                    data: chartData.hour_temps,
+                    borderColor: ' #196F3D',
+                    backgroundColor: tempGradient,
                     borderWidth: 3,
-                    pointBackgroundColor: '#1D8348',
-                    pointRadius: 4,
-                    tension: 0.3,
+                    tension: 0.4,
                     fill: true
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
+                ...chartOptions,
                 scales: {
+                    ...chartOptions.scales,
                     y: {
-                        beginAtZero: false,
-                        grid: {
-                            display: true,
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
+                        ...chartOptions.scales.y,
+                        beginAtZero: false
                     }
                 }
             }
         });
 
-        // Precipitation Chart - 7 days
-        const precipCtx = document.getElementById('precipitationChart').getContext('2d');
-        const precipChart = new Chart(precipCtx, {
+        // Create gradient for precipitation chart
+        const precipCtx = precipCanvas.getContext('2d');
+        const precipGradient = precipCtx.createLinearGradient(0, 0, 0, 250);
+        precipGradient.addColorStop(0, 'rgba(25, 111, 61, 0.8)');   // #196F3D with opacity
+        precipGradient.addColorStop(1, 'rgba(22, 163, 74, 0.6)');   // #16A34A with opacity   // #764ba2 with opacity
+        
+        // Precipitation Chart
+        precipitationChart = new Chart(precipCtx, {
             type: 'bar',
             data: {
-                labels: [{% for day in daily %}'{{ day.day.strftime("%a") }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                labels: chartData.day_labels,
                 datasets: [{
-                    label: 'Chance of Rain (%)',
-                    data: [{% for day in daily %}{{ day.pop }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: '#3498DB',
+                    label: 'Rain Probability (%)',
+                    data: chartData.day_pops,
+                    backgroundColor: precipGradient,
                     borderRadius: 6
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
+                ...chartOptions,
                 scales: {
+                    ...chartOptions.scales,
                     y: {
+                        ...chartOptions.scales.y,
                         beginAtZero: true,
-                        max: 100,
-                        grid: {
-                            display: true,
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
+                        max: 100
                     }
                 }
             }
         });
-    });
+    } catch (error) {
+        console.error('Error initializing charts:', error);
+    }
+  }
+
+  // Update farming insights based on weather data
+  function updateInsights(data) {
+    try {
+      const insightsContainer = document.getElementById('insights-container');
+      if (!insightsContainer) return;
+      
+      // Clear existing insights
+      insightsContainer.innerHTML = '';
+      
+      // High temperature insight
+      if (data.current.temp > 30 && data.current.humidity < 40) {
+        const highTempInsight = document.createElement('div');
+        highTempInsight.className = 'bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-4';
+        highTempInsight.innerHTML = `
+          <div class="flex items-start">
+            <i class="fas fa-exclamation-triangle text-yellow-500 text-xl mr-3"></i>
+            <div>
+              <h4 class="font-semibold text-yellow-800">Irrigation Recommended</h4>
+              <p class="text-yellow-700">
+                High temperature and low humidity. Consider irrigating your crops.
+              </p>
+            </div>
+          </div>
+        `;
+        insightsContainer.appendChild(highTempInsight);
+      }
+      
+      // Frost warning
+      if (data.daily && data.daily.length > 0 && data.daily[0].temp_min < 5) {
+        const frostWarning = document.createElement('div');
+        frostWarning.className = 'bg-green-50 border-l-4 border-green-500 rounded-lg p-4';
+        frostWarning.innerHTML = `
+          <div class="flex items-start">
+            <i class="fas fa-snowflake text-green-500 text-xl mr-3"></i>
+            <div>
+              <h4 class="font-semibold text-green-800">Frost Warning</h4>
+              <p class="text-green-700">
+                Low temperatures expected. Protect sensitive crops from frost.
+              </p>
+            </div>
+          </div>
+        `;
+        insightsContainer.appendChild(frostWarning);
+      }
+      
+      // Rain expected
+      if (data.daily && data.daily.length > 0) {
+        data.daily.slice(0, 3).forEach((day, index) => {
+          const popValue = day.probability !== undefined ? day.probability : 
+                         (day.pop !== undefined && typeof day.pop !== 'function' ? day.pop : 0);
+          
+          if (popValue > 70) {
+            const dayDate = new Date(day.dt);
+            const dayName = dayDate.toLocaleDateString('en-US', {weekday: 'long'});
+            
+            const rainExpected = document.createElement('div');
+            rainExpected.className = 'bg-green-50 border-l-4 border-green-500 rounded-lg p-4';
+            rainExpected.innerHTML = `
+              <div class="flex items-start">
+                <i class="fas fa-cloud-rain text-green-500 text-xl mr-3"></i>
+                <div>
+                  <h4 class="font-semibold text-green-800">Rain Expected</h4>
+                  <p class="text-green-700">
+                    ${popValue}% chance of rain on ${dayName}.
+                  </p>
+                </div>
+              </div>
+            `;
+            insightsContainer.appendChild(rainExpected);
+          }
+        });
+      }
+      
+      // Strong winds
+      if (data.current.wind_speed > 25) {
+        const strongWinds = document.createElement('div');
+        strongWinds.className = 'bg-orange-50 border-l-4 border-orange-500 rounded-lg p-4';
+        strongWinds.innerHTML = `
+          <div class="flex items-start">
+            <i class="fas fa-wind text-orange-500 text-xl mr-3"></i>
+            <div>
+              <h4 class="font-semibold text-orange-800">Strong Winds</h4>
+              <p class="text-orange-700">
+                Secure greenhouse covers and support tall crops.
+              </p>
+            </div>
+          </div>
+        `;
+        insightsContainer.appendChild(strongWinds);
+      }
+    } catch (error) {
+      console.error('Error updating insights:', error);
+    }
+  }
+
+  // Refresh weather data
+  async function refreshWeather(showLoadingState = true) {
+    // Check if we're on the test page
+    const pathParts = window.location.pathname.split('/');
+    const location = pathParts[pathParts.length - 1];
+    
+    if (location === 'test') {
+      console.log('Test page - skipping refresh');
+      return;
+    }
+    
+    const refreshButton = document.getElementById('refresh-weather-btn');
+    
+    // Show loading state if requested
+    if (showLoadingState && refreshButton) {
+      refreshButton.disabled = true;
+      refreshButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Refreshing...';
+    }
+    
+    try {
+      // Fetch current weather
+      const currentResponse = await fetch(`/weather/api/current/${location}`);
+      if (!currentResponse.ok) {
+        throw new Error('Failed to fetch current weather');
+      }
+      const currentData = await currentResponse.json();
+      
+      // Fetch forecast
+      const forecastResponse = await fetch(`/weather/api/forecast/${location}`);
+      if (!forecastResponse.ok) {
+        throw new Error('Failed to fetch forecast');
+      }
+      const forecastData = await forecastResponse.json();
+      
+      // Combine the data
+      const weatherData = {
+        current: currentData,
+        hourly: forecastData.hourly,
+        daily: forecastData.daily,
+        alerts: [] // Alerts need separate handling if available
+      };
+      
+      // Update the UI
+      const updateSuccess = updateWeatherDisplay(weatherData);
+      
+      if (!updateSuccess) {
+        throw new Error('Failed to update weather display');
+      }
+      
+      // Show success notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
+      notification.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Weather data updated successfully';
+      document.body.appendChild(notification);
+      
+      // Remove notification after 3 seconds
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error refreshing weather:', error);
+      
+      // Show error notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md z-50';
+      notification.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${error.message || 'Error refreshing weather data'}`;
+      document.body.appendChild(notification);
+      
+      // Remove notification after 5 seconds
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+    } finally {
+      // Restore refresh button
+      if (showLoadingState && refreshButton) {
+        refreshButton.disabled = false;
+        refreshButton.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Refresh';
+      }
+    }
+  }
+
+  // Initialize charts
+  document.addEventListener('DOMContentLoaded', function() {
+    // Only initialize charts if the elements exist and we have weather data
+    const tempCanvas = document.getElementById('temperatureChart');
+    const precipCanvas = document.getElementById('precipitationChart');
+    const hasData = document.querySelector('.weather-gradient');
+    
+    if (tempCanvas && precipCanvas && hasData) {
+      try {
+        // Get chart data from server-side JSON 
+        const chartData = {{ chart_data_json|safe }};
+        
+        // Initialize charts
+        initializeCharts(chartData);
+      } catch (error) {
+        console.error('Error initializing charts:', error);
+      }
+    }
+    
+    // Set up event listener for refresh button
+    const refreshButton = document.getElementById('refresh-weather-btn');
+    if (refreshButton) {
+      refreshButton.addEventListener('click', () => refreshWeather(true));
+    }
+    
+    // Set up auto-refresh timer
+    setupRefreshTimer();
+  });
+
+  // Jinja2 filter function
+  window.wind_direction = function(degrees) {
+      return getWindDirection(degrees);
+  };
 </script>
-{% endif %}
 {% endblock %}

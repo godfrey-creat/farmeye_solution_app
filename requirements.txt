@@ -23,6 +23,7 @@ Flask-WTF
 email-validator
 WTForms~=3.2.1
 PyJWT
+Flask-CORS==4.0.0
 
 # Form handling and validation
 WTForms-SQLAlchemy
@@ -93,3 +94,7 @@ sphinx-rtd-theme
 gunicorn  # WSGI HTTP Server
 supervisor  # Process control
 requests
+
+# YOLOv8 requirements
+ultralytics>=8.0.0
+torch

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmEye - Smart Farming Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f7fafc;
+            overflow-x: hidden;
+        }
+        
+        .slide {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            min-height: 100vh;
+        }
+        
+        .slide.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: linear-gradient(90deg, #4ade80, #3b82f6);
+            transition: width 0.3s ease;
+        }
+        
+        .feature-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #4ade80;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .leaf-icon {
+            color: #4ade80;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+        }
+        
+        .status-complete {
+            background-color: #f0fdf4;
+            border-left: 4px solid #4ade80;
+        }
+        
+        .status-progress {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .status-planned {
+            background-color: #f8fafc;
+            border-left: 4px solid #94a3b8;
+        }
+    </style>
+</head>
+<body class="relative">
+    <!-- Progress bar -->
+    <div class="progress-bar fixed top-0 left-0 z-50" style="width: 0%"></div>
+    
+    <!-- Navigation controls -->
+    <div class="fixed bottom-6 right-6 z-50 flex space-x-4">
+        <button id="prevBtn" class="bg-white p-3 rounded-full shadow-lg text-gray-700 hover:bg-gray-100 transition">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <button id="nextBtn" class="bg-white p-3 rounded-full shadow-lg text-gray-700 hover:bg-gray-100 transition">
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+    
+    <!-- Slide counter -->
+    <div class="fixed bottom-6 left-6 z-50 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-medium">
+        <span id="currentSlide">1</span> / <span id="totalSlides">10</span>
+    </div>
+    
+    <!-- Slides container -->
+    <div class="slides-container">
+        <!-- Cover Slide -->
+        <div class="slide active">
+            <div class="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-green-50 to-blue-50 p-8">
+                <div class="text-center max-w-4xl mx-auto">
+                    <i class="fas fa-leaf leaf-icon text-6xl mb-6 animate-pulse"></i>
+                    <h1 class="text-5xl font-bold text-gray-800 mb-4">FarmEye</h1>
+                    <h2 class="text-2xl text-gray-600 mb-8">Smart Farming Management Platform</h2>
+                    <div class="bg-white rounded-xl shadow-lg p-8 inline-block">
+                        <p class="text-gray-700 mb-2">Press <span class="bg-gray-100 px-2 py-1 rounded">→</span> or <span class="bg-gray-100 px-2 py-1 rounded">←</span> to navigate</p>
+                        <p class="text-sm text-gray-500">Project Status Report | <span id="current-date"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Executive Summary -->
+        <div class="slide">
+            <div class="min-h-screen flex flex-col justify-center p-12 max-w-6xl mx-auto">
+                <div class="flex items-center mb-8">
+                    <i class="fas fa-leaf leaf-icon text-3xl mr-4"></i>
+                    <h2 class="text-3xl font-bold text-gray-800">Executive Summary</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                    <div class="bg-white rounded-xl shadow-md p-8 feature-card">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Modernizing Agriculture</h3>
+                        <p class="text-gray-600">FarmEye is a comprehensive smart farming platform designed to transform traditional agricultural operations through cutting-edge technology integration and data-driven insights.</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-md p-8 feature-card">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Key Objectives</h3>
+                        <ul class="list-disc pl-5 text-gray-600 space-y-2">
+                            <li>Digitize farm management processes</li>
+                            <li>Provide real-time operational insights</li>
+                            <li>Enable data-driven decision making</li>
+                            <li>Facilitate team collaboration</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 rounded-xl p-6 border border-blue-100">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-800">Current Status</h3>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                        <span class="text-gray-700">Beta - Core Features Operational</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Project Milestones -->
+        <div class="slide">
+            <div class="min-h-screen flex flex-col justify-center p-12 max-w-6xl mx-auto">
+                <div class="flex items-center mb-8">
+                    <i class="fas fa-leaf leaf-icon text-3xl mr-4"></i>
+                    <h2 class="text-3xl font-bold text-gray-800">Project Milestones</h2>
+                </div>
+                
+                <div class="mb-12">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Phase 1: Foundation Development</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="status-complete p-5 rounded-lg">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <h4 class="font-medium">Database Architecture</h4>
+                            </div>
+                            <p class="text-sm text-gray-600">Enterprise-grade schema with relationships between users, farms, fields, and sensors</p>
+                        </div>
+                        <div class="status-complete p-5 rounded-lg">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <h4 class="font-medium">User Management</h4>
+                            </div>
+                            <p class="text-sm text-gray-600">Secure authentication with role-based access control</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-12">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Phase 2: Core Features</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="status-complete p-4 rounded-lg">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <h4 class="font-medium">Farm Management</h4>
+                            </div>
+                        </div>
+                        <div class="status-progress p-4 rounded-lg">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-sync-alt text-blue-500 mr-2 animate-spin"></i>
+                                <h4 class="font-medium">Field System</h4>
+                            </div>
+                            <p class="text-xs text-gray-500">90% complete</p>
+                        </div>
+                        <div class="status-complete p-4 rounded-lg">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <h4 class="font-medium">Weather Intel</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-50 rounded-xl p-4 border border-yellow-100">
+                    <p class="text-yellow-800 text-sm">Next milestone: Complete field data persistence (1 week)</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Current Features -->
+        <div class="slide">
+            <div class="min-h-screen flex flex-col justify-center p-12 max-w-6xl mx-auto">
+                <div class="flex items-center mb-8">
+                    <i class="fas fa-leaf leaf-icon text-3xl mr-4"></i>
+                    <h2 class="text-3xl font-bold text-gray-800">Implemented Features</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                    <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-user-shield text-green-500"></i>
+                            </div>
+                            <h3 class="font-semibold">User Authentication</h3>
+                        </div>
+                        <p class="text-sm text-gray-600">Secure login with email verification and role-based access</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-tractor text-blue-500"></i>
+                            </div>
+                            <h3 class="font-semibold">Farm Management</h3>
+                        </div>
+                        <p class="text-sm text-gray-600">Multi-farm support with comprehensive profiling</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-cloud-sun text-purple-500"></i>
+                            </div>
+                            <h3 class="font-semibold">Weather API</h3>
+                        </div>
+                        <p class="text-sm text-gray-600">Real-time monitoring and 7-day forecasts</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-chart-line text-red-500"></i>
+                            </div>
+                            <h3 class="font-semibold">Dashboard</h3>
+                        </div>
+                        <p class="text-sm text-gray-600">Executive overview with key metrics</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-bell text-yellow-500"></i>
+                            </div>
+                            <h3 class="font-semibold">Alert System</h3>
+                        </div>
+                        <p class="text-sm text-gray-600">Notifications for critical events</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-bug text-indigo-500"></i>
+                            </div>
+                            <h3 class="font-semibold">Pest Control</h3>
+                        </div>
+                        <p class="text-sm text-gray-600">Tracking and advisory system</p>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <span class="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                        Core Platform Stable
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- In Progress -->
+        <div class="slide">
+            <div class="min-h-screen flex flex-col justify-center p-12 max-w-6xl mx-auto">
+                <div class="flex items-center mb-8">
+                    <i class="fas fa-leaf leaf-icon text-3xl mr-4"></i>
+                    <h2 class="text-3xl font-bold text-gray-800">In Development</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                                <i class="fas fa-map-marked-alt text-blue-500 text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold">Field Data Persistence</h3>
+                        </div>
+                        <p class="text-gray-600 mb-4">Completing the implementation of field boundary storage and advanced management features.</p>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-blue-500 h-2.5 rounded-full" style="width: 90%"></div>
+                        </div>
+                        <p class="text-right text-sm text-gray-500 mt-1">90% complete</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mr-4">
+                                <i class="fas fa-mobile-alt text-purple-500 text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold">Mobile Responsiveness</h3>
+                        </div>
+                        <p class="text-gray-600 mb-4">Optimizing the platform for seamless use on smartphones and tablets.</p>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-purple-500 h-2.5 rounded-full" style="width: 65%"></div>
+                        </div>
+                        <p class="text-right text-sm text-gray-500 mt-1">65% complete</p>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-800">Development Focus</h3>
+                    <p class="text-gray-700">Currently prioritizing field system completion to enable full farm mapping capabilities for our beta users.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Planned Features -->
+        <div class="slide">
+            <div class="min-h-screen flex flex-col justify-center p-12 max-w-6xl mx-auto">
+                <div class="flex items-center mb-8">
+                    <i class="fas fa-leaf leaf-icon text-3xl mr-4"></i>
+                    <h2 class="text-3xl font-bold text-gray-800">Roadmap & Future Features</h2>
+                </div>
+                
+                <div class="mb-12">
+                    <div class="relative">
+                        <!-- Timeline -->
+                        <div class="border-l-2 border-gray-200 absolute h-full top-0 left-4"></div>
+                        
+                        <!-- Timeline items -->
+                        <div class="space-y-8">
+                            <!-- Current -->
+                            <div class="relative pl-12">
+                                <div class="absolute w-8 h-8 bg-green-500 rounded-full flex items-center justify-center -left-4">
+                                    <i class="fas fa-check text-white text-sm"></i>
+                                </div>
+                                <div class="bg-green-50 p-6 rounded-xl">
+                                    <h3 class="font-semibold text-lg mb-2">Core Platform</h3>
+                                    <p class="text-gray-600">Beta release with essential farm management features</p>
+                                    <p class="text-sm text-green-600 mt-2">Completed</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Next -->
+                            <div class="relative pl-12">
+                                <div class="absolute w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center -left-4">
+                                    <span class="text-white font-medium">Q3</span>
+                                </div>
+                                <div class="bg-blue-50 p-6 rounded-xl">
+                                    <h3 class="font-semibold text-lg mb-2">Mobile Application</h3>
+                                    <p class="text-gray-600">Native apps for iOS and Android with offline capabilities</p>
+                                    <p class="text-sm text-blue-600 mt-2">4-6 weeks</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Future -->
+                            <div class="relative pl-12">
+                                <div class="absolute w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center -left-4">
+                                    <span class="text-white font-medium">Q4</span>
+                                </div>
+                                <div class="bg-indigo-50 p-6 rounded-xl">
+                                    <h3 class="font-semibold text-lg mb-2">AI Integration</h3>
+                                    <p class="text-gray-600">Machine learning models for crop analysis and yield prediction</p>
+                                    <p class="text-sm text-indigo-600 mt-2">6-8 weeks</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Future -->
+                            <div class="relative pl-12">
+                                <div class="absolute w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center -left-4">
+                                    <span class="text-white font-medium">Q1</span>
+                                </div>
+                                <div class="bg-purple-50 p-6 rounded-xl">
+                                    <h3 class="font-semibold text-lg mb-2">Full Feature Set</h3>
+                                    <p class="text-gray-600">Complete platform with financial tools and advanced analytics</p>
+                                    <p class="text-sm text-purple-600 mt-2">3-4 months</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button id="featureToggle" class="px-6 py-2 bg-white border border-gray-200 rounded-full text-gray-700 font-medium hover:bg-gray-50 transition">
+                        View All Planned Features
+                    </button>
+                </div>
+                
+                <!-- Hidden features list -->
+                <div id="featureList" class="hidden mt-6 bg-white p-6 rounded-xl shadow-sm">
+                    <h3 class="font-semibold mb-4 text-gray-800">Planned Feature Highlights</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-circle-notch text-gray-400 text-xs mt-1 mr-2"></i>
+                            <span>Automated irrigation management</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-circle-notch text-gray-400 text-xs mt-1 mr-2"></i>
+                            <span>Yield prediction algorithms</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-circle-notch text-gray-400 text-xs mt-1 mr-2"></i>
+                            <span>Market price integration</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-circle-notch text-gray-400 text-xs mt-1 mr-2"></i>
+                            <span>Financial management module</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-circle-notch text-gray-400 text-xs mt-1 mr-2"></i>
+                            <span>Equipment tracking system</span>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-circle-notch text-gray-400 text-xs mt-1 mr-2"></i>
+                            <span>Advanced analytics and reporting</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Business Impact -->
+        <div class="slide">
+            <div class="min-h-screen flex flex-col justify-center p-12 max-w-6xl mx-auto">
+                <div class="flex items-center mb-8">
+                    <i class="fas fa-leaf leaf-icon text-3xl mr-4"></i>
+                    <h2 class="text-3xl font-bold text-gray-800">Business Impact</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div class="bg-white p-6 rounded-xl shadow-sm text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-bolt text-green-500 text-2xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-lg mb-2">Efficiency Gains</h3>
+                        <p class="text-gray-600 text-sm">Streamlined farm registration and management processes reduce administrative overhead by 40%</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-users text-blue-500 text-2xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-lg mb-2">Collaboration</h3>
+                        <p class="text-gray-600 text-sm">Enhanced team management enables seamless coordination across farm operations</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm text-center">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-database text-purple-500 text-2xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-lg mb-2">Data-Driven</h3>
+                        <p class="text-gray-600 text-sm">Real-time weather and sensor insights lead to 25% better resource allocation</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-green-100 to-blue-100 p-8 rounded-xl">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Customer Benefits</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <div class="flex items-start mb-3">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <div>
+                                    <h4 class="font-medium">Reduced Operational Costs</h4>
+                                    <p class="text-sm text-gray-600">Optimized resource usage through precise monitoring</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <div>
+                                    <h4 class="font-medium">Improved Yield Quality</h4>
+                                    <p class="text-sm text-gray-600">Timely interventions based on data insights</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-start mb-3">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <div>
+                                    <h4 class="font-medium">Risk Mitigation</h4>
+                                    <p class="text-sm text-gray-600">Early warning systems for weather and pests</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <div>
+                                    <h4 class="font-medium">Scalable Operations</h4>
+                                    <p class="text-sm text-gray-600">Manage multiple farms from a single platform</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Next Steps -->
+        <div class="slide">
+            <div class="min-h-screen flex flex-col justify-center p-12 max-w-6xl mx-auto">
+                <div class="flex items-center mb-8">
+                    <i class="fas fa-leaf leaf-icon text-3xl mr-4"></i>
+                    <h2 class="text-3xl font-bold text-gray-800">Next Steps</h2>
+                </div>
+                
+                <div class="mb-12">
+                    <div class="flex items-start mb-6">
+                        <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold mr-4">1</div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">Complete Field System</h3>
+                            <p class="text-gray-600">Finalize data persistence and advanced field management features</p>
+                            <p class="text-sm text-blue-500 mt-1">1 week timeline</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start mb-6">
+                        <div class="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold mr-4">2</div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">Mobile Development</h3>
+                            <p class="text-gray-600">Begin native application development for iOS and Android</p>
+                            <p class="text-sm text-purple-500 mt-1">4-6 weeks timeline</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start mb-6">
+                        <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold mr-4">3</div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">ML Integration</h3>
+                            <p class="text-gray-600">Implement machine learning models for predictive analytics</p>
+                            <p class="text-sm text-green-500 mt-1">6-8 weeks timeline</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-white font-bold mr-4">4</div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-2">User Testing</h3>
+                            <p class="text-gray-600">Conduct comprehensive acceptance testing with beta users</p>
+                            <p class="text-sm text-yellow-500 mt-1">Ongoing process</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                    <h3 class="font-semibold mb-3">Full Production Timeline</h3>
+                    <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
+                        <div class="bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 h-4 rounded-full" style="width: 35%"></div>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600">
+                        <span>Current (35%)</span>
+                        <span>Full Release (3-4 months)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Risk Assessment -->
+        <div class="slide">
+            <div class="min-h-screen flex flex-col justify-center p-12 max-w-6xl mx-auto">
+                <div class="flex items-center mb-8">
+                    <i class="fas fa-leaf leaf-icon text-3xl mr-4"></i>
+                    <h2 class="text-3xl font-bold text-gray-800">Risk Assessment</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-green-500">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-check-circle text-green-500"></i>
+                            </div>
+                            <h3 class="font-semibold">Low Risk</h3>
+                        </div>
+                        <p class="text-gray-600 text-sm">Core platform stability and performance</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-yellow-500">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                            </div>
+                            <h3 class="font-semibold">Medium Risk</h3>
+                        </div>
+                        <p class="text-gray-600 text-sm">Third-party API dependencies (Weather data)</p>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-red-500">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-times-circle text-red-500"></i>
+                            </div>
+                            <h3 class="font-semibold">No Significant Risk</h3>
+                        </div>
+                        <p class="text-gray-600 text-sm">Data security and privacy concerns</p>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Mitigation Strategies</h3>
+                    <div class="bg-blue-50 p-6 rounded-xl">
+                        <div class="flex items-start mb-3">
+                            <i class="fas fa-shield-alt text-blue-500 mt-1 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium">API Redundancy</h4>
+                                <p class="text-sm text-gray-600">Implement backup weather data providers to ensure continuity</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start mb-3">
+                            <i class="fas fa-server text-blue-500 mt-1 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium">Comprehensive Testing</h4>
+                                <p class="text-sm text-gray-600">Rigorous QA processes for all platform updates</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-cloud-download-alt text-blue-500 mt-1 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium">Data Backup</h4>
+                                <p class="text-sm text-gray-600">Automated daily backups with 30-day retention</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <span class="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                        Risk Profile: Controlled
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Closing Slide -->
+        <div class="slide">
+            <div class="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-green-50 to-blue-50 p-8">
+                <div class="text-center max-w-2xl mx-auto">
+                    <i class="fas fa-leaf leaf-icon text-6xl mb-6"></i>
+                    <h1 class="text-4xl font-bold text-gray-800 mb-4">Thank You</h1>
+                    
+                    <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                        <h2 class="text-xl font-semibold mb-4">FarmEye Platform Status</h2>
+                        <p class="text-gray-700 mb-4">Beta - Core Features Operational</p>
+                        
+                        <div class="flex justify-center space-x-4 mb-6">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-green-500">8</div>
+                                <div class="text-sm text-gray-500">Features Live</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-blue-500">2</div>
+                                <div class="text-sm text-gray-500">In Development</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-gray-500">7+</div>
+                                <div class="text-sm text-gray-500">Planned</div>
+                            </div>
+                        </div>
+                        
+                        <p class="text-sm text-gray-500">Prepared for: Executive Review</p>
+                    </div>
+                    
+                    <p class="text-gray-600">Press <span class="bg-white px-2 py-1 rounded shadow-sm">ESC</span> to exit presentation</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', options);
+            
+            // Slide management
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            let currentSlide = 0;
+            
+            document.getElementById('totalSlides').textContent = totalSlides;
+            updateSlideCounter();
+            
+            // Navigation functions
+            function goToSlide(n) {
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (n + totalSlides) % totalSlides;
+                slides[currentSlide].classList.add('active');
+                updateProgressBar();
+                updateSlideCounter();
+            }
+            
+            function nextSlide() {
+                goToSlide(currentSlide + 1);
+            }
+            
+            function prevSlide() {
+                goToSlide(currentSlide - 1);
+            }
+            
+            function updateProgressBar() {
+                const progress = ((currentSlide + 1) / totalSlides) * 100;
+                document.querySelector('.progress-bar').style.width = `${progress}%`;
+            }
+            
+            function updateSlideCounter() {
+                document.getElementById('currentSlide').textContent = currentSlide + 1;
+            }
+            
+            // Button events
+            document.getElementById('nextBtn').addEventListener('click', nextSlide);
+            document.getElementById('prevBtn').addEventListener('click', prevSlide);
+            
+            // Keyboard events
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                    prevSlide();
+                } else if (e.key === 'Home') {
+                    goToSlide(0);
+                } else if (e.key === 'End') {
+                    goToSlide(totalSlides - 1);
+                } else if (e.key === 'Escape') {
+                    // Could add a proper exit handler here
+                    alert('Presentation ended. Close this window to exit.');
+                }
+            });
+            
+            // Feature toggle
+            document.getElementById('featureToggle').addEventListener('click', function() {
+                const featureList = document.getElementById('featureList');
+                featureList.classList.toggle('hidden');
+                this.textContent = featureList.classList.contains('hidden') 
+                    ? 'View All Planned Features' 
+                    : 'Hide Features List';
+            });
+            
+            // Initialize progress bar
+            updateProgressBar();
+        });
+    </script>
+</body>
+</html>

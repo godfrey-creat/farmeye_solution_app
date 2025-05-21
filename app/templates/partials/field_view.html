@@ -1,7 +1,12 @@
 <div class="bg-white rounded-xl overflow-hidden shadow-card">
     <div class="bg-primary px-6 py-4 text-white flex justify-between items-center">
         <h3 class="font-semibold text-lg">Live Field View</h3>
-        <div class="flex items-center">
+        <div class="flex items-center space-x-3">
+            <!-- YOLO Detection Toggle -->
+            <div class="detection-toggle" id="yoloToggle">
+                <span class="detection-toggle-slider"></span>
+                <span class="text-sm ml-2" id="yoloStatus">YOLO Off</span>
+            </div>
             <div class="flex items-center bg-white bg-opacity-20 px-3 py-1 rounded-lg">
                 <span class="sensor-status sensor-active mr-2"></span>
                 <span class="text-sm">Live</span>
@@ -9,17 +14,33 @@
         </div>
     </div>
     <div class="aspect-w-16 aspect-h-9 bg-dark relative h-64">
-        <div class="absolute inset-0 flex items-center justify-center">
-            <i class="fas fa-video text-white text-opacity-30 text-5xl"></i>
+        <div class="video-container" id="videoContainer">
+            <video id="videoFeed" class="video-feed" playsinline muted loop>
+                <source src="https://www.shutterstock.com/shutterstock/videos/3703540751/preview/stock-footage-vegetative-stage-of-maize-maize-farming.webm" type="video/webm">
+                <source src="{{ url_for('static', filename='Constants/corn.mp4') }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <canvas id="detectionCanvas" class="detection-canvas"></canvas>
+            <div id="videoOverlay" class="video-play-overlay">
+                <div class="play-button">
+                    <i class="fas fa-play"></i>
+                </div>
+            </div>
+            <div id="detectionStats" class="detection-stats" style="display: none;">
+                <div class="detection-count">
+                    <span class="maize-count" id="maizeCount">0 Maize</span>
+                    <span class="weed-count" id="weedCount">0 Weeds</span>
+                </div>
+            </div>
         </div>
         <div class="absolute bottom-0 left-0 right-0 bg-dark bg-opacity-70 backdrop-blur-sm text-white p-3">
             <div class="flex justify-between items-center">
-                <span class="font-medium">Sector 3 - Camera 2</span>
+                <span class="font-medium" id="cameraLabel">Maize Field - Vegetative Stage</span>
                 <div class="flex space-x-3">
-                    <button class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20">
+                    <button class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20" id="expandButton">
                         <i class="fas fa-expand-alt"></i>
                     </button>
-                    <button class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20">
+                    <button class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20" id="snapshotBtn">
                         <i class="fas fa-camera"></i>
                     </button>
                     <button class="p-2 rounded-lg bg-white bg-opacity-10 hover:bg-opacity-20">
@@ -31,21 +52,100 @@
     </div>
     <div class="p-4 flex justify-between bg-lighter">
         <div class="flex space-x-3">
-            <button class="btn btn-outline text-sm">
+            <button class="btn btn-outline text-sm" id="prevCameraBtn">
                 <i class="fas fa-chevron-left mr-2"></i> Previous
             </button>
-            <button class="btn btn-outline text-sm">
+            <button class="btn btn-outline text-sm" id="nextCameraBtn">
                 Next <i class="fas fa-chevron-right ml-2"></i>
             </button>
         </div>
         <div class="flex items-center">
             <span class="text-sm text-medium mr-2">Camera:</span>
-            <select class="border border-primary rounded-lg text-sm px-3 py-2 bg-white">
+            <select class="border border-primary rounded-lg text-sm px-3 py-2 bg-white" id="cameraSelect">
                 <option>Camera 1</option>
                 <option selected>Camera 2</option>
                 <option>Camera 3</option>
                 <option>Camera 4</option>
             </select>
+        </div>
+    </div>
+</div>
+
+<!-- Expanded View (Hidden by default) -->
+<div class="expanded-view-container" id="expandedView" style="display: none;">
+    <div class="expanded-header">
+        <h2 class="text-xl font-semibold">All Cameras</h2>
+        <button class="btn-icon" id="collapseButton">
+            <i class="fas fa-compress-alt"></i>
+        </button>
+    </div>
+    <div class="camera-grid">
+        <div class="camera-item" data-camera="Camera 1">
+            <div class="camera-header">
+                <span>Camera 1 - Vegetative Stage</span>
+                <div class="active-indicator" style="display: none;">
+                    <span class="sensor-status sensor-active"></span>
+                    <span class="text-xs">Active</span>
+                </div>
+            </div>
+            <div class="video-container">
+                <video class="video-feed" playsinline muted loop>
+                    <source src="https://www.shutterstock.com/shutterstock/videos/3703540751/preview/stock-footage-vegetative-stage-of-maize-maize-farming.webm" type="video/webm">
+                    <source src="{{ url_for('static', filename='Constants/corn.mp4') }}" type="video/mp4">
+                </video>
+                <canvas class="detection-canvas"></canvas>
+            </div>
+        </div>
+        
+        <div class="camera-item" data-camera="Camera 2">
+            <div class="camera-header">
+                <span>Camera 2 - Field View</span>
+                <div class="active-indicator">
+                    <span class="sensor-status sensor-active"></span>
+                    <span class="text-xs">Active</span>
+                </div>
+            </div>
+            <div class="video-container">
+                <video class="video-feed" playsinline muted loop>
+                    <source src="https://www.shutterstock.com/shutterstock/videos/3719558213/preview/stock-footage-zea-mays-maize-corn-field-farming-natural.webm" type="video/webm">
+                    <source src="{{ url_for('static', filename='Constants/corn.mp4') }}" type="video/mp4">
+                </video>
+                <canvas class="detection-canvas"></canvas>
+            </div>
+        </div>
+        
+        <div class="camera-item" data-camera="Camera 3">
+            <div class="camera-header">
+                <span>Camera 3 - Top Down View</span>
+                <div class="active-indicator" style="display: none;">
+                    <span class="sensor-status sensor-active"></span>
+                    <span class="text-xs">Active</span>
+                </div>
+            </div>
+            <div class="video-container">
+                <video class="video-feed" playsinline muted loop>
+                    <source src="https://www.shutterstock.com/shutterstock/videos/3774732253/preview/stock-footage-top-down-view-neatly-planted-maize-crops-fertile.webm" type="video/webm">
+                    <source src="{{ url_for('static', filename='Constants/corn.mp4') }}" type="video/mp4">
+                </video>
+                <canvas class="detection-canvas"></canvas>
+            </div>
+        </div>
+        
+        <div class="camera-item" data-camera="Camera 4">
+            <div class="camera-header">
+                <span>Camera 4 - Aerial View</span>
+                <div class="active-indicator" style="display: none;">
+                    <span class="sensor-status sensor-active"></span>
+                    <span class="text-xs">Active</span>
+                </div>
+            </div>
+            <div class="video-container">
+                <video class="video-feed" playsinline muted loop>
+                    <source src="https://www.shutterstock.com/shutterstock/videos/3750960769/preview/stock-footage-aerial-view-rows-maize-corn-field-landscape.webm" type="video/webm">
+                    <source src="{{ url_for('static', filename='Constants/corn.mp4') }}" type="video/mp4">
+                </video>
+                <canvas class="detection-canvas"></canvas>
+            </div>
         </div>
     </div>
 </div>
