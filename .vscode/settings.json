@@ -6,5 +6,6 @@
         "**/*.csproj": true,
         "**/bin": true,
         "**/obj": true
-    }
+    },
+    "codium.codeCompletion.enable": true
 }
