@@ -241,11 +241,31 @@ class FarmStage(db.Model):
     end_date = db.Column(db.DateTime, nullable=True)
     status = db.Column(db.String(20), default="Active")  # Active, Completed
     description = db.Column(db.Text)
+    expected_duration = db.Column(db.Integer)  # Expected days in this stage
+    recommended_tasks = db.Column(db.Text)
+
+    recommended_tasks = db.Column(db.Text)  # JSON string of recommended task types
+
+    def get_recommended_tasks(self):
+        """Get recommended tasks for this growth stage"""
+        if not self.recommended_tasks:
+            return []
+
+        try:
+            import json
+
+            return json.loads(self.recommended_tasks)
+        except:
+            return []
 
     # Relationship with Farm
     farm = db.relationship("Farm", backref="farm_stages", lazy=True)
     # Relationship with Labor tasks
     labor_tasks = db.relationship("LaborTask", backref="farm_stage", lazy=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     def __repr__(self):
         return f"<FarmStage {self.stage_name}, Farm: {self.farm_id}, Status: {self.status}>"
