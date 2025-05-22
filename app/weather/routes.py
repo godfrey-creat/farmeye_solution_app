@@ -513,7 +513,7 @@ def get_mock_weather_data():
 
 
 # API endpoints with location-based routes
-@weather.route("/api/current/<location>")
+@weather.route("/api/weather/current/<location>")
 @login_required
 @require_farm_registration
 def api_current_weather(location):
@@ -529,7 +529,7 @@ def api_current_weather(location):
         return jsonify({"error": str(e)}), 500
 
 
-@weather.route("/api/forecast/<location>")
+@weather.route("/api/weather/forecast/<location>")
 @login_required
 @require_farm_registration
 def api_forecast(location):
@@ -643,3 +643,28 @@ def test_weather():
 
     flash("This is test data for debugging purposes.", "info")
     return render_template("dashboard/weather.html", **template_vars)
+
+
+@weather.route("/api/weather/current")
+@login_required
+@require_farm_registration
+def api_current_weather_default():
+    """Get current weather for user's farm location"""
+    farm = Farm.query.filter_by(user_id=current_user.id).first()
+    if not farm or not farm.location:
+        return jsonify({"error": "No farm location set"}), 400
+    
+    location = farm.location.split()[0]  # Get first word of location
+    return api_current_weather(location)
+
+@weather.route("/api/weather/forecast")
+@login_required
+@require_farm_registration
+def api_forecast_default():
+    """Get weather forecast for user's farm location"""
+    farm = Farm.query.filter_by(user_id=current_user.id).first()
+    if not farm or not farm.location:
+        return jsonify({"error": "No farm location set"}), 400
+    
+    location = farm.location.split()[0]  # Get first word of location
+    return api_forecast(location)

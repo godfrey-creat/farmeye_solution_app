@@ -7,6 +7,11 @@ from app.farm.models import (
     FarmStage, PestControl, PestAction
 )
 from datetime import datetime, timedelta
+from app.tasks.models import TaskCategory, Task, TaskRecurrence
+from app.auth.models import User
+from app.farm.models import Farm, Field
+from datetime import datetime, timedelta
+import random
 
 def seed_data():
     """Add initial seed data to the database"""
@@ -168,8 +173,93 @@ def seed_data():
 
     print("Database seeding completed successfully!")
 
+def seed_task_categories():
+    """Create default task categories"""
+    return TaskCategory.get_default_categories()
+
+def seed_sample_tasks(num_tasks=10):
+    """Create sample tasks for testing"""
+    # Get users, farms, and fields
+    users = User.query.all()
+    if not users:
+        print("No users found. Please run user seeding first.")
+        return
+        
+    farms = Farm.query.all()
+    if not farms:
+        print("No farms found. Please run farm seeding first.")
+        return
+    
+    categories = seed_task_categories()
+    
+    # Task types corresponding to categories
+    task_types = [cat.name for cat in categories]
+    
+    # Status options
+    statuses = ['pending', 'in_progress', 'completed']
+    priorities = ['low', 'medium', 'high']
+    
+    # Create random tasks
+    for i in range(num_tasks):
+        # Select random farm and user
+        farm = random.choice(farms)
+        user = random.choice(users)
+        
+        # Get fields for this farm
+        fields = Field.query.filter_by(farm_id=farm.id).all()
+        field = random.choice(fields) if fields else None
+        
+        # Set random dates within next 30 days
+        start_days_offset = random.randint(1, 30)
+        duration_days = random.randint(0, 3)
+        
+        start_date = datetime.utcnow() + timedelta(days=start_days_offset)
+        end_date = start_date + timedelta(days=duration_days) if duration_days > 0 else None
+        
+        # Select random task type and category
+        task_type_index = random.randint(0, len(task_types) - 1)
+        task_type = task_types[task_type_index]
+        category = categories[task_type_index]
+        
+        # Create task
+        task = Task(
+            title=f"{task_type} - {'Farm' if not field else field.name}",
+            description=f"Sample {task_type.lower()} task for testing.",
+            task_type=task_type,
+            start_date=start_date,
+            end_date=end_date,
+            is_all_day=bool(random.randint(0, 1)),
+            status=random.choice(statuses),
+            priority=random.choice(priorities),
+            farm_id=farm.id,
+            field_id=field.id if field else None,
+            category_id=category.id,
+            assigned_to=user.id,
+            created_by=user.id
+        )
+        
+        db.session.add(task)
+        
+        # Add recurrence for some tasks
+        if random.random() < 0.3:  # 30% chance of recurring
+            recurrence = TaskRecurrence(
+                recurrence_type=random.choice(['daily', 'weekly', 'monthly']),
+                recurrence_interval=random.randint(1, 3),
+                recurrence_days=','.join([str(d) for d in random.sample(range(7), k=random.randint(1, 3))]) if random.random() < 0.5 else None,
+                recurrence_end_type=random.choice(['never', 'on_date', 'after_count']),
+                recurrence_end_date=datetime.utcnow() + timedelta(days=90) if random.random() < 0.5 else None,
+                recurrence_count=random.randint(5, 20) if random.random() < 0.5 else None
+            )
+            task.recurrence = recurrence
+    
+    db.session.commit()
+    print(f"Created {num_tasks} sample tasks.")
+
+
 # Run this function when the script is executed directly
 if __name__ == '__main__':
     app = create_app()
     with app.app_context():
         seed_data()
+        seed_task_categories()
+        seed_sample_tasks(20)

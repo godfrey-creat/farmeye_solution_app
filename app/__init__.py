@@ -120,8 +120,11 @@ def create_app(config_name=None):
 
     from app.tasks import task as task_blueprint
 
-    app.register_blueprint(task_blueprint, url_prefix="/task")
     # Context processor to make weather data available to all templates
+
+    from app.tasks import task as task_blueprint
+
+    app.register_blueprint(task_blueprint, url_prefix="/tasks")
 
     @app.context_processor
     def inject_weather():

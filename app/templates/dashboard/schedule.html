@@ -1,5 +1,620 @@
-{ %extends "base.html" %}
+{% extends "base.html" %}
+{% block title %}Task Schedule - FarmEye{% endblock %}
 
-<div>
-    Calendar
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/calendar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/task-forms.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/task-integration.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="schedule-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Task Schedule</h1>
+      <p>Manage your farming activities and schedule tasks efficiently</p>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn-secondary" onclick="showTaskAnalytics()">
+        <i class="fas fa-chart-bar"></i> Analytics
+      </button>
+      <button class="btn-primary" onclick="taskManager.createTask()">
+        <i class="fas fa-plus"></i> New Task
+      </button>
+    </div>
+  </div>
+  
+  <!-- Quick Actions -->
+  <div class="task-quick-actions">
+    <h3>Quick Actions</h3>
+    <div class="quick-actions-grid">
+      <div class="quick-action-card" onclick="taskManager.createTask()">
+        <i class="fas fa-plus-circle"></i>
+        <h5>Add New Task</h5>
+        <p>Create a new farming task</p>
+      </div>
+      
+      <div class="quick-action-card" onclick="showUpcomingTasks()">
+        <i class="fas fa-clock"></i>
+        <h5>Upcoming Tasks</h5>
+        <p>View tasks due soon</p>
+      </div>
+      
+      <div class="quick-action-card" onclick="showRecommendedTasks()">
+        <i class="fas fa-lightbulb"></i>
+        <h5>Recommendations</h5>
+        <p>AI-powered task suggestions</p>
+      </div>
+      
+      <div class="quick-action-card" onclick="showTaskTemplates()">
+        <i class="fas fa-bookmark"></i>
+        <h5>Templates</h5>
+        <p>Use saved task templates</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Task Summary Cards -->
+  <div class="analytics-summary">
+    <div class="summary-card">
+      <div class="card-icon pending">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="card-content">
+        <h3 id="summary-pending">0</h3>
+        <p>Pending Tasks</p>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="card-icon in-progress">
+        <i class="fas fa-play"></i>
+      </div>
+      <div class="card-content">
+        <h3 id="summary-in-progress">0</h3>
+        <p>In Progress</p>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="card-icon due-today">
+        <i class="fas fa-calendar-day"></i>
+      </div>
+      <div class="card-content">
+        <h3 id="summary-due-today">0</h3>
+        <p>Due Today</p>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="card-icon completed">
+        <i class="fas fa-check"></i>
+      </div>
+      <div class="card-content">
+        <h3 id="summary-completed">0</h3>
+        <p>Completed This Week</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main Calendar -->
+  <div class="calendar-section">
+    <div id="task-calendar"></div>
+  </div>
+  
+  <!-- Upcoming Tasks Panel -->
+  <div class="upcoming-tasks-panel">
+    <h3>
+      <i class="fas fa-clock"></i> Upcoming Tasks
+      <span class="task-count" id="upcoming-count">0</span>
+    </h3>
+    
+    <div class="upcoming-tasks-list" id="upcoming-tasks-list">
+      <!-- Upcoming tasks will be rendered here -->
+    </div>
+    
+    <div class="panel-actions">
+      <button class="btn-secondary btn-sm" onclick="showAllUpcomingTasks()">
+        View All
+      </button>
+    </div>
+  </div>
 </div>
+
+<!-- Task Templates Modal -->
+<div class="modal-overlay" id="task-templates-modal" style="display: none;">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Task Templates</h3>
+      <button class="btn-close" onclick="closeModal('task-templates-modal')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="templates-section">
+        <div class="section-header">
+          <h4>Quick Start Templates</h4>
+          <button class="btn-secondary btn-sm" onclick="createCustomTemplate()">
+            <i class="fas fa-plus"></i> Create Template
+          </button>
+        </div>
+        
+        <div class="task-templates-grid" id="templates-grid">
+          <!-- Templates will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recommendations Modal -->
+<div class="modal-overlay" id="recommendations-modal" style="display: none;">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Task Recommendations</h3>
+      <button class="btn-close" onclick="closeModal('recommendations-modal')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="recommendations-content">
+        <div class="recommendations-header">
+          <p>Based on your current growth stages and weather conditions, here are recommended tasks:</p>
+        </div>
+        
+        <div class="recommendations-list" id="recommendations-list">
+          <!-- Recommendations will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeTaskManagement } from '{{ url_for("static", filename="js/task-init.js") }}';
+  
+  // Initialize task management system
+  document.addEventListener('DOMContentLoaded', async () => {
+    await initializeTaskManagement();
+    
+    // Update summary cards
+    updateSummaryCards();
+    
+    // Load upcoming tasks
+    loadUpcomingTasks();
+    
+    // Subscribe to store updates
+    store.subscribe(action => {
+      if (['TASKS_LOADED', 'TASK_STATISTICS_LOADED'].includes(action.type)) {
+        updateSummaryCards();
+        loadUpcomingTasks();
+      }
+    });
+  });
+  
+  // Global functions for the page
+  window.showUpcomingTasks = function() {
+    // Show upcoming tasks in modal or navigate to list view
+    if (window.calendarManager) {
+      window.calendarManager.setView('list');
+    }
+  };
+  
+  window.showRecommendedTasks = async function() {
+    const modal = document.getElementById('recommendations-modal');
+    const list = document.getElementById('recommendations-list');
+    
+    try {
+      // Get current farm
+      const activeFarm = store.farm?.getActiveFarm();
+      if (!activeFarm) {
+        list.innerHTML = '<p class="no-recommendations">Please select a farm to see recommendations.</p>';
+        modal.style.display = 'block';
+        return;
+      }
+      
+      // Fetch recommendations
+      const recommendations = await store.tasks?.fetchRecommendedTasks(activeFarm.id) || [];
+      
+      if (recommendations.length === 0) {
+        list.innerHTML = '<p class="no-recommendations">No recommendations available at this time.</p>';
+      } else {
+        list.innerHTML = recommendations.map(rec => `
+          <div class="recommendation-card">
+            <div class="rec-header">
+              <h5>${rec.task_type}</h5>
+              <span class="rec-stage">${rec.growth_stage}</span>
+            </div>
+            <p class="rec-description">${rec.description || 'Recommended task for current growth stage'}</p>
+            <div class="rec-actions">
+              <button class="btn-primary btn-sm" onclick="applyRecommendation('${rec.task_type}', '${rec.growth_stage}')">
+                Create Task
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+      
+      modal.style.display = 'block';
+    } catch (error) {
+      console.error('Error loading recommendations:', error);
+      list.innerHTML = '<p class="error-message">Error loading recommendations. Please try again.</p>';
+      modal.style.display = 'block';
+    }
+  };
+  
+  window.showTaskTemplates = function() {
+    const modal = document.getElementById('task-templates-modal');
+    const grid = document.getElementById('templates-grid');
+    
+    // Default templates
+    const templates = [
+      {
+        id: 'weeding',
+        title: 'Weekly Weeding',
+        type: 'Weeding',
+        description: 'Regular weeding schedule for crop maintenance',
+        recurrence: 'weekly'
+      },
+      {
+        id: 'irrigation',
+        title: 'Irrigation Check',
+        type: 'Irrigating',
+        description: 'Daily irrigation system monitoring',
+        recurrence: 'daily'
+      },
+      {
+        id: 'fertilizer',
+        title: 'Fertilizer Application',
+        type: 'Fertilizing',
+        description: 'Monthly fertilizer application schedule',
+        recurrence: 'monthly'
+      },
+      {
+        id: 'harvest',
+        title: 'Harvest Planning',
+        type: 'Harvesting',
+        description: 'Harvest preparation and execution',
+        recurrence: 'none'
+      }
+    ];
+    
+    grid.innerHTML = templates.map(template => `
+      <div class="template-card" onclick="useTemplate('${template.id}')">
+        <div class="template-header">
+          <h5 class="template-title">${template.title}</h5>
+          <span class="template-type">${template.type}</span>
+        </div>
+        <p class="template-description">${template.description}</p>
+        <div class="template-meta">
+          <small><i class="fas fa-repeat"></i> ${template.recurrence}</small>
+        </div>
+      </div>
+    `).join('');
+    
+    modal.style.display = 'block';
+  };
+  
+  window.applyRecommendation = function(taskType, growthStage) {
+    // Pre-populate task form with recommendation
+    if (window.taskManager) {
+      window.taskManager.createTask();
+      
+      // Wait for form to load then populate
+      setTimeout(() => {
+        const taskTypeField = document.getElementById('task-type');
+        if (taskTypeField) {
+          taskTypeField.value = taskType;
+        }
+      }, 500);
+    }
+    
+    closeModal('recommendations-modal');
+  };
+  
+  window.useTemplate = function(templateId) {
+    // Apply template to new task
+    if (window.taskManager) {
+      window.taskManager.createTask();
+      
+      // Template-specific logic would go here
+      console.log('Using template:', templateId);
+    }
+    
+    closeModal('task-templates-modal');
+  };
+  
+  window.closeModal = function(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+  };
+  
+  function updateSummaryCards() {
+    const statistics = store.tasks?.statistics;
+    if (!statistics) return;
+    
+    document.getElementById('summary-pending').textContent = statistics.counts.pending || 0;
+    document.getElementById('summary-in-progress').textContent = statistics.counts.in_progress || 0;
+    document.getElementById('summary-due-today').textContent = statistics.counts.due_today || 0;
+    document.getElementById('summary-completed').textContent = statistics.counts.completed || 0;
+  }
+  
+  function loadUpcomingTasks() {
+    const upcomingTasks = store.tasks?.upcomingTasks || [];
+    const list = document.getElementById('upcoming-tasks-list');
+    const count = document.getElementById('upcoming-count');
+    
+    count.textContent = upcomingTasks.length;
+    
+    if (upcomingTasks.length === 0) {
+      list.innerHTML = `
+        <div class="no-upcoming-tasks">
+          <i class="fas fa-check-circle"></i>
+          <p>No upcoming tasks</p>
+          <small>You're all caught up!</small>
+        </div>
+      `;
+      return;
+    }
+    
+    const limitedTasks = upcomingTasks.slice(0, 5);
+    
+    list.innerHTML = limitedTasks.map(task => {
+      const dueDate = new Date(task.start_date);
+      const isToday = dueDate.toDateString() === new Date().toDateString();
+      const daysUntil = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
+      
+      return `
+        <div class="upcoming-task-item" onclick="taskManager.editTask(${task.id})">
+          <div class="task-status-indicator ${task.status}"></div>
+          <div class="task-info">
+            <h6>${task.title}</h6>
+            <div class="task-meta">
+              <span class="task-type">${task.task_type}</span>
+              <span class="task-due ${isToday ? 'due-today' : ''}">
+                ${isToday ? 'Due today' : `${daysUntil} days`}
+              </span>
+            </div>
+          </div>
+          <div class="task-priority priority-${task.priority}">
+            ${task.priority}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+</script>
+
+<style>
+/* Page-specific styles */
+.schedule-page {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-content h1 {
+  margin: 0 0 0.5rem 0;
+  color: #2a6041;
+  font-size: 2rem;
+}
+
+.header-content p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 1.1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.calendar-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.upcoming-tasks-panel {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.upcoming-tasks-panel h3 {
+  margin: 0 0 1rem 0;
+  color: #2a6041;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.task-count {
+  background: #e9ecef;
+  color: #6c757d;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: normal;
+}
+
+.upcoming-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.upcoming-task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upcoming-task-item:hover {
+  background: #e9ecef;
+  transform: translateX(4px);
+}
+
+.task-info {
+  flex: 1;
+}
+
+.task-info h6 {
+  margin: 0 0 0.25rem 0;
+  color: #2a6041;
+  font-size: 0.95rem;
+}
+
+.task-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.task-due.due-today {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.task-priority {
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.task-priority.priority-high {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.task-priority.priority-medium {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.task-priority.priority-low {
+  background: #d4edda;
+  color: #155724;
+}
+
+.no-upcoming-tasks {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.no-upcoming-tasks i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #28a745;
+  display: block;
+}
+
+.panel-actions {
+  text-align: center;
+}
+
+.recommendation-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.rec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rec-header h5 {
+  margin: 0;
+  color: #2a6041;
+}
+
+.rec-stage {
+  background: #e8f5e8;
+  color: #2a6041;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+}
+
+.rec-description {
+  color: #6c757d;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+}
+
+.rec-actions {
+  text-align: right;
+}
+
+.no-recommendations,
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.error-message {
+  color: #dc3545;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .header-actions {
+    justify-content: center;
+  }
+  
+  .task-meta {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .upcoming-task-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .task-priority {
+    align-self: flex-end;
+  }
+}
+</style>
+{% endblock %}

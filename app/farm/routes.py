@@ -581,39 +581,19 @@ def dashboard_data():
     )
 
 
-@farm.route("/get_farms", methods=["GET"])
+@farm.route("/api/farms", methods=['GET'])
 @login_required
 def get_farms():
-    """Get farms for the current user"""
-    farms = Farm.query.filter_by(user_id=current_user.id).all()
-    farm_list = []
-
-    for farm in farms:
-        farm_data = {
-            "id": farm.id,
-            "name": farm.name,
-            "region": farm.region,
-            "fields": [],
-        }
-
-        # Get fields for this farm
-        fields = Field.query.filter_by(farm_id=farm.id).all()
-        for field in fields:
-            field_data = {"id": field.id, "name": field.name, "boundaries": []}
-
-            # Get boundaries for this field
-            boundaries = Boundary.query.filter_by(field_id=field.id).all()
-            for boundary in boundaries:
-                field_data["boundaries"].append(
-                    {
-                        "id": boundary.id,
-                        "lat": float(boundary.latitude),
-                        "lng": float(boundary.longitude),
-                    }
-                )
-
-            farm_data["fields"].append(field_data)
-
-        farm_list.append(farm_data)
-
-    return jsonify({"success": True, "farms": farm_list})
+    """Get all farms for the current user"""
+    try:
+        farms = Farm.query.filter_by(user_id=current_user.id).all()
+        return jsonify({
+            'status': 'success',
+            'farms': [farm.to_dict() for farm in farms]
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error fetching farms: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Failed to fetch farms'
+        }), 500
