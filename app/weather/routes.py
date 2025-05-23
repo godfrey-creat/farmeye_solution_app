@@ -22,15 +22,16 @@ from app import db
 
 import traceback
 import logging
+import os
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Your OpenWeatherMap API key
-OPENWEATHER_API_KEY = (
-    "073c86bb08ab26b37ab8a79c850ec27d"  # Replace with your actual API key
-)
+# Get OpenWeatherMap API key from environment
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+if not OPENWEATHER_API_KEY:
+    logger.warning("OPENWEATHER_API_KEY not found in environment variables")
 
 
 def format_hour(dt):
