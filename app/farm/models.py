@@ -27,6 +27,9 @@ class Farm(db.Model):
     soil_notes = db.Column(db.Text)
     irrigation_type = db.Column(db.String(50))
     water_source = db.Column(db.String(50))
+    
+    # Added crop_image_path field to fix the AttributeError
+    crop_image_path = db.Column(db.String(255), nullable=True)
 
     # Relationships
     owner = db.relationship("User", backref="farms", lazy=True, foreign_keys=[user_id])

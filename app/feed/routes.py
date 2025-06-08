@@ -12,9 +12,7 @@ import cv2
 try:
     from ultralytics import YOLO
 except ImportError:
-    current_app.logger.error(
-        "Could not import ultralytics YOLO. Make sure it's installed"
-    )
+    print("Could not import ultralytics YOLO. Make sure it's installed")
 
 feed_bp = Blueprint("feed", __name__, url_prefix="/feed")
 
@@ -27,27 +25,30 @@ class YoloDetector:
 
     def __init__(self, model_path=None):
         """Initialize the detector with the given model path"""
-        if model_path is None:
-            # Default model path
-            model_path = os.path.join(
-                current_app.root_path, "utils", "maize_weed_detection.pt"
-            )
-
         self.model_path = model_path
         self.model = None
         self.is_loaded = False
         self.class_names = ["maize", "weed"]
 
-        current_app.logger.info(
-            f"Initializing YOLO detector with model at: {model_path}"
-        )
-        self.load_model()
+    def _get_model_path(self):
+        """Get the model path, determining it at runtime when app context is available"""
+        if self.model_path is None:
+            # Default model path - only access current_app when actually needed
+            self.model_path = os.path.join(
+                current_app.root_path, "utils", "maize_weed_detection.pt"
+            )
+        return self.model_path
 
     def load_model(self):
         """Load the YOLO model"""
         try:
+            model_path = self._get_model_path()
+            current_app.logger.info(
+                f"Initializing YOLO detector with model at: {model_path}"
+            )
+            
             # Load the actual YOLOv8 model
-            self.model = YOLO(self.model_path)
+            self.model = YOLO(model_path)
 
             self.is_loaded = True
             current_app.logger.info("YOLO model loaded successfully")
@@ -75,6 +76,7 @@ class YoloDetector:
                 ...
             ]
         """
+        # Load model on first use (lazy loading)
         if not self.is_loaded:
             self.load_model()
 
@@ -151,7 +153,7 @@ class YoloDetector:
         return detections
 
 
-# Create a global detector instance
+# Create a global detector instance (without initializing the model path yet)
 detector = YoloDetector()
 
 

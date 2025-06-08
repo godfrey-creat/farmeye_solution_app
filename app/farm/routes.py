@@ -1,4 +1,7 @@
 # app/farm/routes.py
+from werkzeug.security import generate_password_hash
+import secrets
+import string
 import os
 import uuid
 from datetime import datetime
@@ -176,6 +179,7 @@ def schedule():
     return render_template("dashboard/schedule.html", active_page="schedule")
 
 
+
 @farm.route("/register", methods=["GET", "POST"])
 @farm.route("/register_farm", methods=["GET", "POST"])
 @login_required
@@ -248,16 +252,27 @@ def register_farm():
                 for member in data.get("teamMembers", []):
                     user = User.query.filter_by(email=member["email"]).first()
                     if not user:
+                        # Generate a temporary password for new team members
+                        temp_password = generate_temporary_password()
+                        password_hash = generate_password_hash(temp_password)
+                        
                         user = User(
                             email=member["email"],
                             username=member["email"].split("@")[0],
+                            password_hash=password_hash,
                             first_name=member["firstName"],
                             last_name=member["lastName"],
+                            phone_number=member.get("phoneNumber", "000-000-0000"),  # Provide default phone number
                             user_type="team_member",
+                            region=member.get("region", "nairobi"),
                             is_approved=False,
+                            created_at=datetime.utcnow(),
                         )
                         db.session.add(user)
                         db.session.flush()
+                        
+                        # Optional: Send email with temporary password or account setup instructions
+                        # send_team_member_invite_email(user.email, temp_password)
 
                     # Add team member to farms
                     for farm in Farm.query.filter_by(user_id=current_user.id).all():
@@ -291,7 +306,9 @@ def register_farm():
                         }
                     ),
                     500,
-                )  # For GET requests, render the registration page with CSRF protection
+                )
+                
+    # For GET requests, render the registration page with CSRF protection
     form = FarmRegistrationForm()
     return render_template(
         "farm/farm_registration_standalone.html",
@@ -299,6 +316,10 @@ def register_farm():
         current_user=current_user,  # Add current_user to template context
     )
 
+def generate_temporary_password(length=12):
+    """Generate a secure temporary password for new team members"""
+    characters = string.ascii_letters + string.digits + "!@#$%^&*"
+    return ''.join(secrets.choice(characters) for _ in range(length))
 
 @farm.route("/view/<int:farm_id>")
 @login_required

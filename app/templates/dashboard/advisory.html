@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+
+{% block title %}FarmEye - Advisory{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components/analytics.css') }}">
+<style>
+.advisory-card {
+    transition: all 0.3s ease;
+}
+.advisory-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+.priority-high { border-left: 4px solid #ef4444; }
+.priority-medium { border-left: 4px solid #f59e0b; }
+.priority-low { border-left: 4px solid #10b981; }
+.priority-info { border-left: 4px solid #3b82f6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="flex justify-between items-center mb-8">
+    <div>
+        <h1 class="text-3xl font-semibold text-dark">AI-Powered Farm Advisory</h1>
+        <p class="text-medium mt-1">Personalized recommendations based on your farm data</p>
+    </div>
+    <div class="flex items-center space-x-4">
+        <button onclick="refreshRecommendations()" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg transition-colors shadow-md flex items-center">
+            <i class="fas fa-sync-alt mr-2"></i>Refresh Advisory
+        </button>
+        <button class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg transition-colors shadow-sm flex items-center">
+            <i class="fas fa-download mr-2"></i>Download Report
+        </button>
+    </div>
+</div>
+
+<!-- Farm Status Overview -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-card p-5">
+        <div class="flex items-center">
+            <div class="bg-green-100 p-3 rounded-lg mr-4">
+                <i class="fas fa-seedling text-green-600"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-medium">Farm Health</h3>
+                <div class="text-2xl font-bold text-dark" id="farm-health-score">{{ farm_info.health_score or 'Loading...' }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-card p-5">
+        <div class="flex items-center">
+            <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                <i class="fas fa-robot text-blue-600"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-medium">AI Confidence</h3>
+                <div class="text-2xl font-bold text-dark" id="ai-confidence">{{ model_predictions.confidence or 'N/A' }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-card p-5">
+        <div class="flex items-center">
+            <div class="bg-yellow-100 p-3 rounded-lg mr-4">
+                <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-medium">Active Alerts</h3>
+                <div class="text-2xl font-bold text-dark" id="active-alerts">{{ alerts|length or 0 }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-card p-5">
+        <div class="flex items-center">
+            <div class="bg-purple-100 p-3 rounded-lg mr-4">
+                <i class="fas fa-calendar-check text-purple-600"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-medium">Recommendations</h3>
+                <div class="text-2xl font-bold text-dark" id="recommendations-count">{{ recommendations|length or 0 }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Recommendations Section -->
+<div class="bg-white rounded-xl shadow-card mb-8">
+    <div class="p-6 border-b border-gray-200">
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-semibold text-dark">AI-Generated Recommendations</h2>
+                <p class="text-medium text-sm mt-1">Based on current farm conditions, weather, and crop growth stage</p>
+            </div>
+            <div class="text-xs text-medium">
+                Last updated: <span id="last-updated">{{ farm_info.last_updated or 'Just now' }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="p-6">
+        <div id="recommendations-container" class="space-y-4">
+            {% if recommendations %}
+                {% for recommendation in recommendations %}
+                <div class="advisory-card bg-gray-50 rounded-lg p-4 priority-{{ recommendation.priority.lower() }}">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center">
+                            <div class="bg-white p-2 rounded-lg mr-3 shadow-sm">
+                                {% if recommendation.priority.lower() == 'high' %}
+                                    <i class="fas fa-exclamation-circle text-red-500"></i>
+                                {% elif recommendation.priority.lower() == 'medium' %}
+                                    <i class="fas fa-info-circle text-yellow-500"></i>
+                                {% elif recommendation.priority.lower() == 'low' %}
+                                    <i class="fas fa-check-circle text-green-500"></i>
+                                {% else %}
+                                    <i class="fas fa-lightbulb text-blue-500"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-dark">{{ recommendation.action }}</h3>
+                                <span class="text-xs font-medium px-2 py-1 rounded-full 
+                                    {% if recommendation.priority.lower() == 'high' %}bg-red-100 text-red-700
+                                    {% elif recommendation.priority.lower() == 'medium' %}bg-yellow-100 text-yellow-700
+                                    {% elif recommendation.priority.lower() == 'low' %}bg-green-100 text-green-700
+                                    {% else %}bg-blue-100 text-blue-700{% endif %}">
+                                    {{ recommendation.priority }} Priority
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-dark">{{ recommendation.due }}</div>
+                            <div class="text-xs text-medium">Due</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ml-11">
+                        <p class="text-gray-700 mb-3">{{ recommendation.description }}</p>
+                        
+                        {% if recommendation.reasoning %}
+                        <div class="bg-white rounded-lg p-3 mb-3">
+                            <h4 class="text-sm font-medium text-gray-800 mb-1">AI Analysis:</h4>
+                            <p class="text-sm text-gray-600">{{ recommendation.reasoning }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="flex justify-between items-center">
+                            <div class="flex space-x-2">
+                                <button class="text-xs bg-primary text-white px-3 py-1 rounded-full hover:bg-primary-dark transition-colors">
+                                    Mark as Done
+                                </button>
+                                <button class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition-colors">
+                                    Schedule
+                                </button>
+                            </div>
+                            <button class="text-xs text-primary hover:underline flex items-center">
+                                Learn More <i class="fas fa-external-link-alt ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-8">
+                    <div class="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-robot text-2xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">No Recommendations Available</h3>
+                    <p class="text-gray-500 mb-4">AI analysis is in progress. Please check back in a few minutes.</p>
+                    <button onclick="refreshRecommendations()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">
+                        Refresh Now
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Model Predictions Section -->
+{% if model_predictions and model_predictions.detections %}
+<div class="bg-white rounded-xl shadow-card mb-8">
+    <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-dark">AI Model Predictions</h2>
+        <p class="text-medium text-sm mt-1">Computer vision analysis of your crop images</p>
+    </div>
+    
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Crop Health Status -->
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="font-medium text-dark mb-3">Crop Health Analysis</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-medium">Health Status:</span>
+                        <span class="font-medium 
+                            {% if model_predictions.health_status == 'Healthy' %}text-green-600
+                            {% else %}text-red-600{% endif %}">
+                            {{ model_predictions.health_status or 'Unknown' }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-medium">Disease Class:</span>
+                        <span class="font-medium">{{ model_predictions.disease_class or 'None detected' }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-medium">Confidence:</span>
+                        <span class="font-medium">{{ "%.1f"|format((model_predictions.confidence or 0) * 100) }}%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-medium">Last Analyzed:</span>
+                        <span class="font-medium">{{ model_predictions.last_analyzed or 'Never' }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detection Results -->
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="font-medium text-dark mb-3">Object Detection Results</h3>
+                <div class="space-y-2">
+                    {% set maize_count = model_predictions.detections|selectattr('class', 'equalto', 'maize')|list|length %}
+                    {% set weed_count = model_predictions.detections|selectattr('class', 'equalto', 'weed')|list|length %}
+                    
+                    <div class="flex justify-between">
+                        <span class="text-sm text-medium">Maize Plants:</span>
+                        <span class="font-medium text-green-600">{{ maize_count }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-medium">Weeds Detected:</span>
+                        <span class="font-medium {% if weed_count > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                            {{ weed_count }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-medium">Total Detections:</span>
+                        <span class="font-medium">{{ model_predictions.detections|length }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detailed Detection Results -->
+        {% if model_predictions.detections %}
+        <div class="mt-6">
+            <h3 class="font-medium text-dark mb-3">Detailed Detection Results</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Object</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Confidence</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Size</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for detection in model_predictions.detections %}
+                        <tr>
+                            <td class="px-4 py-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if detection.class == 'maize' %}bg-green-100 text-green-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ detection.class.title() }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 text-sm">{{ "%.1f"|format(detection.confidence * 100) }}%</td>
+                            <td class="px-4 py-2 text-sm">
+                                ({{ "%.0f"|format(detection.x) }}, {{ "%.0f"|format(detection.y) }})
+                            </td>
+                            <td class="px-4 py-2 text-sm">
+                                {{ "%.0f"|format(detection.width) }} × {{ "%.0f"|format(detection.height) }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Farm Insights -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Current Conditions -->
+    <div class="bg-white rounded-xl shadow-card p-6">
+        <h2 class="text-lg font-semibold text-dark mb-4">Current Farm Conditions</h2>
+        <div class="space-y-4">
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-medium">Soil Moisture</span>
+                <span class="font-medium">{{ moisture.current or 'N/A' }}%</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-medium">Soil Health</span>
+                <span class="font-medium">{{ soil_health.status or 'Unknown' }}</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-medium">Field Health</span>
+                <span class="font-medium">{{ field_health.status or 'Unknown' }}</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-medium">Growth Stage</span>
+                <span class="font-medium">{{ crop_growth.stage or 'Unknown' }}</span>
+            </div>
+            <div class="flex justify-between items-center py-2">
+                <span class="text-medium">Weather</span>
+                <span class="font-medium">{{ weather.temperature or 'N/A' }}°C, {{ weather.condition or 'Unknown' }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Items -->
+    <div class="bg-white rounded-xl shadow-card p-6">
+        <h2 class="text-lg font-semibold text-dark mb-4">Priority Action Items</h2>
+        <div class="space-y-3">
+            {% for recommendation in recommendations[:5] %}
+            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                <div class="w-2 h-2 rounded-full mr-3
+                    {% if recommendation.priority.lower() == 'high' %}bg-red-500
+                    {% elif recommendation.priority.lower() == 'medium' %}bg-yellow-500
+                    {% else %}bg-green-500{% endif %}">
+                </div>
+                <div class="flex-1">
+                    <div class="font-medium text-sm">{{ recommendation.action }}</div>
+                    <div class="text-xs text-medium">Due: {{ recommendation.due }}</div>
+                </div>
+                <div class="text-xs font-medium px-2 py-1 rounded-full
+                    {% if recommendation.priority.lower() == 'high' %}bg-red-100 text-red-700
+                    {% elif recommendation.priority.lower() == 'medium' %}bg-yellow-100 text-yellow-700
+                    {% else %}bg-green-100 text-green-700{% endif %}">
+                    {{ recommendation.priority }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function refreshRecommendations() {
+    const button = document.querySelector('button[onclick="refreshRecommendations()"]');
+    const icon = button.querySelector('i');
+    
+    // Add loading state
+    icon.classList.add('fa-spin');
+    button.disabled = true;
+    
+    // Fetch new recommendations
+    fetch('/api/dashboard-data')
+        .then(response => response.json())
+        .then(data => {
+            // Update the recommendations display
+            updateRecommendationsDisplay(data.recommendations);
+            
+            // Update status cards
+            document.getElementById('active-alerts').textContent = data.alerts.length;
+            document.getElementById('recommendations-count').textContent = data.recommendations.length;
+            document.getElementById('last-updated').textContent = 'Just now';
+            
+            // Update AI confidence if available
+            if (data.model_predictions && data.model_predictions.confidence) {
+                document.getElementById('ai-confidence').textContent = 
+                    (data.model_predictions.confidence * 100).toFixed(1) + '%';
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing recommendations:', error);
+            alert('Failed to refresh recommendations. Please try again.');
+        })
+        .finally(() => {
+            // Remove loading state
+            icon.classList.remove('fa-spin');
+            button.disabled = false;
+        });
+}
+
+function updateRecommendationsDisplay(recommendations) {
+    const container = document.getElementById('recommendations-container');
+    
+    if (!recommendations || recommendations.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <div class="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <i class="fas fa-robot text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-600 mb-2">No Recommendations Available</h3>
+                <p class="text-gray-500">AI analysis is in progress. Please check back in a few minutes.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Rebuild recommendations HTML
+    const recommendationsHTML = recommendations.map(rec => `
+        <div class="advisory-card bg-gray-50 rounded-lg p-4 priority-${rec.priority.toLowerCase()}">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center">
+                    <div class="bg-white p-2 rounded-lg mr-3 shadow-sm">
+                        <i class="fas fa-${getPriorityIcon(rec.priority)} text-${getPriorityColor(rec.priority)}-500"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-dark">${rec.action}</h3>
+                        <span class="text-xs font-medium px-2 py-1 rounded-full bg-${getPriorityColor(rec.priority)}-100 text-${getPriorityColor(rec.priority)}-700">
+                            ${rec.priority} Priority
+                        </span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm font-medium text-dark">${rec.due}</div>
+                    <div class="text-xs text-medium">Due</div>
+                </div>
+            </div>
+            <div class="ml-11">
+                <p class="text-gray-700 mb-3">${rec.description}</p>
+                ${rec.reasoning ? `
+                <div class="bg-white rounded-lg p-3 mb-3">
+                    <h4 class="text-sm font-medium text-gray-800 mb-1">AI Analysis:</h4>
+                    <p class="text-sm text-gray-600">${rec.reasoning}</p>
+                </div>
+                ` : ''}
+                <div class="flex justify-between items-center">
+                    <div class="flex space-x-2">
+                        <button class="text-xs bg-primary text-white px-3 py-1 rounded-full hover:bg-primary-dark transition-colors">
+                            Mark as Done
+                        </button>
+                        <button class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition-colors">
+                            Schedule
+                        </button>
+                    </div>
+                    <button class="text-xs text-primary hover:underline flex items-center">
+                        Learn More <i class="fas fa-external-link-alt ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = recommendationsHTML;
+}
+
+function getPriorityIcon(priority) {
+    switch(priority.toLowerCase()) {
+        case 'high': return 'exclamation-circle';
+        case 'medium': return 'info-circle';
+        case 'low': return 'check-circle';
+        default: return 'lightbulb';
+    }
+}
+
+function getPriorityColor(priority) {
+    switch(priority.toLowerCase()) {
+        case 'high': return 'red';
+        case 'medium': return 'yellow';
+        case 'low': return 'green';
+        default: return 'blue';
+    }
+}
+</script>
+{% endblock %}
