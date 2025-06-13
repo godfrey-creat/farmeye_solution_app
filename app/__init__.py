@@ -118,6 +118,9 @@ def create_app(config_name=None):
 
     app.register_blueprint(irrigation_blueprint, url_prefix="/irrigation")
 
+    from app.advisory.routes import advisory
+    app.register_blueprint(advisory, url_prefix='/advisory')
+
     # Context processor to make weather data available to all templates
 
     @app.context_processor

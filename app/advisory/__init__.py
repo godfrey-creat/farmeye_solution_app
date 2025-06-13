@@ -1,5 +1,3 @@
+# app/advisory/__init__.py
 from flask import Blueprint
-
-advisory = Blueprint("advisory", __name__)
-
-from app.advisory import routes, models
+advisory = Blueprint('advisory', __name__)

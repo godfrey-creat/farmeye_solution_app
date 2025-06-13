@@ -1,5 +1,5 @@
 # app/api/routes.py
-from flask import jsonify, current_app
+from flask import jsonify, current_app, render_template, redirect, url_for
 from flask_login import login_required, current_user
 import requests
 from datetime import datetime, timedelta
@@ -22,7 +22,6 @@ from dotenv import load_dotenv
 from sqlalchemy import func, desc
 
 load_dotenv()
-
 
 @api.route("/dashboard-data")
 @login_required
@@ -254,6 +253,21 @@ def dashboard_data():
 
     return jsonify(response_data)
 
+@api.route("/dashboard")
+@login_required
+def dashboard():
+    """Main dashboard navigation page."""
+    # This renders the main dashboard page and includes a link to the advisory dashboard
+    return render_template(
+        "dashboard.html",
+        active_page="dashboard"
+    )
+
+@api.route("/advisory")
+@login_required
+def advisory_dashboard_redirect():
+    """Redirect to the advisory dashboard page."""
+    return redirect(url_for("advisory.dashboard"))  # This assumes your advisory blueprint is registered as "advisory"
 
 @api.route("/debug")
 @login_required
@@ -275,7 +289,6 @@ def api_debug():
     }
 
     return jsonify(debug_info)
-
 
 @api.route("/user-profile")
 @login_required

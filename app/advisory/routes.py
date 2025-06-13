@@ -10,9 +10,12 @@ from app.feed.routes import detector   # Use the global YOLO detector instance
 from dotenv import load_dotenv
 from openai import OpenAI
 from PIL import Image
+import requests
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# --------------------- Helper Functions ---------------------
 
 def get_latest_farm_image(farm_id):
     return FarmImage.query.filter_by(farm_id=farm_id).order_by(FarmImage.upload_date.desc()).first()
@@ -34,8 +37,36 @@ def get_soil_health(farm_id):
 def get_moisture_data(farm_id):
     return SensorData.query.filter_by(farm_id=farm_id, sensor_type="soil_moisture").order_by(SensorData.timestamp.desc()).all()
 
-def get_weather_data(farm_id):
-    return WeatherData.query.filter_by(farm_id=farm_id).order_by(WeatherData.timestamp.desc()).all()
+def get_recent_weather_data(farm_id, minutes=60):
+    """Try to get recent weather from DB, else return empty list."""
+    cutoff = datetime.utcnow() - timedelta(minutes=minutes)
+    return WeatherData.query.filter_by(farm_id=farm_id).filter(WeatherData.timestamp >= cutoff).order_by(WeatherData.timestamp.desc()).all()
+
+def fetch_live_weather_api(farm):
+    """Fetch live weather from external API (adapt endpoint as needed)."""
+    api_url = os.getenv("WEATHER_API_URL")  # Set this in your .env or config
+    params = {
+        "location": getattr(farm, "location", ""),
+        "farm_id": farm.id
+    }
+    try:
+        response = requests.get(api_url, params=params, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return [data] if isinstance(data, dict) else data
+    except Exception as e:
+        current_app.logger.error(f"Failed to fetch live weather API: {str(e)}")
+    return []
+
+def weather_as_dict(obj):
+    if hasattr(obj, "as_dict"):
+        return obj.as_dict()
+    elif isinstance(obj, dict):
+        return obj
+    else:
+        return str(obj)
+
+# --------------------- Main Routes ---------------------
 
 @advisory.route("/dashboard_data")
 @login_required
@@ -47,7 +78,12 @@ def dashboard_data():
     # --- Get farm state ---
     soil_health = get_soil_health(farm.id)
     moisture = get_moisture_data(farm.id)
-    weather_data = get_weather_data(farm.id)
+
+    # WEATHER: Try DB, else fetch live API
+    weather_data = get_recent_weather_data(farm.id)
+    if not weather_data or len(weather_data) == 0:
+        weather_data = fetch_live_weather_api(farm)
+
     current_stage_obj = FarmStage.query.filter_by(
         farm_id=farm.id, status="Active"
     ).order_by(FarmStage.start_date.desc()).first()
@@ -85,7 +121,7 @@ def dashboard_data():
         "current_conditions": {
             "soil_health": soil_health,
             "soil_moisture": [m.as_dict() if hasattr(m, "as_dict") else str(m) for m in moisture],
-            "weather": [w.as_dict() if hasattr(w, "as_dict") else str(w) for w in weather_data]
+            "weather": [weather_as_dict(w) for w in weather_data]
         },
         "crop_status": {
             "current_stage": current_stage,
@@ -115,13 +151,115 @@ def dashboard_data():
     response_data = {
         "ai_input": ai_input,
         "recommendations": recommendations,
+        "farm": {
+            "name": farm.name,
+            "location": farm.location,
+            "stage": current_stage,
+            "crop_type": farm.crop_type,
+            "size": farm.size,
+        }
     }
     return jsonify(response_data)
 
 @advisory.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("advisory/advisory.html", active_page="advisory")
+    farm = Farm.query.filter_by(user_id=current_user.id).first()
+    ai_input = None
+    recommendations = []
+    farm_meta = None
+    error = None
+
+    if not farm:
+        error = "No farm found for user."
+    else:
+        soil_health = get_soil_health(farm.id)
+        moisture = get_moisture_data(farm.id)
+
+        # WEATHER: Try DB, else fetch live API
+        weather_data = get_recent_weather_data(farm.id)
+        if not weather_data or len(weather_data) == 0:
+            weather_data = fetch_live_weather_api(farm)
+
+        current_stage_obj = FarmStage.query.filter_by(
+            farm_id=farm.id, status="Active"
+        ).order_by(FarmStage.start_date.desc()).first()
+        current_stage = current_stage_obj.stage_name if current_stage_obj else "Unknown"
+        active_pests = PestControl.query.filter_by(farm_id=farm.id, status="Active").all()
+
+        soil_moisture = SensorData.query.filter_by(
+            farm_id=farm.id, sensor_type="soil_moisture"
+        ).order_by(SensorData.timestamp.desc()).first()
+        nitrogen_sensor = SensorData.query.filter_by(
+            farm_id=farm.id, sensor_type="nitrogen"
+        ).order_by(SensorData.timestamp.desc()).first()
+        phosphorus_sensor = SensorData.query.filter_by(
+            farm_id=farm.id, sensor_type="phosphorus"
+        ).order_by(SensorData.timestamp.desc()).first()
+        ph_sensor = SensorData.query.filter_by(
+            farm_id=farm.id, sensor_type="ph"
+        ).order_by(SensorData.timestamp.desc()).first()
+
+        latest_image = get_latest_farm_image(farm.id)
+        yolo_detections = []
+        if latest_image and os.path.exists(latest_image.file_path):
+            try:
+                image_pil = Image.open(latest_image.file_path)
+                yolo_detections = detector.detect(image_pil)
+            except Exception as e:
+                current_app.logger.error(f"Error running YOLO on advisory image: {str(e)}")
+                yolo_detections = []
+        else:
+            yolo_detections = []
+
+        ai_input = {
+            "current_conditions": {
+                "soil_health": soil_health,
+                "soil_moisture": [m.as_dict() if hasattr(m, "as_dict") else str(m) for m in moisture],
+                "weather": [weather_as_dict(w) for w in weather_data]
+            },
+            "crop_status": {
+                "current_stage": current_stage,
+                "model_predictions": yolo_detections
+            },
+            "active_issues": {
+                "pests": [
+                    {
+                        "name": pest.pest_name or "Unknown Pest",
+                        "severity": pest.severity or "Medium",
+                        "location": pest.location_in_farm or "Unknown Location",
+                        "detected_date": pest.detection_date.isoformat() if pest.detection_date else "Unknown Date",
+                        "description": pest.description or "No description available"
+                    }
+                    for pest in active_pests
+                ]
+            },
+            "sensor_data": {
+                "soil_moisture": soil_moisture.value if soil_moisture else None,
+                "nitrogen": nitrogen_sensor.value if nitrogen_sensor else None,
+                "phosphorus": phosphorus_sensor.value if phosphorus_sensor else None,
+                "ph": ph_sensor.value if ph_sensor else None,
+            }
+        }
+        recommendations = generate_ai_recommendations(ai_input, farm)
+        farm_meta = {
+            "name": farm.name,
+            "location": farm.location,
+            "stage": current_stage,
+            "crop_type": farm.crop_type,
+            "size": farm.size,
+        }
+
+    return render_template(
+        "advisory/advisory.html",
+        active_page="advisory",
+        ai_input=ai_input,
+        recommendations=recommendations,
+        farm=farm_meta,
+        error=error
+    )
+
+# --------------------- Recommendation Functions ---------------------
 
 def generate_ai_recommendations(ai_input, farm):
     """Generate AI-powered recommendations using OpenAI"""
@@ -230,7 +368,7 @@ def get_fallback_recommendations(ai_input, farm):
             "reasoning": "Active pest detection requires immediate intervention"
         })
     sensors = ai_input.get("sensor_data", {})
-    if sensors.get("nitrogen") and sensors["nitrogen"] < 40:
+    if sensors.get("nitrogen") is not None and sensors["nitrogen"] < 40:
         recommendations.append({
             "action": "Apply Nitrogen Fertilizer",
             "description": f"Nitrogen levels are at {sensors['nitrogen']} ppm, below optimal range. Apply nitrogen-rich fertilizer to improve crop growth.",
@@ -238,7 +376,7 @@ def get_fallback_recommendations(ai_input, farm):
             "due": "Within 48 hours",
             "reasoning": "Low nitrogen levels can impact crop yield"
         })
-    if sensors.get("soil_moisture") and sensors["soil_moisture"] < 40:
+    if sensors.get("soil_moisture") is not None and sensors["soil_moisture"] < 40:
         recommendations.append({
             "action": "Irrigation Needed",
             "description": f"Soil moisture is at {sensors['soil_moisture']}%, below optimal range. Schedule irrigation to prevent crop stress.",
